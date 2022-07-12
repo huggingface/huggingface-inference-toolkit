@@ -1,0 +1,10 @@
+FROM public.ecr.aws/t6m7g5n4/transformers-inference:4.20.1-pt1.11-cuda11.5
+
+# install robyn framework
+RUN pip install robyn 
+
+# copy application
+COPY app/ .
+
+# run app
+CMD ["app.py"]
