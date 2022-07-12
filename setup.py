@@ -42,6 +42,8 @@ extras["test"] = [
     "datasets",
     "pytest-sugar",
     "mock==2.0.0",
+    "docker",
+    "requests",
 ]
 extras["quality"] = [
     "black",

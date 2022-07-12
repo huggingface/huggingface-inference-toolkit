@@ -18,18 +18,18 @@ uvicorn src.huggingface_inference_toolkit.webservice_starlette:app
 
 _cpu images_
 ```bash
-docker build -t robyn-transformers:cpu -f dockerfiles/Dockerfile.cpu .
+docker build -t starlette-transformers:cpu -f dockerfiles/starlette/Dockerfile.cpu .
 ```
 
 _gpu images_
 ```bash
-docker build -t robyn-transformers:gpu -f dockerfiles/Dockerfile.gpu .
+docker build -t starlette-transformers:gpu -f dockerfiles/starlette/Dockerfile.gpu .
 ```
 
 2. run container
 
 ```bash
-docker run -it -p 5000:5000 robyn-transformers:cpu
+docker run -ti -p 5000:5000 starlette-transformers:cpu
 ```
 
 ## Hey Benchmark

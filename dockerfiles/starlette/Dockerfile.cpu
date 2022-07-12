@@ -1,0 +1,12 @@
+FROM public.ecr.aws/t6m7g5n4/transformers-inference:4.20.1-pt1.11-cpu
+
+# install robyn framework
+COPY starlette_requirements.txt /tmp/requirements.txt
+RUN pip install  --no-cache-dir -r /tmp/requirements.txt && rm /tmp/requirements.txt
+
+# copy application
+COPY src/huggingface_inference_toolkit huggingface_inference_toolkit
+COPY src/huggingface_inference_toolkit/webservice_starlette.py webservice_starlette.py
+
+# run app
+ENTRYPOINT ["uvicorn", "webservice_starlette:app", "--host", "0.0.0.0", "--port", "5000"]
