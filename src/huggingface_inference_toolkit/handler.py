@@ -15,20 +15,24 @@ class HuggingFaceHandler(ABC):
     A Default Hugging Face Inference Handler which works with all transformers pipelines, Sentence Transformers and Optimum.
     """
 
-    def __init__(self, model_dir: Union[str, Path]):
-        self.pipeline = get_pipeline(model_dir=model_dir)
+    def __init__(self, model_dir: Union[str, Path], task=None):
+        self.pipeline = get_pipeline(model_dir=model_dir, task=task)
 
-    def handle(self, data):
+    def __call__(self, data):
         """
         Handles an inference request with input data and makes a prediction.
         Args:
             :data: (obj): the raw request body data.
         :return: prediction output
         """
+        logger.info(data)
+        inputs = data.pop("inputs", data)
+        parameters = data.pop("parameters", None)
+
         # pass inputs with all kwargs in data
-        if data.parameters is not None:
-            prediction = self.pipeline(data.inputs, **data.parameters)
+        if parameters is not None:
+            prediction = self.pipeline(inputs, **parameters)
         else:
-            prediction = self.pipeline(data.inputs)
+            prediction = self.pipeline(inputs)
         # postprocess the prediction
         return prediction

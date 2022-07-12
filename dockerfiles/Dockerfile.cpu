@@ -1,10 +1,12 @@
 FROM public.ecr.aws/t6m7g5n4/transformers-inference:4.20.1-pt1.11-cpu
 
 # install robyn framework
-RUN pip install robyn 
+COPY requirements.txt /tmp/requirements.txt
+RUN pip install -r /tmp/requirements.txt && rm /tmp/requirements.txt
 
 # copy application
-COPY app/ .
+COPY src/huggingface_inference_toolkit huggingface_inference_toolkit
+COPY src/huggingface_inference_toolkit/webservice_robyn.py webservice_robyn.py
 
 # run app
-CMD ["app.py"]
+CMD ["webservice_robyn.py"]

@@ -16,7 +16,7 @@ VERSION = "0.1.0"
 
 install_requires = [
     "huggingface_hub>=0.0.8",
-    "ujson",
+    "orjson",
     "robyn",
     # vision
     "Pillow",

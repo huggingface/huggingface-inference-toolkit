@@ -1,9 +1,14 @@
 import os
+import logging
+from huggingface_inference_toolkit.serialization.json_utils import Jsoner
 
 from robyn import Robyn
 
 from huggingface_inference_toolkit.handler import HuggingFaceHandler
 from huggingface_inference_toolkit.serialization.base import ContentType
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(format="%(asctime)s | %(name)s | %(levelname)s | %(message)s", level=logging.INFO)
 
 
 app = Robyn(__file__)
@@ -34,11 +39,16 @@ async def health():
 
 @app.post("/predict")
 async def predict(request):
-    content_type = request.headers.get("Content-Type", None)
-    body = ContentType.get_deserializer(content_type).deserialize(request["body"])
-    print(body)
-    # pred = inference_handler(body["inputs"])
-    return ContentType.get_serializer("application/json").serialize(body)
+    try:
+        logger.info(request)
+        content_type = request.headers.get("Content-Type", None)
+        body = ContentType.get_deserializer(content_type).deserialize(request["body"])
+        logger.info(body)
 
+        # pred = inference_handler(body["inputs"])
+        return Jsoner.serialize(body) 
+    except Exception as e:
+        logger.error(e)
+        return Jsoner.serialize({"error": str(e)})  
 
 app.start(port=5000)

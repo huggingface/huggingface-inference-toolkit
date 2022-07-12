@@ -91,10 +91,22 @@ def check_and_register_custom_pipeline_from_directory(model_dir):
     NotImplementedError("Not implemented yet")
 
 
-def get_pipeline(task: str, device: int, model_dir: Path, **kwargs) -> Pipeline:
+def get_device():
+    """
+    The get device function will return the device for the DL Framework.
+    """
+    if _is_gpu_available():
+        return 0
+    else:
+        return -1
+
+
+def get_pipeline(task: str, model_dir: Path, **kwargs) -> Pipeline:
     """
     create pipeline class for a specific task based on local saved model
     """
+    device = get_device()
+
     if task is None:
         raise EnvironmentError(
             "The task for this model is not set: Please set one: https://huggingface.co/docs#how-is-a-models-type-of-inference-api-and-widget-determined"
