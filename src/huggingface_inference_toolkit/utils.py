@@ -13,7 +13,13 @@ from transformers import pipeline
 from transformers.file_utils import is_tf_available, is_torch_available
 from transformers.pipelines import Conversation, Pipeline
 
-from huggingface_inference_toolkit.const import HF_DEFAULT_PIPELINE_NAME, HF_MODEL_DIR, HF_MODEL_ID, HF_MODULE_NAME
+from huggingface_inference_toolkit.const import (
+    HF_DEFAULT_PIPELINE_NAME,
+    HF_MODEL_DIR,
+    HF_MODEL_ID,
+    HF_MODULE_NAME,
+    HF_TASK,
+)
 
 
 logger = logging.getLogger(__name__)

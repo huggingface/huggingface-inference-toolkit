@@ -4,6 +4,7 @@ import tempfile
 from transformers import pipeline
 from transformers.file_utils import is_torch_available
 from transformers.testing_utils import require_tf, require_torch, slow
+from huggingface_inference_toolkit.handler import get_inference_handler_either_custom_or_default_handler
 
 from huggingface_inference_toolkit.utils import (
     _get_framework,
@@ -129,3 +130,19 @@ def test_remote_custom_pipeline():
         payload = "test"
         assert pipeline.path == str(storage_dir)
         assert pipeline(payload) == payload.upper()
+
+
+def test_get_inference_handler_either_custom_or_default_pipeline():
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        storage_dir = _load_repository_from_hf("philschmid/custom-pipeline-text-classification", tmpdirname)
+        pipeline = get_inference_handler_either_custom_or_default_handler(str(storage_dir))
+        payload = "test"
+        assert pipeline.path == str(storage_dir)
+        assert pipeline(payload) == payload.upper()
+
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        MODEL = "lysandre/tiny-bert-random"
+        TASK = "text-classification"
+        pipeline = get_inference_handler_either_custom_or_default_handler(MODEL, TASK)
+        res = pipeline({"inputs": "Life is good, Life is bad"})
+        assert "score" in res[0]

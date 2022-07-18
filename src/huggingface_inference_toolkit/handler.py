@@ -1,10 +1,9 @@
 import logging
 from abc import ABC
 from pathlib import Path
-from typing import Union
+from typing import Optional, Union
 
-from huggingface_inference_toolkit.utils import _is_gpu_available, get_pipeline
-
+from huggingface_inference_toolkit.utils import check_and_register_custom_pipeline_from_directory, get_pipeline
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(format="%(asctime)s | %(name)s | %(levelname)s | %(message)s", level=logging.INFO)
@@ -36,3 +35,17 @@ class HuggingFaceHandler(ABC):
             prediction = self.pipeline(inputs)
         # postprocess the prediction
         return prediction
+
+
+
+def get_inference_handler_either_custom_or_default_handler(
+    model_dir: Path, task: Optional[str] = None
+):
+    """
+    get inference handler either custom or default Handler
+    """
+    custom_pipeline = check_and_register_custom_pipeline_from_directory(model_dir)
+    if custom_pipeline:
+        return custom_pipeline
+    else:
+        return HuggingFaceHandler(model_dir=model_dir, task=task)
