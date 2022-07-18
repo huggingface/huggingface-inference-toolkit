@@ -4,13 +4,14 @@ import re
 import tempfile
 import time
 
+import docker
 import numpy as np
 import pytest
-from huggingface_inference_toolkit.utils import _load_repository_from_hf
-from integ.config import task2input, task2model, task2output, task2validation
-import docker
 import requests
 from docker.client import DockerClient
+from huggingface_inference_toolkit.utils import _load_repository_from_hf
+from integ.config import task2input, task2model, task2output, task2validation
+
 
 client = docker.from_env()
 

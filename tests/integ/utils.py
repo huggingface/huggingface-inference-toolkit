@@ -8,7 +8,6 @@ from time import time
 LOGGER = logging.getLogger("timeout")
 
 
-
 def validate_classification(result=None, snapshot=None):
     for idx, _ in enumerate(result):
         assert result[idx].keys() == snapshot[idx].keys()

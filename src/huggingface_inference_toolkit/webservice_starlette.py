@@ -1,7 +1,8 @@
-from cmath import log
-import os
 import logging
+import os
+from cmath import log
 from pathlib import Path
+
 from huggingface_inference_toolkit.const import (
     HF_FRAMEWORK,
     HF_HUB_TOKEN,
@@ -10,19 +11,18 @@ from huggingface_inference_toolkit.const import (
     HF_REVISION,
     HF_TASK,
 )
-from huggingface_inference_toolkit.serialization.json_utils import Jsoner
-
-from starlette.applications import Starlette
-from starlette.responses import JSONResponse, PlainTextResponse, Response
-from starlette.routing import Route
-from starlette.requests import Request
-
 from huggingface_inference_toolkit.handler import (
     HuggingFaceHandler,
     get_inference_handler_either_custom_or_default_handler,
 )
 from huggingface_inference_toolkit.serialization.base import ContentType
+from huggingface_inference_toolkit.serialization.json_utils import Jsoner
 from huggingface_inference_toolkit.utils import _load_repository_from_hf
+from starlette.applications import Starlette
+from starlette.requests import Request
+from starlette.responses import JSONResponse, PlainTextResponse, Response
+from starlette.routing import Route
+
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(format="%(asctime)s | %(name)s | %(levelname)s | %(message)s", level=logging.INFO)

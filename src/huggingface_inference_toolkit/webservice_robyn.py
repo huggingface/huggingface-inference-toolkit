@@ -1,11 +1,12 @@
-import os
 import logging
-from huggingface_inference_toolkit.serialization.json_utils import Jsoner
+import os
 
 from robyn import Robyn
 
 from huggingface_inference_toolkit.handler import HuggingFaceHandler
 from huggingface_inference_toolkit.serialization.base import ContentType
+from huggingface_inference_toolkit.serialization.json_utils import Jsoner
+
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(format="%(asctime)s | %(name)s | %(levelname)s | %(message)s", level=logging.INFO)
@@ -46,9 +47,10 @@ async def predict(request):
         logger.info(body)
 
         # pred = inference_handler(body["inputs"])
-        return Jsoner.serialize(body) 
+        return Jsoner.serialize(body)
     except Exception as e:
         logger.error(e)
-        return Jsoner.serialize({"error": str(e)})  
+        return Jsoner.serialize({"error": str(e)})
+
 
 app.start(port=5000)

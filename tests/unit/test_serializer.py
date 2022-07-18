@@ -1,5 +1,5 @@
-import pytest
 import numpy as np
+import pytest
 from huggingface_inference_toolkit.serialization.json_utils import Jsoner
 
 

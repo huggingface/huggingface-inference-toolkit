@@ -4,8 +4,8 @@ import tempfile
 from transformers import pipeline
 from transformers.file_utils import is_torch_available
 from transformers.testing_utils import require_tf, require_torch, slow
-from huggingface_inference_toolkit.handler import get_inference_handler_either_custom_or_default_handler
 
+from huggingface_inference_toolkit.handler import get_inference_handler_either_custom_or_default_handler
 from huggingface_inference_toolkit.utils import (
     _get_framework,
     _is_gpu_available,

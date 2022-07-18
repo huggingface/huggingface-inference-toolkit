@@ -1,14 +1,13 @@
 import importlib.util
 import logging
 import os
-from pathlib import Path
 import sys
+from pathlib import Path
 from typing import Optional, Union
 
 from huggingface_hub import HfApi
-from huggingface_hub.file_download import cached_download, hf_hub_url
 from huggingface_hub._snapshot_download import _filter_repo_files
-
+from huggingface_hub.file_download import cached_download, hf_hub_url
 from transformers import pipeline
 from transformers.file_utils import is_tf_available, is_torch_available
 from transformers.pipelines import Conversation, Pipeline
