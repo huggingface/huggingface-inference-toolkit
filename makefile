@@ -1,6 +1,6 @@
 .PHONY: quality style unit-test integ-test
 
-check_dirs := src tests
+check_dirs := src 
 
 # run tests
 
@@ -17,7 +17,7 @@ integ-test:
 quality:
 	black --check --line-length 119 --target-version py36 $(check_dirs)
 	isort --check-only $(check_dirs)
-	flake8 $(check_dirs)
+	flake8 src
 
 # Format source code automatically
 

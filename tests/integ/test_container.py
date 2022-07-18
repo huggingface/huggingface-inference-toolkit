@@ -1,11 +1,7 @@
-import json
-import os
-import re
 import tempfile
 import time
 
 import docker
-import numpy as np
 import pytest
 import requests
 from docker.client import DockerClient
@@ -42,13 +38,12 @@ def wait_for_container_to_be_ready(base_url):
 
 def verify_task(container: DockerClient, task: str, framework: str = "pytorch"):
     BASE_URL = "http://localhost:5000"
-    model = task2model[task][framework]
     input = task2input[task]
     # health check
     wait_for_container_to_be_ready(BASE_URL)
 
     prediction = requests.post(f"{BASE_URL}/predict", json=input).json()
-    assert task2validation[task](result=prediction, snapshot=task2output[task]) == True
+    assert task2validation[task](result=prediction, snapshot=task2output[task]) is True
 
 
 @pytest.mark.parametrize(

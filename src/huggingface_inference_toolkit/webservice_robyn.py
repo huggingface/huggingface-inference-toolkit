@@ -3,7 +3,6 @@ import os
 
 from robyn import Robyn
 
-from huggingface_inference_toolkit.handler import HuggingFaceHandler
 from huggingface_inference_toolkit.serialization.base import ContentType
 from huggingface_inference_toolkit.serialization.json_utils import Jsoner
 

@@ -1,6 +1,4 @@
 import logging
-import os
-from cmath import log
 from pathlib import Path
 
 from huggingface_inference_toolkit.const import (
@@ -11,24 +9,22 @@ from huggingface_inference_toolkit.const import (
     HF_REVISION,
     HF_TASK,
 )
-from huggingface_inference_toolkit.handler import (
-    HuggingFaceHandler,
-    get_inference_handler_either_custom_or_default_handler,
-)
+from huggingface_inference_toolkit.handler import get_inference_handler_either_custom_or_default_handler
 from huggingface_inference_toolkit.serialization.base import ContentType
 from huggingface_inference_toolkit.serialization.json_utils import Jsoner
 from huggingface_inference_toolkit.utils import _load_repository_from_hf
 from starlette.applications import Starlette
-from starlette.requests import Request
-from starlette.responses import JSONResponse, PlainTextResponse, Response
+from starlette.responses import PlainTextResponse, Response
 from starlette.routing import Route
 
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(format="%(asctime)s | %(name)s | %(levelname)s | %(message)s", level=logging.INFO)
 
+
 # @app.startup_handler
 async def some_startup_task():
+
     global inference_handler
     # 1. check if model artifacts available in HF_MODEL_DIR
     if len(list(Path(HF_MODEL_DIR).glob("**/*"))) <= 0:
@@ -48,7 +44,7 @@ async def some_startup_task():
     logger.info(f"Initializing model from directory:{HF_MODEL_DIR}")
     # 2. determine correct inference handler
     inference_handler = get_inference_handler_either_custom_or_default_handler(HF_MODEL_DIR, task=HF_TASK)
-    logger.info(f"Model initialized successfully")
+    logger.info("Model initialized successfully")
 
 
 async def health(request):

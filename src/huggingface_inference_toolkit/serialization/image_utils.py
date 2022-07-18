@@ -1,4 +1,4 @@
-from io import BytesIO, StringIO
+from io import BytesIO
 
 from PIL import Image
 
