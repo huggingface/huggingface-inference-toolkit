@@ -17,52 +17,52 @@ from integ.utils import (
 
 task2model = {
     "text-classification": {
-        "pytorch": "distilbert-base-uncased-finetuned-sst-2-english",
-        "tensorflow": "distilbert-base-uncased-finetuned-sst-2-english",
+        "pytorch": "hf-internal-testing/tiny-random-distilbert",
+        "tensorflow": "hf-internal-testing/tiny-random-distilbert",
     },
     "zero-shot-classification": {
-        "pytorch": "joeddav/xlm-roberta-large-xnli",
-        "tensorflow": None,
+        "pytorch": "hf-internal-testing/tiny-random-bart",
+        "tensorflow": "hf-internal-testing/tiny-random-bart",
     },
     "feature-extraction": {
-        "pytorch": "bert-base-uncased",
-        "tensorflow": "bert-base-uncased",
+        "pytorch": "hf-internal-testing/tiny-random-bert",
+        "tensorflow": "hf-internal-testing/tiny-random-bert",
     },
     "ner": {
-        "pytorch": "dbmdz/bert-large-cased-finetuned-conll03-english",
-        "tensorflow": "dbmdz/bert-large-cased-finetuned-conll03-english",
+        "pytorch": "hf-internal-testing/tiny-random-roberta",
+        "tensorflow": "hf-internal-testing/tiny-random-roberta",
     },
     "question-answering": {
-        "pytorch": "distilbert-base-uncased-distilled-squad",
-        "tensorflow": "distilbert-base-uncased-distilled-squad",
+        "pytorch": "hf-internal-testing/tiny-random-electra",
+        "tensorflow": "hf-internal-testing/tiny-random-electra",
     },
     "fill-mask": {
-        "pytorch": "albert-base-v2",
-        "tensorflow": "albert-base-v2",
+        "pytorch": "hf-internal-testing/tiny-random-bert",
+        "tensorflow": "hf-internal-testing/tiny-random-bert",
     },
     "summarization": {
-        "pytorch": "sshleifer/distilbart-xsum-1-1",
-        "tensorflow": "sshleifer/distilbart-xsum-1-1",
+        "pytorch": "hf-internal-testing/tiny-random-bart",
+        "tensorflow": "hf-internal-testing/tiny-random-bart",
     },
     "translation_xx_to_yy": {
-        "pytorch": "Helsinki-NLP/opus-mt-en-de",
-        "tensorflow": "Helsinki-NLP/opus-mt-en-de",
+        "pytorch": "hf-internal-testing/tiny-random-t5",
+        "tensorflow": "hf-internal-testing/tiny-random-t5",
     },
     "text2text-generation": {
-        "pytorch": "t5-small",
-        "tensorflow": "t5-small",
+        "pytorch": "hf-internal-testing/tiny-random-t5",
+        "tensorflow": "hf-internal-testing/tiny-random-t5",
     },
     "text-generation": {
-        "pytorch": "gpt2",
-        "tensorflow": "gpt2",
+        "pytorch": "hf-internal-testing/tiny-random-gpt2",
+        "tensorflow": "hf-internal-testing/tiny-random-gpt2",
     },
     "image-classification": {
-        "pytorch": "google/vit-base-patch16-224",
-        "tensorflow": "google/vit-base-patch16-224",
+        "pytorch": "hf-internal-testing/tiny-random-vit",
+        "tensorflow": "hf-internal-testing/tiny-random-vit",
     },
     "automatic-speech-recognition": {
-        "pytorch": "facebook/wav2vec2-base-100h",
-        "tensorflow": "facebook/wav2vec2-base-960h",
+        "pytorch": "hf-internal-testing/tiny-random-wav2vec2",
+        "tensorflow": "hf-internal-testing/tiny-random-wav2vec2",
     },
 }
 
@@ -94,7 +94,7 @@ task2input = {
 }
 
 task2output = {
-    "text-classification": [{"label": "POSITIVE", "score": 0.99}],
+    "text-classification": [{"label": "POSITIVE", "score": 0.01}],
     "zero-shot-classification": {
         "sequence": "Hi, I recently bought a device from your company but it is not working as advertised and I would like to get reimbursed!",
         "labels": ["refund", "faq", "legal"],

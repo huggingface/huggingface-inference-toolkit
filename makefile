@@ -8,8 +8,8 @@ unit-test:
 	python -m pytest -n auto --dist loadfile -s -v ./tests/unit/
 
 integ-test:
-	python -m pytest -n 2 -s -v ./tests/integ/
-	# python -m pytest -n auto -s -v ./tests/integ/
+	# python -m pytest -n 2 -s -v ./tests/integ/
+	python -m pytest -n auto -s -v ./tests/integ/
 
 
 # Check that source code meets quality standards

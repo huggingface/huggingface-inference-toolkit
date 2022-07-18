@@ -1,3 +1,4 @@
+import random
 import tempfile
 import time
 
@@ -36,8 +37,8 @@ def wait_for_container_to_be_ready(base_url):
     return True
 
 
-def verify_task(container: DockerClient, task: str, framework: str = "pytorch"):
-    BASE_URL = "http://localhost:5000"
+def verify_task(container: DockerClient, task: str, port: int = 5000, framework: str = "pytorch"):
+    BASE_URL = f"http://localhost:{port}"
     input = task2input[task]
     # health check
     wait_for_container_to_be_ready(BASE_URL)
@@ -64,47 +65,69 @@ def verify_task(container: DockerClient, task: str, framework: str = "pytorch"):
     ],
 )
 def test_cpu_container_remote_model(task) -> None:
-    container_name = "integration-test"
+    container_name = f"integration-test-{task}"
     container_image = "starlette-transformers:cpu"
+    framework = "pytorch"
+    model = task2model[task][framework]
+    port = random.randint(5000, 64000)
     make_sure_other_containers_are_stopped(client, container_name)
     with tempfile.TemporaryDirectory() as tmpdirname:
         # https://github.com/huggingface/infinity/blob/test-ovh/test/integ/utils.py
+        storage_dir = _load_repository_from_hf(model, tmpdirname)
         container = client.containers.run(
             container_image,
             name=container_name,
-            ports={"5000": "5000"},
-            environment={"HF_MODEL_ID": "/opt/huggingface/model", "HF_TASK": task},
-            volumes={tmpdirname: {"bind": "/opt/huggingface/model", "mode": "rw"}},
+            ports={"5000": port},
+            environment={"HF_MODEL_ID": model, "HF_TASK": task},
             detach=True,
             # GPU
             # device_requests=[docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])]
         )
         # time.sleep(5)
-        verify_task(container, task)
+        verify_task(container, task, port)
         container.stop()
         container.remove()
 
 
-def test_cpu_container_local_model() -> None:
-    container_name = "integration-test"
+@pytest.mark.parametrize(
+    "task",
+    [
+        "text-classification",
+        "zero-shot-classification",
+        "ner",
+        "question-answering",
+        "fill-mask",
+        "summarization",
+        "translation_xx_to_yy",
+        "text2text-generation",
+        "text-generation",
+        "feature-extraction",
+        # "image-classification",
+        # "automatic-speech-recognition",
+    ],
+)
+def test_cpu_container_local_model(task) -> None:
+    container_name = f"integration-test-{task}"
     container_image = "starlette-transformers:cpu"
+    framework = "pytorch"
+    model = task2model[task][framework]
+    port = random.randint(5000, 64000)
     make_sure_other_containers_are_stopped(client, container_name)
     with tempfile.TemporaryDirectory() as tmpdirname:
         # https://github.com/huggingface/infinity/blob/test-ovh/test/integ/utils.py
-        storage_dir = _load_repository_from_hf("distilbert-base-uncased-finetuned-sst-2-english", tmpdirname)
+        storage_dir = _load_repository_from_hf(model, tmpdirname)
         container = client.containers.run(
             container_image,
             name=container_name,
-            ports={"5000": "5000"},
-            environment={"HF_MODEL_DIR": tmpdirname, "HF_TASK": "text-classification"},
-            volumes={tmpdirname: {"bind": tmpdirname, "mode": "rw"}},
+            ports={"5000": port},
+            environment={"HF_MODEL_DIR": "/opt/huggingface/model", "HF_TASK": task},
+            volumes={tmpdirname: {"bind": "/opt/huggingface/model", "mode": "ro"}},
             detach=True,
             # GPU
             # device_requests=[docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])]
         )
         # time.sleep(5)
-        verify_task(container, "text-classification")
-
+        verify_task(container, task, port)
         container.stop()
         container.remove()
 
@@ -114,7 +137,7 @@ def test_cpu_container_local_model() -> None:
     ["philschmid/custom-pipeline-text-classification"],
 )
 def test_cpu_container_custom_pipeline(repository_id) -> None:
-    container_name = "integration-test"
+    container_name = "integration-test-custom"
     container_image = "starlette-transformers:cpu"
     make_sure_other_containers_are_stopped(client, container_name)
     with tempfile.TemporaryDirectory() as tmpdirname:
