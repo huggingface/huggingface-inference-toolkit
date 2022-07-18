@@ -2,13 +2,18 @@ import importlib.util
 import logging
 import os
 from pathlib import Path
-from typing import Optional
+import sys
+from typing import Optional, Union
 
 from huggingface_hub import HfApi
 from huggingface_hub.file_download import cached_download, hf_hub_url
+from huggingface_hub._snapshot_download import _filter_repo_files
+
 from transformers import pipeline
 from transformers.file_utils import is_tf_available, is_torch_available
 from transformers.pipelines import Conversation, Pipeline
+
+from huggingface_inference_toolkit.const import HF_DEFAULT_PIPELINE_NAME, HF_MODEL_DIR, HF_MODEL_ID, HF_MODULE_NAME
 
 
 logger = logging.getLogger(__name__)
@@ -31,6 +36,25 @@ def is_optimum_available():
 
 def is_sentence_transformers():
     return _sentence_transformers
+
+
+framework2weight = {
+    "pytorch": "pytorch*",
+    "tensorflow": "tf*",
+    "flax": "flax*",
+    "rust": "rust*",
+    "onnx": "*onnx",
+}
+ignore_regex_list = ["pytorch*", "tf*", "flax*", "rust*", "*onnx"]
+
+
+def create_artifact_filter(framework):
+    pattern = framework2weight.get(framework, None)
+    if pattern in ignore_regex_list:
+        ignore_regex_list.remove(pattern)
+        return ignore_regex_list
+    else:
+        return []
 
 
 def wrap_conversation_pipeline(pipeline):
@@ -84,11 +108,81 @@ def _get_framework():
         )
 
 
+def _load_repository_from_hf(
+    repository_id: Optional[str] = None,
+    target_dir: Optional[Union[str, Path]] = None,
+    framework: Optional[str] = None,
+    revision: Optional[str] = None,
+    hf_hub_token: Optional[str] = None,
+):
+    """
+    Load a model from huggingface hub.
+    """
+    repository_id = repository_id or HF_MODEL_ID
+    target_dir = Path(target_dir) or Path(HF_MODEL_DIR)
+    framework = framework or _get_framework()
+
+    # create workdir
+    if not target_dir.exists():
+        target_dir.mkdir(parents=True)
+
+    # create regex to only include the framework specific weights
+    ignore_regex = create_artifact_filter(framework)
+
+    # get image artifact files
+    _api = HfApi()
+    repo_info = _api.repo_info(
+        repo_id=repository_id,
+        repo_type="model",
+        revision=revision,
+        token=hf_hub_token,
+    )
+    # apply regex to filter out non-framework specific weights if args.framework is set
+    filtered_repo_files = _filter_repo_files(
+        repo_files=[f.rfilename for f in repo_info.siblings],
+        ignore_regex=ignore_regex,
+    )
+
+    # iterate over all files and download them
+    for repo_file in filtered_repo_files:
+        url = hf_hub_url(repo_id=repository_id, filename=repo_file, revision=revision)
+        path = cached_download(
+            url,
+            cache_dir=target_dir.as_posix(),
+            force_filename=repo_file,
+            use_auth_token=hf_hub_token,
+        )
+
+        if os.path.exists(path + ".lock"):
+            os.remove(path + ".lock")
+
+    # create requirements.txt if not exists
+    if not (target_dir / "requirements.txt").exists():
+        target_dir.joinpath("requirements.txt").touch()
+
+    return target_dir
+
+
 def check_and_register_custom_pipeline_from_directory(model_dir):
     """
     Checks if a custom pipeline is available and registers it if so.
     """
-    NotImplementedError("Not implemented yet")
+    # path to custom handler
+    custom_module = Path(model_dir).joinpath(HF_DEFAULT_PIPELINE_NAME)
+    if custom_module.is_file():
+        logger.info(f"Found custom pipeline at {custom_module}")
+        spec = importlib.util.spec_from_file_location(HF_MODULE_NAME, custom_module)
+        if spec:
+            # import custom handler
+            pipeline = importlib.util.module_from_spec(spec)
+            sys.modules[HF_MODULE_NAME] = pipeline
+            spec.loader.exec_module(pipeline)
+            # init custom handler with model_dir
+            custom_pipeline = pipeline.PreTrainedPipeline(model_dir)
+    else:
+        logger.info(f"No custom pipeline found at {custom_module}")
+        custom_pipeline = None
+    return custom_pipeline
 
 
 def get_device():
@@ -133,7 +227,7 @@ def get_pipeline(task: str, model_dir: Path, **kwargs) -> Pipeline:
         # TODO: add check for optimum accelerated pipeline
     elif is_sentence_transformers():
         pass
-    # TODO: add check for sentence transformers pipeline
+        # TODO: add check for sentence transformers pipeline
 
     # wrapp specific pipeline to support better ux
     if task == "conversational":
