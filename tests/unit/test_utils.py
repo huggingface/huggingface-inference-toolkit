@@ -120,7 +120,7 @@ def test_local_custom_pipeline():
     pipeline = check_and_register_custom_pipeline_from_directory(model_dir)
     payload = "test"
     assert pipeline.path == model_dir
-    assert pipeline(payload) == (pipeline.path, payload)
+    assert pipeline(payload) == payload
 
 
 def test_remote_custom_pipeline():
@@ -129,7 +129,7 @@ def test_remote_custom_pipeline():
         pipeline = check_and_register_custom_pipeline_from_directory(str(storage_dir))
         payload = "test"
         assert pipeline.path == str(storage_dir)
-        assert pipeline(payload) == payload.upper()
+        assert pipeline(payload) == payload
 
 
 def test_get_inference_handler_either_custom_or_default_pipeline():
@@ -138,7 +138,7 @@ def test_get_inference_handler_either_custom_or_default_pipeline():
         pipeline = get_inference_handler_either_custom_or_default_handler(str(storage_dir))
         payload = "test"
         assert pipeline.path == str(storage_dir)
-        assert pipeline(payload) == payload.upper()
+        assert pipeline(payload) == payload
 
     with tempfile.TemporaryDirectory() as tmpdirname:
         MODEL = "lysandre/tiny-bert-random"
