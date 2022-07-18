@@ -23,7 +23,7 @@ jobs:
         python-version: 3.9
     - name: Install Python dependencies
       run: pip install -e .[test,dev,transformers,torch]
-    - name: Build Docker:
+    - name: Build Docker
       run: docker build -t starlette-transformers:cpu -f dockerfiles/starlette/Dockerfile.cpu .
     - name: Run Integration Tests
       env:
