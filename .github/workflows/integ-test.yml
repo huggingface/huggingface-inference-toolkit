@@ -1,7 +1,7 @@
-name: Run Tests
+name: Run Integration Tests
 
 on: 
-  # pull_request:
+  pull_request:
   workflow_dispatch:
 
 
