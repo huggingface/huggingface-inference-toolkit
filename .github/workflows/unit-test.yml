@@ -21,7 +21,7 @@ jobs:
       with:
         python-version: 3.9
     - name: Install Python dependencies
-      run: pip install -e .[test,dev,transformers]
+      run: pip install -e .[test,dev,transformers,torch]
     - name: Run Unit Tests
       run: make unit-test
     # - name: Run Integration Tests

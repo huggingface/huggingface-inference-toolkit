@@ -22,7 +22,7 @@ jobs:
       with:
         python-version: 3.9
     - name: Install Python dependencies
-      run: pip install -e .[test,dev,transformers]
+      run: pip install -e .[test,dev,transformers,torch]
     - name: Run Integration Tests
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
