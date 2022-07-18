@@ -60,8 +60,8 @@ def verify_task(container: DockerClient, task: str, port: int = 5000, framework:
         "text2text-generation",
         "text-generation",
         "feature-extraction",
-        "image-classification",
-        "automatic-speech-recognition",
+        # "image-classification",
+        # "automatic-speech-recognition",
     ],
 )
 def test_cpu_container_remote_model(task) -> None:
