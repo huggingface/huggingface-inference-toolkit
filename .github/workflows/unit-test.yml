@@ -2,7 +2,8 @@ name: Run Unit-Tests
 
 on:
   push:
-    - branch: [main] 
+    branches:
+      - main
   pull_request:
   workflow_dispatch:
 
