@@ -74,3 +74,8 @@ def validate_automatic_speech_recognition(result=None, snapshot=None):
     assert result is not None
     assert "text" in result
     return True
+
+
+def validate_object_detection(result=None, snapshot=None):
+    assert result[0].keys() == snapshot[0].keys()
+    return True

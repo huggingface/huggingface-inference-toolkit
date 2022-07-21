@@ -1,4 +1,16 @@
 import orjson
+from io import BytesIO
+from PIL import Image
+import base64
+
+
+def default(obj):
+    if isinstance(obj, Image.Image):
+        with BytesIO() as out:
+            obj.save(out, format="PNG")
+            png_string = out.getvalue()
+            return base64.b64encode(png_string).decode("utf-8")
+    raise TypeError
 
 
 class Jsoner:
@@ -8,7 +20,7 @@ class Jsoner:
 
     @staticmethod
     def serialize(body):
-        return orjson.dumps(body, option=orjson.OPT_SERIALIZE_NUMPY)
+        return orjson.dumps(body, option=orjson.OPT_SERIALIZE_NUMPY, default=default)
 
 
 # class _JSONEncoder(json.JSONEncoder):

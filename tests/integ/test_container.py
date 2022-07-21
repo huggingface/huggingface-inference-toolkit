@@ -42,7 +42,7 @@ def verify_task(container: DockerClient, task: str, port: int = 5000, framework:
     input = task2input[task]
     # health check
     wait_for_container_to_be_ready(BASE_URL)
-    if task == "image-classification":
+    if task == "image-classification" or task == "object-detection" or task == "image-segmentation":
         prediction = requests.post(
             f"{BASE_URL}/predict", data=task2input[task], headers={"content-type": "image/x-image"}
         ).json()
@@ -71,8 +71,8 @@ def verify_task(container: DockerClient, task: str, port: int = 5000, framework:
         "image-classification",
         "automatic-speech-recognition",
         "audio-classification",
-        # "object-detection",
-        # "image-segmentation",
+        "object-detection",
+        "image-segmentation",
         # "table-question-answering",
         # "visual-question-answering",
         # "zero-shot-image-classification",

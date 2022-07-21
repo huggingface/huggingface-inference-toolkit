@@ -6,6 +6,7 @@ from integ.utils import (
     validate_feature_extraction,
     validate_fill_mask,
     validate_ner,
+    validate_object_detection,
     validate_question_answering,
     validate_summarization,
     validate_text2text_generation,
@@ -68,6 +69,14 @@ task2model = {
         "pytorch": "hf-internal-testing/tiny-random-wavlm",
         "tensorflow": None,
     },
+    "object-detection": {
+        "pytorch": "hustvl/yolos-tiny",
+        "tensorflow": None,
+    },
+    "image-segmentation": {
+        "pytorch": "hf-internal-testing/tiny-random-beit-pipeline",
+        "tensorflow": None,
+    },
 }
 
 
@@ -95,6 +104,8 @@ task2input = {
     },
     "text-generation": {"inputs": "My name is philipp and I am"},
     "image-classification": open(os.path.join(os.getcwd(), "tests/resources/image/tiger.jpeg"), "rb").read(),
+    "object-detection": open(os.path.join(os.getcwd(), "tests/resources/image/tiger.jpeg"), "rb").read(),
+    "image-segmentation": open(os.path.join(os.getcwd(), "tests/resources/image/tiger.jpeg"), "rb").read(),
     "automatic-speech-recognition": open(os.path.join(os.getcwd(), "tests/resources/audio/sample1.flac"), "rb").read(),
     "audio-classification": open(os.path.join(os.getcwd(), "tests/resources/audio/sample1.flac"), "rb").read(),
 }
@@ -131,6 +142,8 @@ task2output = {
         {"label": "no", "score": 0.5052680969238281},
         {"label": "yes", "score": 0.49473199248313904},
     ],
+    "object-detection": [{"score": 0.9143241047859192, "label": "cat", "box": {}}],
+    "image-segmentation": [{"score": 0.9143241047859192, "label": "cat", "mask": {}}],
 }
 
 task2validation = {
@@ -147,4 +160,6 @@ task2validation = {
     "image-classification": validate_classification,
     "automatic-speech-recognition": validate_automatic_speech_recognition,
     "audio-classification": validate_classification,
+    "object-detection": validate_object_detection,
+    "image-segmentation": validate_object_detection,
 }

@@ -1,3 +1,5 @@
+import base64
+import json
 import numpy as np
 import pytest
 import os
@@ -5,9 +7,18 @@ from huggingface_inference_toolkit.serialization import Jsoner, Audioer, Imager
 from PIL import Image
 
 
-def test_json_serializeation():
+def test_json_serialization():
     t = {"res": np.array([2.0]), "text": "I like you.", "float": 1.2}
     assert b'{"res":[2.0],"text":"I like you.","float":1.2}' == Jsoner.serialize(t)
+
+
+def test_json_image_serialization():
+    t = [
+        {"label": "refrigerator", "mask": Image.new("RGB", (60, 30), color="red"), "score": 0.9803440570831299},
+        {"label": "LABEL_200", "mask": Image.new("RGB", (60, 30), color="red"), "score": 0.9631735682487488},
+        {"label": "cat", "mask": Image.new("RGB", (60, 30), color="red"), "score": 0.9995332956314087},
+    ]
+    Jsoner.serialize(t)
 
 
 def test_json_deserialization():
