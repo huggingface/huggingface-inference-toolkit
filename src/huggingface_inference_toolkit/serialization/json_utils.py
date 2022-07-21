@@ -1,7 +1,8 @@
-import orjson
-from io import BytesIO
-from PIL import Image
 import base64
+from io import BytesIO
+
+import orjson
+from PIL import Image
 
 
 def default(obj):
