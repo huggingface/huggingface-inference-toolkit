@@ -46,7 +46,7 @@ def verify_task(container: DockerClient, task: str, port: int = 5000, framework:
         prediction = requests.post(
             f"{BASE_URL}/predict", data=task2input[task], headers={"content-type": "image/x-image"}
         ).json()
-    elif task == "automatic-speech-recognition":
+    elif task == "automatic-speech-recognition" or task == "audio-classification":
         prediction = requests.post(
             f"{BASE_URL}/predict", data=task2input[task], headers={"content-type": "audio/x-audio"}
         ).json()
@@ -70,7 +70,7 @@ def verify_task(container: DockerClient, task: str, port: int = 5000, framework:
         "feature-extraction",
         "image-classification",
         "automatic-speech-recognition",
-        # "audio-classification",
+        "audio-classification",
         # "object-detection",
         # "image-segmentation",
         # "table-question-answering",
@@ -119,7 +119,7 @@ def test_cpu_container_remote_model(task) -> None:
         "feature-extraction",
         "image-classification",
         "automatic-speech-recognition",
-        # "audio-classification",
+        "audio-classification",
         # "object-detection",
         # "image-segmentation",
         # "table-question-answering",

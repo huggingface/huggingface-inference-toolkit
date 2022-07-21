@@ -64,7 +64,12 @@ task2model = {
         "pytorch": "hf-internal-testing/tiny-random-wav2vec2",
         "tensorflow": "hf-internal-testing/tiny-random-wav2vec2",
     },
+    "audio-classification": {
+        "pytorch": "hf-internal-testing/tiny-random-wavlm",
+        "tensorflow": None,
+    },
 }
+
 
 task2input = {
     "text-classification": {"inputs": "I love you. I like you"},
@@ -91,6 +96,7 @@ task2input = {
     "text-generation": {"inputs": "My name is philipp and I am"},
     "image-classification": open(os.path.join(os.getcwd(), "tests/resources/image/tiger.jpeg"), "rb").read(),
     "automatic-speech-recognition": open(os.path.join(os.getcwd(), "tests/resources/audio/sample1.flac"), "rb").read(),
+    "audio-classification": open(os.path.join(os.getcwd(), "tests/resources/audio/sample1.flac"), "rb").read(),
 }
 
 task2output = {
@@ -121,6 +127,10 @@ task2output = {
     "automatic-speech-recognition": {
         "text": "GOING ALONG SLUSHY COUNTRY ROADS AND SPEAKING TO DAMP OAUDIENCES IN DROFTY SCHOOL ROOMS DAY AFTER DAY FOR A FORT NIGHT HE'LL HAVE TO PUT IN AN APPEARANCE AT SOME PLACE OF WORSHIP ON SUNDAY MORNING AND HE CAN COME TO US IMMEDIATELY AFTERWARDS"
     },
+    "audio-classification": [
+        {"label": "no", "score": 0.5052680969238281},
+        {"label": "yes", "score": 0.49473199248313904},
+    ],
 }
 
 task2validation = {
@@ -136,4 +146,5 @@ task2validation = {
     "text-generation": validate_text_generation,
     "image-classification": validate_classification,
     "automatic-speech-recognition": validate_automatic_speech_recognition,
+    "audio-classification": validate_classification,
 }
