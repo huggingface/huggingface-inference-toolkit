@@ -42,8 +42,16 @@ def verify_task(container: DockerClient, task: str, port: int = 5000, framework:
     input = task2input[task]
     # health check
     wait_for_container_to_be_ready(BASE_URL)
-
-    prediction = requests.post(f"{BASE_URL}/predict", json=input).json()
+    if task == "image-classification":
+        prediction = requests.post(
+            f"{BASE_URL}/predict", data=task2input[task], headers={"content-type": "image/x-image"}
+        ).json()
+    elif task == "automatic-speech-recognition":
+        prediction = requests.post(
+            f"{BASE_URL}/predict", data=task2input[task], headers={"content-type": "audio/x-audio"}
+        ).json()
+    else:
+        prediction = requests.post(f"{BASE_URL}/predict", json=input).json()
     assert task2validation[task](result=prediction, snapshot=task2output[task]) is True
 
 
@@ -60,8 +68,15 @@ def verify_task(container: DockerClient, task: str, port: int = 5000, framework:
         "text2text-generation",
         "text-generation",
         "feature-extraction",
-        # "image-classification",
-        # "automatic-speech-recognition",
+        "image-classification",
+        "automatic-speech-recognition",
+        # "audio-classification",
+        # "object-detection",
+        # "image-segmentation",
+        # "table-question-answering",
+        # "visual-question-answering",
+        # "zero-shot-image-classification",
+        # "conversational"
     ],
 )
 def test_cpu_container_remote_model(task) -> None:
@@ -102,8 +117,15 @@ def test_cpu_container_remote_model(task) -> None:
         "text2text-generation",
         "text-generation",
         "feature-extraction",
-        # "image-classification",
-        # "automatic-speech-recognition",
+        "image-classification",
+        "automatic-speech-recognition",
+        # "audio-classification",
+        # "object-detection",
+        # "image-segmentation",
+        # "table-question-answering",
+        # "visual-question-answering",
+        # "zero-shot-image-classification",
+        # "conversational"
     ],
 )
 def test_cpu_container_local_model(task) -> None:

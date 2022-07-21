@@ -31,5 +31,5 @@ class ContentType:
             return content_type_mapping[content_type]
         else:
             raise Exception(
-                f'Content type "{content_type}" not supported. Supported content types are: {list(content_type_mapping.keys()).split(", ")}'
+                f'Content type "{content_type}" not supported. Supported content types are: {", ".join(list(content_type_mapping.keys()))}'
             )
