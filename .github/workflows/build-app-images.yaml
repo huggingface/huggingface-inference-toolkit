@@ -1,0 +1,33 @@
+name: "Build applications images"
+
+on:
+  push:
+    # paths:
+    #   - "app/**"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  starlette-cpu:
+    uses: ./.github/workflows/actions/docker-build-action.yaml
+    with:
+      context: dockerfiles/starlette
+      repository: huggingface
+      image: hf-endpoints-inference-cpu
+      dockerfile: Dockerfile.cpu
+    secrets:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+  starlette-gpu:
+    uses: ./.github/workflows/actions/docker-build-action.yaml
+    with:
+      context: dockerfiles/starlette
+      repository: huggingface
+      image: hf-endpoints-inference-gpu
+      dockerfile: Dockerfile.gpu
+    secrets:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}

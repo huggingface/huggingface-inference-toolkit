@@ -1,6 +1,6 @@
-FROM public.ecr.aws/t6m7g5n4/transformers-inference:4.20.1-pt1.11-cpu
+FROM huggingface/transformers-inference:4.20.1-pt1.11-cuda11.5
 
-# install robyn framework
+# install starlette framework
 COPY starlette_requirements.txt /tmp/requirements.txt
 RUN pip install  --no-cache-dir -r /tmp/requirements.txt && rm /tmp/requirements.txt
 

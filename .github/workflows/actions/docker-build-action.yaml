@@ -1,0 +1,59 @@
+on:
+  workflow_call:
+    inputs:
+      context:
+        type: string
+        required: true
+      repository:
+        type: string
+        required: true
+      image:
+        type: string
+        required: true
+      platforms:
+        type: string
+        required: false
+        default: linux/amd64
+      build_args:
+        type: string
+        required: false
+        default: ""
+      dockerfile:
+        type: string
+        required: false
+        default: "Dockerfile"
+    secrets:
+      DOCKER_USERNAME:
+        required: true
+      DOCKER_PASSWORD:
+        required: true
+
+jobs:
+  buildx:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v3
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2.0.0
+
+      - name: Login to container registry
+        uses: docker/login-action@v2.0.0
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Inject slug/short variables
+        uses: rlespinasse/github-slug-action@v4
+
+      - name: Build and push image to container registry
+        uses: docker/build-push-action@v3.0.0
+        with:
+          push: true
+          context: ${{ inputs.context }}
+          build-args: ${{ inputs.build_args }}
+          tags: ${{ inputs.repository }}/${{ inputs.image }}:${{ env.GITHUB_SHA_SHORT }},${{ inputs.repository }}/${{ inputs.image }}:latest,
