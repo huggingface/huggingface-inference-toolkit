@@ -1,7 +1,4 @@
-import os
-from typing import Dict, List, Union
-
-from sentence_transformers import SentenceTransformer, util, CrossEncoder
+from sentence_transformers import CrossEncoder, SentenceTransformer, util
 
 
 class SentenceSimilarityPipeline:

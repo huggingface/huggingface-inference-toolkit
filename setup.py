@@ -15,21 +15,25 @@ VERSION = "0.1.0"
 # libavcodec-extra : libavcodec-extra  inculdes additional codecs for ffmpeg
 
 install_requires = [
-    "huggingface_hub>=0.0.8",
+    # transformers
+    "transformers[sklearn,sentencepiece]>=4.17.0"
+    # api stuff
     "orjson",
-    "robyn",
+    # "robyn",
     # vision
     "Pillow",
     # speech + torchaudio
     "librosa",
     "pyctcdecode>=0.3.0",
     "phonemizer",
+    # sentence transformers
+    "sentence_transformers",
+    "torchvision<=0.12.0",
 ]
 
 extras = {}
 
 # Hugging Face specific dependencies
-extras["transformers"] = ["transformers[sklearn,sentencepiece]>=4.17.0"]
 # framework specific dependencies
 extras["torch"] = ["torch>=1.8.0", "torchaudio"]
 extras["tensorflow"] = ["tensorflow>=2.4.0"]
