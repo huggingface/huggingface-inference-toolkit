@@ -10,6 +10,16 @@ Hugging Face Inference Toolkit is for serving 🤗 Transformers models in contai
 ---
 ## 💻  Getting Started with Hugging Face Inference Toolkit
 
+### Local run
+
+```bash
+mkdir tmp/
+HF_MODEL_ID=hf-internal-testing/tiny-random-distilbert HF_MODEL_DIR=tmp HF_TASK=text-classification uvicorn src.huggingface_inference_toolkit.webservice_starlette:app 
+```
+
+### Container
+
+
 1. build the preferred container for either CPU or GPU.
 
 _cpu images_

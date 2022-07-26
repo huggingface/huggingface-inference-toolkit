@@ -7,7 +7,7 @@ from huggingface_inference_toolkit.utils import check_and_register_custom_pipeli
 
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(format="%(asctime)s | %(name)s | %(levelname)s | %(message)s", level=logging.INFO)
+logging.basicConfig(format="%(asctime)s | %(levelname)s | %(message)s", level=logging.INFO)
 
 
 class HuggingFaceHandler(ABC):

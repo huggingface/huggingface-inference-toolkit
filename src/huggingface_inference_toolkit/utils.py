@@ -17,7 +17,7 @@ from huggingface_inference_toolkit.sentence_transformers_utils import get_senten
 
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(format="%(asctime)s | %(name)s | %(levelname)s | %(message)s", level=logging.INFO)
+logging.basicConfig(format="%(asctime)s | %(levelname)s | %(message)s", level=logging.INFO)
 
 
 if is_tf_available():
