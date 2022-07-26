@@ -41,3 +41,30 @@ hey -n 1000 -m POST -H 'Content-Type: application/json' -d '{	"inputs": "I love 
 --workers=1
 
 
+## Supported & Tested Tasks
+
+```bash
+"text-classification",
+"zero-shot-classification",
+"ner",
+"question-answering",
+"fill-mask",
+"summarization",
+"translation_xx_to_yy",
+"text2text-generation",
+"text-generation",
+"feature-extraction",
+"image-classification",
+"automatic-speech-recognition",
+"audio-classification",
+"object-detection",
+"image-segmentation",
+"table-question-answering",
+"conversational"
+"sentence-similarity",
+"sentence-embeddings",
+"sentence-ranking",
+# TODO currently not supported due to multimodality input
+# "visual-question-answering",
+# "zero-shot-image-classification",
+```
