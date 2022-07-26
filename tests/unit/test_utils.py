@@ -21,32 +21,6 @@ TASK = "text-classification"
 TASK_MODEL = "sshleifer/tiny-dbmdz-bert-large-cased-finetuned-conll03-english"
 
 
-def test_gpu_is_not_available():
-    device = _is_gpu_available()
-    assert device is False
-
-
-@slow
-def test_gpu_available():
-    device = _is_gpu_available()
-    assert device is True
-
-
-@require_torch
-def test_get_framework_pytorch():
-    framework = _get_framework()
-    assert framework == "pytorch"
-
-
-@require_tf
-def test_get_framework_tensorflow():
-    framework = _get_framework()
-    if is_torch_available():
-        assert framework == "pytorch"
-    else:
-        assert framework == "tensorflow"
-
-
 @require_torch
 def test_load_repository_from_hf():
     MODEL = "lysandre/tiny-bert-random"
@@ -71,6 +45,32 @@ def test_load_repository_from_hf():
         assert "tf_model.h5" in folder_contents
         assert "requirements.txt" in folder_contents
         assert "tokenizer_config.json" in folder_contents
+
+
+def test_gpu_is_not_available():
+    device = _is_gpu_available()
+    assert device is False
+
+
+@slow
+def test_gpu_available():
+    device = _is_gpu_available()
+    assert device is True
+
+
+@require_torch
+def test_get_framework_pytorch():
+    framework = _get_framework()
+    assert framework == "pytorch"
+
+
+@require_tf
+def test_get_framework_tensorflow():
+    framework = _get_framework()
+    if is_torch_available():
+        assert framework == "pytorch"
+    else:
+        assert framework == "tensorflow"
 
 
 def test_get_pipeline():
