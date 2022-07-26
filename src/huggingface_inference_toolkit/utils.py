@@ -125,8 +125,6 @@ def _load_repository_from_hf(
     if isinstance(target_dir, str):
         target_dir = Path(target_dir)
 
-    print(framework)
-
     # create workdir
     if not target_dir.exists():
         target_dir.mkdir(parents=True)
@@ -147,8 +145,6 @@ def _load_repository_from_hf(
         repo_files=[f.rfilename for f in repo_info.siblings],
         ignore_regex=ignore_regex,
     )
-
-    print(filtered_repo_files)
 
     # iterate over all files and download them
     for repo_file in filtered_repo_files:
