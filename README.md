@@ -149,7 +149,7 @@ Below you ll find a list of supported and tested transformers and sentence trans
 # "zero-shot-image-classification",
 ```
 
-##  ⚙ Supported Backends
+##  ⚙ Supported Frontend
 
 - [x] Starlette (HF Endpoints)
 - [ ] Starlette (Azure ML)
