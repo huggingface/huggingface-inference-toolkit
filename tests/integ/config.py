@@ -77,6 +77,18 @@ task2model = {
         "pytorch": "hf-internal-testing/tiny-random-beit-pipeline",
         "tensorflow": None,
     },
+    "table-question-answering": {
+        "pytorch": "microsoft/tapex-base-finetuned-wtq",
+        "tensorflow": None,
+    },
+    "zero-shot-image-classification": {
+        "pytorch": "hf-internal-testing/tiny-random-clip-zero-shot-image-classification",
+        "tensorflow": "hf-internal-testing/tiny-random-clip-zero-shot-image-classification",
+    },
+    "conversational": {
+        "pytorch": "hf-internal-testing/tiny-random-blenderbot",
+        "tensorflow": "hf-internal-testing/tiny-random-blenderbot",
+    },
 }
 
 
@@ -104,10 +116,29 @@ task2input = {
     },
     "text-generation": {"inputs": "My name is philipp and I am"},
     "image-classification": open(os.path.join(os.getcwd(), "tests/resources/image/tiger.jpeg"), "rb").read(),
+    "zero-shot-image-classification": open(os.path.join(os.getcwd(), "tests/resources/image/tiger.jpeg"), "rb").read(),
     "object-detection": open(os.path.join(os.getcwd(), "tests/resources/image/tiger.jpeg"), "rb").read(),
     "image-segmentation": open(os.path.join(os.getcwd(), "tests/resources/image/tiger.jpeg"), "rb").read(),
     "automatic-speech-recognition": open(os.path.join(os.getcwd(), "tests/resources/audio/sample1.flac"), "rb").read(),
     "audio-classification": open(os.path.join(os.getcwd(), "tests/resources/audio/sample1.flac"), "rb").read(),
+    "table-question-answering": {
+        "inputs": {
+            "query": "How many stars does the transformers repository have?",
+            "table": {
+                "Repository": ["Transformers", "Datasets", "Tokenizers"],
+                "Stars": ["36542", "4512", "3934"],
+                "Contributors": ["651", "77", "34"],
+                "Programming language": ["Python", "Python", "Rust, Python and NodeJS"],
+            },
+        }
+    },
+    "conversational": {
+        "inputs": {
+            "past_user_inputs": ["Which movie is the best ?"],
+            "generated_responses": ["It's Die Hard for sure."],
+            "text": "Can you explain why?",
+        }
+    },
 }
 
 task2output = {
@@ -135,6 +166,13 @@ task2output = {
         {"score": 0.0004262699221726507, "label": "dhole, Cuon alpinus"},
         {"score": 0.00030842673731967807, "label": "lion, king of beasts, Panthera leo"},
     ],
+    "zero-shot-image-classification": [
+        {"score": 0.8858247399330139, "label": "tiger, Panthera tigris"},
+        {"score": 0.10940514504909515, "label": "tiger cat"},
+        {"score": 0.0006216464680619538, "label": "jaguar, panther, Panthera onca, Felis onca"},
+        {"score": 0.0004262699221726507, "label": "dhole, Cuon alpinus"},
+        {"score": 0.00030842673731967807, "label": "lion, king of beasts, Panthera leo"},
+    ],
     "automatic-speech-recognition": {
         "text": "GOING ALONG SLUSHY COUNTRY ROADS AND SPEAKING TO DAMP OAUDIENCES IN DROFTY SCHOOL ROOMS DAY AFTER DAY FOR A FORT NIGHT HE'LL HAVE TO PUT IN AN APPEARANCE AT SOME PLACE OF WORSHIP ON SUNDAY MORNING AND HE CAN COME TO US IMMEDIATELY AFTERWARDS"
     },
@@ -144,11 +182,14 @@ task2output = {
     ],
     "object-detection": [{"score": 0.9143241047859192, "label": "cat", "box": {}}],
     "image-segmentation": [{"score": 0.9143241047859192, "label": "cat", "mask": {}}],
+    "table-question-answering": {"answer": "36542"},
+    "conversational": {"generated_text": "", "conversation": {}},
 }
 
 task2validation = {
     "text-classification": validate_classification,
     "zero-shot-classification": validate_zero_shot_classification,
+    "zero-shot-image-classification": validate_zero_shot_classification,
     "feature-extraction": validate_feature_extraction,
     "ner": validate_ner,
     "question-answering": validate_question_answering,
@@ -162,4 +203,6 @@ task2validation = {
     "audio-classification": validate_classification,
     "object-detection": validate_object_detection,
     "image-segmentation": validate_object_detection,
+    "table-question-answering": validate_zero_shot_classification,
+    "conversational": validate_zero_shot_classification,
 }

@@ -1,3 +1,4 @@
 orjson
 starlette
 uvicorn
+pandas

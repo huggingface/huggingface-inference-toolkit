@@ -42,7 +42,12 @@ def verify_task(container: DockerClient, task: str, port: int = 5000, framework:
     input = task2input[task]
     # health check
     wait_for_container_to_be_ready(BASE_URL)
-    if task == "image-classification" or task == "object-detection" or task == "image-segmentation":
+    if (
+        task == "image-classification"
+        or task == "object-detection"
+        or task == "image-segmentation"
+        or task == "zero-shot-image-classification"
+    ):
         prediction = requests.post(
             f"{BASE_URL}/predict", data=task2input[task], headers={"content-type": "image/x-image"}
         ).json()
@@ -73,10 +78,11 @@ def verify_task(container: DockerClient, task: str, port: int = 5000, framework:
         "audio-classification",
         "object-detection",
         "image-segmentation",
-        # "table-question-answering",
+        "table-question-answering",
+        "conversational"
+        # TODO currently not supported due to multimodality input
         # "visual-question-answering",
         # "zero-shot-image-classification",
-        # "conversational"
     ],
 )
 def test_cpu_container_remote_model(task) -> None:
@@ -122,10 +128,11 @@ def test_cpu_container_remote_model(task) -> None:
         "audio-classification",
         "object-detection",
         "image-segmentation",
-        # "table-question-answering",
+        "table-question-answering",
+        "conversational"
+        # TODO currently not supported due to multimodality input
         # "visual-question-answering",
         # "zero-shot-image-classification",
-        # "conversational"
     ],
 )
 def test_cpu_container_local_model(task) -> None:

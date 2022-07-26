@@ -25,7 +25,6 @@ class HuggingFaceHandler(ABC):
             :data: (obj): the raw request body data.
         :return: prediction output
         """
-        logger.info(data)
         inputs = data.pop("inputs", data)
         parameters = data.pop("parameters", None)
 
