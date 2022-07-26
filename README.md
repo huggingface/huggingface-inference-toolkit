@@ -49,7 +49,7 @@ curl --request POST \
 
 The Hugging Face Inference Toolkit implements various additional environment variables to simplify your deployment experience. A full list of environment variables is given below. All potential environment varialbes can be found in [const.py](src/huggingface_inference_toolkit/const.py)
 
-#### `HF_MODEL_DIR`
+### `HF_MODEL_DIR`
 
 The `HF_MODEL_DIR` environment variable defines the directory where your model is stored or will be stored. 
 If `HF_MODEL_ID` is not set the toolkit expects a the model artifact at this directory. This value should be set to the value where you mount your model artifacts. 
@@ -61,7 +61,7 @@ The default value is `/opt/huggingface/model`
 HF_MODEL_ID="/opt/mymodel"
 ```
 
-#### `HF_TASK`
+### `HF_TASK`
 
 The `HF_TASK` environment variable defines the task for the used Transformers pipeline or Sentence Transformers. A full list of tasks can be find in [supported & tested task section](#supported--tested-tasks)
 
@@ -69,7 +69,7 @@ The `HF_TASK` environment variable defines the task for the used Transformers pi
 HF_TASK="question-answering"
 ```
 
-#### `HF_MODEL_ID`
+### `HF_MODEL_ID`
 
 The `HF_MODEL_ID` environment variable defines the model id, which will be automatically loaded from [huggingface.co/models](https://huggingface.co/models) when starting the container.
 
@@ -77,7 +77,7 @@ The `HF_MODEL_ID` environment variable defines the model id, which will be autom
 HF_MODEL_ID="distilbert-base-uncased-finetuned-sst-2-english"
 ```
 
-#### `HF_REVISION`
+### `HF_REVISION`
 
 The `HF_REVISION` is an extension to `HF_MODEL_ID` and allows you to define/pin a revision of the model to make sure you always load the same model on your SageMaker Endpoint.
 
@@ -85,7 +85,7 @@ The `HF_REVISION` is an extension to `HF_MODEL_ID` and allows you to define/pin 
 HF_REVISION="03b4d196c19d0a73c7e0322684e97db1ec397613"
 ```
 
-#### `HF_HUB_TOKEN`
+### `HF_HUB_TOKEN`
 
 The `HF_HUB_TOKEN` environment variable defines the your Hugging Face authorization token. The `HF_HUB_TOKEN` is used as a HTTP bearer authorization for remote files, like private models. You can find your token at your [settings page](https://huggingface.co/settings/token).
 
@@ -93,7 +93,7 @@ The `HF_HUB_TOKEN` environment variable defines the your Hugging Face authorizat
 HF_HUB_TOKEN="api_XXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
 ```
 
-#### `HF_FRAMEWORK`
+### `HF_FRAMEWORK`
 
 The `HF_FRAMEWORK` environment variable defines the base deep learning framework used in the container. This is important when loading large models from the Hugguing Face Hub to avoid extra file downloads.
 
@@ -151,8 +151,9 @@ Below you ll find a list of supported and tested transformers and sentence trans
 
 ##  ⚙ Supported Backends
 
-* Startlette
-* Azure ML _TODO_
+- [x] Starlette (HF Endpoints)
+- [ ] Starlette (Azure ML)
+- [ ] Starlette (SageMaker)
 
 ---
 ## 🤝 Contributing
