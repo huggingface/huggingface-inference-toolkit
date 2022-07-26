@@ -21,12 +21,41 @@ TASK = "text-classification"
 TASK_MODEL = "sshleifer/tiny-dbmdz-bert-large-cased-finetuned-conll03-english"
 
 
-@require_torch
-def test_load_repository_from_hf():
+def test_load_revision_repository_from_hf():
     MODEL = "lysandre/tiny-bert-random"
     REVISION = "eb4c77816edd604d0318f8e748a1c606a2888493"
     with tempfile.TemporaryDirectory() as tmpdirname:
-        storage_folder = _load_repository_from_hf(MODEL, tmpdirname, revision=REVISION, framework="pytorch")
+        storage_folder = _load_repository_from_hf(MODEL, tmpdirname, revision=REVISION)
+        # folder contains all config files and pytorch_model.bin
+        folder_contents = os.listdir(storage_folder)
+        assert "pytorch_model.bin" in folder_contents
+        # filter framework
+        assert "tf_model.h5" in folder_contents
+        # revision doesn't have tokenizer
+        assert "tokenizer_config.json" not in folder_contents
+
+
+@require_tf
+def test_load_tensorflow_repository_from_hf():
+    MODEL = "lysandre/tiny-bert-random"
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        storage_folder = _load_repository_from_hf(MODEL, tmpdirname, framework="tensorflow")
+        # folder contains all config files and pytorch_model.bin
+        folder_contents = os.listdir(storage_folder)
+        assert "pytorch_model.bin" not in folder_contents
+        # custom requirements.txt for custom handler
+        assert "requirements.txt" in folder_contents
+        # filter framework
+        assert "tf_model.h5" in folder_contents
+        # revision doesn't have tokenizer
+        assert "tokenizer_config.json" in folder_contents
+
+
+@require_torch
+def test_load_pytorch_repository_from_hf():
+    MODEL = "lysandre/tiny-bert-random"
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        storage_folder = _load_repository_from_hf(MODEL, tmpdirname, framework="pytorch")
         # folder contains all config files and pytorch_model.bin
         folder_contents = os.listdir(storage_folder)
         assert "pytorch_model.bin" in folder_contents
@@ -35,15 +64,6 @@ def test_load_repository_from_hf():
         # filter framework
         assert "tf_model.h5" not in folder_contents
         # revision doesn't have tokenizer
-        assert "tokenizer_config.json" not in folder_contents
-
-    with tempfile.TemporaryDirectory() as tmpdirname:
-        storage_folder = _load_repository_from_hf(MODEL, tmpdirname)
-        # folder contains all config files and pytorch_model.bin
-        folder_contents = os.listdir(storage_folder)
-        assert "pytorch_model.bin" in folder_contents
-        assert "tf_model.h5" in folder_contents
-        assert "requirements.txt" in folder_contents
         assert "tokenizer_config.json" in folder_contents
 
 
