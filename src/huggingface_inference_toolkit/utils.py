@@ -12,7 +12,7 @@ from transformers import pipeline
 from transformers.file_utils import is_tf_available, is_torch_available
 from transformers.pipelines import Conversation, Pipeline
 
-from huggingface_inference_toolkit.const import HF_DEFAULT_PIPELINE_NAME, HF_MODEL_DIR, HF_MODEL_ID, HF_MODULE_NAME
+from huggingface_inference_toolkit.const import HF_DEFAULT_PIPELINE_NAME, HF_MODULE_NAME
 from huggingface_inference_toolkit.sentence_transformers_utils import get_sentence_transformers_pipeline
 
 
@@ -147,6 +147,8 @@ def _load_repository_from_hf(
         repo_files=[f.rfilename for f in repo_info.siblings],
         ignore_regex=ignore_regex,
     )
+
+    print(filtered_repo_files)
 
     # iterate over all files and download them
     for repo_file in filtered_repo_files:

@@ -5,7 +5,8 @@ check_dirs := src
 # run tests
 
 unit-test:
-	python -m pytest -n auto --dist loadfile -s -v ./tests/unit/
+	# python -m pytest -n auto --dist loadfile -s -v ./tests/unit/test_utils.py
+	python -m pytest -s -v ./tests/unit/test_utils.py
 
 integ-test:
 	# python -m pytest -n 2 -s -v ./tests/integ/
