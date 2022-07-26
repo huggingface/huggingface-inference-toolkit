@@ -22,7 +22,15 @@ jobs:
         python-version: 3.9.12
     - name: Install Python dependencies
       run: pip install -e .[test,dev,torch]
-    - name: Run Unit Tests
-      run: make unit-test
-    # - name: Run Integration Tests
-    #   run: make integ-test
+    - name: Run Unit test_const
+      run: 	python -m pytest -s -v ./tests/unit/test_const.py
+    - name: Run Unit test_handler
+      run: 	python -m pytest -s -v ./tests/unit/test_handler.py
+    - name: Run Unit test_sentence_transformers
+      run: 	python -m pytest -s -v ./tests/unit/test_sentence_transformers.py
+    - name: Run Unit test_serializer
+      run: 	python -m pytest -s -v ./tests/unit/test_serializer.py
+    - name: Run Unit test_utils
+      run: 	python -m pytest -s -v ./tests/unit/test_utils.py
+    # - name: Run Unit Tests
+    #   run: make unit test

@@ -4,12 +4,10 @@ import os
 import sys
 from pathlib import Path
 from typing import List, Optional, Union
-from fnmatch import fnmatch
 
 from huggingface_hub import HfApi
 
-# from huggingface_hub._snapshot_download import _filter_repo_files
-from huggingface_hub.file_download import cached_download, hf_hub_url
+from huggingface_hub._snapshot_download import _filter_repo_files
 from transformers import pipeline
 from transformers.file_utils import is_tf_available, is_torch_available
 from transformers.pipelines import Conversation, Pipeline
@@ -61,21 +59,6 @@ def create_artifact_filter(framework):
         return ignore_regex_list
     else:
         return []
-
-
-def _filter_repo_files(
-    repo_files: List[str],
-    ignore_regex: Optional[Union[List[str], str]] = None,
-) -> List[str]:
-    ignore_regex = [ignore_regex] if isinstance(ignore_regex, str) else ignore_regex
-    filtered_files = []
-    for repo_file in repo_files:
-        # if there's a denylist, skip download if file does matches any regex
-        if any(fnmatch(repo_file, r) for r in ignore_regex):
-            continue
-
-        filtered_files.append(repo_file)
-    return filtered_files
 
 
 def wrap_conversation_pipeline(pipeline):
