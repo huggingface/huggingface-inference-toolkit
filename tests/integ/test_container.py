@@ -79,7 +79,7 @@ def verify_task(container: DockerClient, task: str, port: int = 5000, framework:
         "object-detection",
         "image-segmentation",
         "table-question-answering",
-        "conversational"
+        "conversational",
         # TODO currently not supported due to multimodality input
         # "visual-question-answering",
         # "zero-shot-image-classification",
@@ -132,7 +132,7 @@ def test_cpu_container_remote_model(task) -> None:
         "object-detection",
         "image-segmentation",
         "table-question-answering",
-        "conversational"
+        "conversational",
         # TODO currently not supported due to multimodality input
         # "visual-question-answering",
         # "zero-shot-image-classification",
