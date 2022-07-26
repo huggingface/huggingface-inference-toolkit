@@ -124,6 +124,8 @@ def _load_repository_from_hf(
     target_dir = Path(target_dir) or Path(HF_MODEL_DIR)
     framework = framework or _get_framework()
 
+    print(framework)
+
     # create workdir
     if not target_dir.exists():
         target_dir.mkdir(parents=True)

@@ -51,6 +51,25 @@ def test_load_tensorflow_repository_from_hf():
         assert "tokenizer_config.json" in folder_contents
 
 
+def test_load_onnx_repository_from_hf():
+    MODEL = "philschmid/distilbert-onnx-banking77"
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        storage_folder = _load_repository_from_hf(MODEL, tmpdirname, framework="onnx")
+        # folder contains all config files and pytorch_model.bin
+        folder_contents = os.listdir(storage_folder)
+        assert "pytorch_model.bin" not in folder_contents
+        # custom requirements.txt for custom handler
+        assert "requirements.txt" in folder_contents
+        # filter framework
+        assert "tf_model.h5" not in folder_contents
+        # onnx model
+        assert "model.onnx" in folder_contents
+        # custom pipeline
+        assert "pipeline.py" in folder_contents
+        # revision doesn't have tokenizer
+        assert "tokenizer_config.json" in folder_contents
+
+
 @require_torch
 def test_load_pytorch_repository_from_hf():
     MODEL = "lysandre/tiny-bert-random"
