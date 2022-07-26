@@ -13,6 +13,7 @@ from transformers.file_utils import is_tf_available, is_torch_available
 from transformers.pipelines import Conversation, Pipeline
 
 from huggingface_inference_toolkit.const import HF_DEFAULT_PIPELINE_NAME, HF_MODEL_DIR, HF_MODEL_ID, HF_MODULE_NAME
+from huggingface_inference_toolkit.sentence_transformers_utils import get_sentence_transformers_pipeline
 
 
 logger = logging.getLogger(__name__)
@@ -26,11 +27,13 @@ if is_torch_available():
     import torch
 
 _optimum_available = importlib.util.find_spec("optimum") is not None
-_sentence_transformers = importlib.util.find_spec("_sentence-transformers") is not None
+_sentence_transformers = importlib.util.find_spec("sentence_transformers") is not None
 
 
 def is_optimum_available():
-    return _optimum_available
+    return False
+    # TODO: change when supported
+    # return _optimum_available
 
 
 def is_sentence_transformers():
@@ -145,13 +148,22 @@ def _load_repository_from_hf(
     # iterate over all files and download them
     for repo_file in filtered_repo_files:
         url = hf_hub_url(repo_id=repository_id, filename=repo_file, revision=revision)
+
+        # define values if repo has nested strucutre
+        if isinstance(repo_file, str):
+            repo_file = Path(repo_file)
+
+        repo_file_is_dir = repo_file.parent != Path(".")
+        real_target_dir = target_dir / repo_file.parent if repo_file_is_dir else target_dir
+        real_file_name = str(repo_file.name) if repo_file_is_dir else repo_file
+
+        # download files
         path = cached_download(
             url,
-            cache_dir=target_dir.as_posix(),
-            force_filename=repo_file,
+            cache_dir=real_target_dir.as_posix(),
+            force_filename=real_file_name,
             use_auth_token=hf_hub_token,
         )
-
         if os.path.exists(path + ".lock"):
             os.remove(path + ".lock")
 
@@ -217,16 +229,15 @@ def get_pipeline(task: str, model_dir: Path, **kwargs) -> Pipeline:
     else:
         kwargs["tokenizer"] = model_dir
 
-    transformers_pipeline = True
-    if transformers_pipeline:
-        hf_pipeline = pipeline(task=task, model=model_dir, device=device, **kwargs)
     # add check for optimum accelerated pipeline
-    elif is_optimum_available():
-        pass
+    if is_optimum_available():
         # TODO: add check for optimum accelerated pipeline
-    elif is_sentence_transformers():
-        pass
-        # TODO: add check for sentence transformers pipeline
+        logger.info("Optimum is not implement yet using default pipeline.")
+        hf_pipeline = pipeline(task=task, model=model_dir, device=device, **kwargs)
+    elif is_sentence_transformers() and task in ["sentence-similarity", "sentence-embeddings", "sentence-ranking"]:
+        hf_pipeline = get_sentence_transformers_pipeline(task=task, model_dir=model_dir, device=device, **kwargs)
+    else:
+        hf_pipeline = pipeline(task=task, model=model_dir, device=device, **kwargs)
 
     # wrapp specific pipeline to support better ux
     if task == "conversational":

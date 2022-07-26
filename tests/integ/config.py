@@ -89,6 +89,18 @@ task2model = {
         "pytorch": "hf-internal-testing/tiny-random-blenderbot",
         "tensorflow": "hf-internal-testing/tiny-random-blenderbot",
     },
+    "sentence-similarity": {
+        "pytorch": "sentence-transformers/all-MiniLM-L6-v2",
+        "tensorflow": None,
+    },
+    "sentence-embeddings": {
+        "pytorch": "sentence-transformers/all-MiniLM-L6-v2",
+        "tensorflow": None,
+    },
+    "sentence-ranking": {
+        "pytorch": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+        "tensorflow": None,
+    },
 }
 
 
@@ -139,6 +151,11 @@ task2input = {
             "text": "Can you explain why?",
         }
     },
+    "sentence-similarity": {
+        "inputs": {"source_sentence": "Lets create an embedding", "sentences": ["Lets create an embedding"]}
+    },
+    "sentence-embeddings": {"inputs": "Lets create an embedding"},
+    "sentence-ranking": {"inputs": ["Lets create an embedding", "Lets create an embedding"]},
 }
 
 task2output = {
@@ -184,7 +201,11 @@ task2output = {
     "image-segmentation": [{"score": 0.9143241047859192, "label": "cat", "mask": {}}],
     "table-question-answering": {"answer": "36542"},
     "conversational": {"generated_text": "", "conversation": {}},
+    "sentence-similarity": {"similarities": ""},
+    "sentence-embeddings": {"embeddings": ""},
+    "sentence-ranking": {"scores": ""},
 }
+
 
 task2validation = {
     "text-classification": validate_classification,
@@ -205,4 +226,7 @@ task2validation = {
     "image-segmentation": validate_object_detection,
     "table-question-answering": validate_zero_shot_classification,
     "conversational": validate_zero_shot_classification,
+    "sentence-similarity": validate_zero_shot_classification,
+    "sentence-embeddings": validate_zero_shot_classification,
+    "sentence-ranking": validate_zero_shot_classification,
 }

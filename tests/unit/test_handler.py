@@ -55,3 +55,12 @@ def test_custom_pipeline():
         storage_dir = _load_repository_from_hf("philschmid/custom-pipeline-text-classification", tmpdirname)
         h = get_inference_handler_either_custom_or_default_handler(str(storage_dir), task="custom")
         assert h(INPUT) == INPUT
+
+
+@require_torch
+def test_sentence_transformers_pipeline():
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        storage_dir = _load_repository_from_hf("sentence-transformers/all-MiniLM-L6-v2", tmpdirname)
+        h = get_inference_handler_either_custom_or_default_handler(str(storage_dir), task="sentence-embeddings")
+        pred = h(INPUT)
+        assert isinstance(pred["embeddings"], list)
