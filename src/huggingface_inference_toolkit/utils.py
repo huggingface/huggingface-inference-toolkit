@@ -43,6 +43,8 @@ def is_sentence_transformers():
 framework2weight = {
     "pytorch": "pytorch*",
     "tensorflow": "tf*",
+    "tf": "tf*",
+    "pt": "pytorch*",
     "flax": "flax*",
     "rust": "rust*",
     "onnx": "*onnx",
@@ -120,9 +122,8 @@ def _load_repository_from_hf(
     """
     Load a model from huggingface hub.
     """
-    repository_id = repository_id or HF_MODEL_ID
-    target_dir = Path(target_dir) or Path(HF_MODEL_DIR)
-    framework = framework or _get_framework()
+    if isinstance(target_dir, str):
+        target_dir = Path(target_dir)
 
     print(framework)
 

@@ -114,7 +114,7 @@ def test_get_framework_tensorflow():
 
 def test_get_pipeline():
     with tempfile.TemporaryDirectory() as tmpdirname:
-        storage_dir = _load_repository_from_hf(MODEL, tmpdirname)
+        storage_dir = _load_repository_from_hf(MODEL, tmpdirname, framework="pytorch")
         pipe = get_pipeline(TASK, storage_dir.as_posix())
         res = pipe("Life is good, Life is bad")
         assert "score" in res[0]
@@ -142,7 +142,7 @@ def test_wrap_conversation_pipeline():
 @require_torch
 def test_wrapped_pipeline():
     with tempfile.TemporaryDirectory() as tmpdirname:
-        storage_dir = _load_repository_from_hf("microsoft/DialoGPT-small", tmpdirname)
+        storage_dir = _load_repository_from_hf("microsoft/DialoGPT-small", tmpdirname, framework="pytorch")
         conv_pipe = get_pipeline("conversational", storage_dir.as_posix())
         data = {
             "past_user_inputs": ["Which movie is the best ?"],
@@ -164,7 +164,7 @@ def test_local_custom_pipeline():
 
 def test_remote_custom_pipeline():
     with tempfile.TemporaryDirectory() as tmpdirname:
-        storage_dir = _load_repository_from_hf("philschmid/custom-pipeline-text-classification", tmpdirname)
+        storage_dir = _load_repository_from_hf("philschmid/custom-pipeline-text-classification", tmpdirname, framework="pytorch")
         pipeline = check_and_register_custom_pipeline_from_directory(str(storage_dir))
         payload = "test"
         assert pipeline.path == str(storage_dir)
@@ -173,7 +173,7 @@ def test_remote_custom_pipeline():
 
 def test_get_inference_handler_either_custom_or_default_pipeline():
     with tempfile.TemporaryDirectory() as tmpdirname:
-        storage_dir = _load_repository_from_hf("philschmid/custom-pipeline-text-classification", tmpdirname)
+        storage_dir = _load_repository_from_hf("philschmid/custom-pipeline-text-classification", tmpdirname, framework="pytorch")
         pipeline = get_inference_handler_either_custom_or_default_handler(str(storage_dir))
         payload = "test"
         assert pipeline.path == str(storage_dir)

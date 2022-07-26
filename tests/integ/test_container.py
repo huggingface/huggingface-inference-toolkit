@@ -97,7 +97,7 @@ def test_cpu_container_remote_model(task) -> None:
     make_sure_other_containers_are_stopped(client, container_name)
     with tempfile.TemporaryDirectory() as tmpdirname:
         # https://github.com/huggingface/infinity/blob/test-ovh/test/integ/utils.py
-        storage_dir = _load_repository_from_hf(model, tmpdirname)
+        storage_dir = _load_repository_from_hf(model, tmpdirname, framework="pytorch")
         container = client.containers.run(
             container_image,
             name=container_name,
@@ -150,7 +150,7 @@ def test_cpu_container_local_model(task) -> None:
     make_sure_other_containers_are_stopped(client, container_name)
     with tempfile.TemporaryDirectory() as tmpdirname:
         # https://github.com/huggingface/infinity/blob/test-ovh/test/integ/utils.py
-        storage_dir = _load_repository_from_hf(model, tmpdirname)
+        storage_dir = _load_repository_from_hf(model, tmpdirname, framework="pytorch")
         container = client.containers.run(
             container_image,
             name=container_name,

@@ -18,14 +18,18 @@ from huggingface_inference_toolkit.utils import (
 
 def test_get_sentence_transformers_pipeline():
     with tempfile.TemporaryDirectory() as tmpdirname:
-        storage_dir = _load_repository_from_hf("sentence-transformers/all-MiniLM-L6-v2", tmpdirname)
+        storage_dir = _load_repository_from_hf(
+            "sentence-transformers/all-MiniLM-L6-v2", tmpdirname, framework="pytorch"
+        )
         pipe = get_pipeline("sentence-embeddings", storage_dir.as_posix())
         assert isinstance(pipe, SentenceEmbeddingPipeline)
 
 
 def test_sentence_embedding_task():
     with tempfile.TemporaryDirectory() as tmpdirname:
-        storage_dir = _load_repository_from_hf("sentence-transformers/all-MiniLM-L6-v2", tmpdirname)
+        storage_dir = _load_repository_from_hf(
+            "sentence-transformers/all-MiniLM-L6-v2", tmpdirname, framework="pytorch"
+        )
         pipe = get_sentence_transformers_pipeline("sentence-embeddings", storage_dir.as_posix())
         res = pipe("Lets create an embedding")
         assert isinstance(res["embeddings"], list)
@@ -33,7 +37,9 @@ def test_sentence_embedding_task():
 
 def test_sentence_similarity():
     with tempfile.TemporaryDirectory() as tmpdirname:
-        storage_dir = _load_repository_from_hf("sentence-transformers/all-MiniLM-L6-v2", tmpdirname)
+        storage_dir = _load_repository_from_hf(
+            "sentence-transformers/all-MiniLM-L6-v2", tmpdirname, framework="pytorch"
+        )
         pipe = get_sentence_transformers_pipeline("sentence-similarity", storage_dir.as_posix())
         res = pipe({"source_sentence": "Lets create an embedding", "sentences": ["Lets create an embedding"]})
         assert isinstance(res["similarities"], list)
@@ -41,7 +47,7 @@ def test_sentence_similarity():
 
 def test_sentence_ranking():
     with tempfile.TemporaryDirectory() as tmpdirname:
-        storage_dir = _load_repository_from_hf("cross-encoder/ms-marco-MiniLM-L-6-v2", tmpdirname)
+        storage_dir = _load_repository_from_hf("cross-encoder/ms-marco-MiniLM-L-6-v2", tmpdirname, framework="pytorch")
         pipe = get_sentence_transformers_pipeline("sentence-ranking", storage_dir.as_posix())
         res = pipe(
             [
