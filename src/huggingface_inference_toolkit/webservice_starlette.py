@@ -1,7 +1,8 @@
 import logging
+import os
 from pathlib import Path
 from time import perf_counter
-import os
+
 import orjson
 from huggingface_inference_toolkit.const import (
     HF_FRAMEWORK,
