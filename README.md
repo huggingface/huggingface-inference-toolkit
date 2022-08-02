@@ -43,7 +43,7 @@ docker run -ti -p 5000:5000 -e HF_MODEL_ID=distilbert-base-uncased-distilled-squ
 
 ```bash
 curl --request POST \
-  --url http://localhost:5000/predict \
+  --url http://localhost:5000 \
   --header 'Content-Type: application/json' \
   --data '{
 	"inputs": {

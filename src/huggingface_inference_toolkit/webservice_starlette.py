@@ -73,7 +73,7 @@ async def predict(request):
         pred = inference_handler(deserialized_body)
         # log request time
         # TODO: repalce with middleware
-        logger.info(f"POST /predict |  Duration: {(perf_counter()-start_time) *1000:.2f} ms")
+        logger.info(f"POST {request.url.path} |  Duration: {(perf_counter()-start_time) *1000:.2f} ms")
         # deserialized and resonds with json
         return Response(Jsoner.serialize(pred))
     except Exception as e:
@@ -86,6 +86,7 @@ app = Starlette(
     routes=[
         Route("/", health, methods=["GET"]),
         Route("/health", health, methods=["GET"]),
+        Route("/", predict, methods=["POST"]),
         Route("/predict", predict, methods=["POST"]),
     ],
     on_startup=[some_startup_task],

@@ -49,14 +49,14 @@ def verify_task(container: DockerClient, task: str, port: int = 5000, framework:
         or task == "zero-shot-image-classification"
     ):
         prediction = requests.post(
-            f"{BASE_URL}/predict", data=task2input[task], headers={"content-type": "image/x-image"}
+            f"{BASE_URL}", data=task2input[task], headers={"content-type": "image/x-image"}
         ).json()
     elif task == "automatic-speech-recognition" or task == "audio-classification":
         prediction = requests.post(
-            f"{BASE_URL}/predict", data=task2input[task], headers={"content-type": "audio/x-audio"}
+            f"{BASE_URL}", data=task2input[task], headers={"content-type": "audio/x-audio"}
         ).json()
     else:
-        prediction = requests.post(f"{BASE_URL}/predict", json=input).json()
+        prediction = requests.post(f"{BASE_URL}", json=input).json()
     assert task2validation[task](result=prediction, snapshot=task2output[task]) is True
 
 
@@ -193,7 +193,7 @@ def test_cpu_container_custom_pipeline(repository_id) -> None:
         BASE_URL = "http://localhost:5000"
         wait_for_container_to_be_ready(BASE_URL)
         payload = {"inputs": "this is a test"}
-        prediction = requests.post(f"{BASE_URL}/predict", json=payload).json()
+        prediction = requests.post(f"{BASE_URL}", json=payload).json()
         assert prediction == payload
         # time.sleep(5)
         container.stop()
