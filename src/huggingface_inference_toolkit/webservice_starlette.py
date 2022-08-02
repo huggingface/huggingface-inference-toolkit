@@ -1,4 +1,5 @@
 import logging
+import os
 from pathlib import Path
 from time import perf_counter
 
@@ -21,7 +22,10 @@ from starlette.routing import Route
 
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(format="%(asctime)s | %(levelname)s | %(message)s", level=logging.INFO)
+if os.environ.get("HF_ENDPOINT", None):
+    logging.basicConfig(format="| %(levelname)s | %(message)s", level=logging.INFO)
+else:
+    logging.basicConfig(format="%(asctime)s | %(levelname)s | %(message)s", level=logging.INFO)
 uvicorn_error = logging.getLogger("uvicorn.error")
 uvicorn_error.disabled = True
 uvicorn_access = logging.getLogger("uvicorn.access")

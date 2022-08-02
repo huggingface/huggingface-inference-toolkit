@@ -111,6 +111,14 @@ The `HF_FRAMEWORK` environment variable defines the base deep learning framework
 HF_FRAMEWORK="pytorch"
 ```
 
+### `HF_ENDPOINT`
+
+The `HF_ENDPOINT` environment variable indicates whether the service is run inside the HF Inference endpoint service to adjust the `logging` config.
+
+```bash
+HF_ENDPOINT="True"
+```
+
 
 ---
 
