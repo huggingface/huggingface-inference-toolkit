@@ -10,6 +10,7 @@ content_type_mapping = {
     # image types
     "image/png": Imager,
     "image/jpeg": Imager,
+    "image/jpg": Imager,
     "image/tiff": Imager,
     "image/bmp": Imager,
     "image/gif": Imager,
@@ -17,8 +18,11 @@ content_type_mapping = {
     "image/x-image": Imager,
     # audio types
     "audio/x-flac": Audioer,
+    "audio/flac": Audioer,
     "audio/mpeg": Audioer,
     "audio/wave": Audioer,
+    "audio/wav": Audioer,
+    "audio/x-wav": Audioer,
     "audio/ogg": Audioer,
     "audio/x-audio": Audioer,
 }
