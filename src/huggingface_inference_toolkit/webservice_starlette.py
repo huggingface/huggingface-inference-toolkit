@@ -22,7 +22,7 @@ from starlette.routing import Route
 
 
 logger = logging.getLogger(__name__)
-if os.environ.get("HF_ENDPOINT", None):
+if os.environ.get("HF_ENDPOINT", None) is not None:
     logging.basicConfig(format="| %(levelname)s | %(message)s", level=logging.INFO)
 else:
     logging.basicConfig(format="%(asctime)s | %(levelname)s | %(message)s", level=logging.INFO)
