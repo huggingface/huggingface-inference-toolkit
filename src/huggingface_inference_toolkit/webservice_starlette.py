@@ -1,9 +1,9 @@
 import logging
-import os
 from pathlib import Path
 from time import perf_counter
 
 import orjson
+from huggingface_inference_toolkit.async_utils import async_handler_call
 from huggingface_inference_toolkit.const import (
     HF_FRAMEWORK,
     HF_HUB_TOKEN,
@@ -21,19 +21,20 @@ from starlette.responses import PlainTextResponse, Response
 from starlette.routing import Route
 
 
+def config_logging(level=logging.INFO):
+    logging.basicConfig(format="%(asctime)s | %(levelname)s | %(message)s", datefmt="", level=logging.INFO)
+    # disable uvicorn access logs to hide /health
+    uvicorn_access = logging.getLogger("uvicorn.access")
+    uvicorn_access.disabled = True
+    # remove double logs for errors
+    logging.getLogger("uvicorn").removeHandler(logging.getLogger("uvicorn").handlers[0])
+
+
+config_logging()
 logger = logging.getLogger(__name__)
-if os.environ.get("HF_ENDPOINT", None) is not None:
-    logging.basicConfig(format="| %(levelname)s | %(message)s", level=logging.INFO)
-else:
-    logging.basicConfig(format="%(asctime)s | %(levelname)s | %(message)s", level=logging.INFO)
-uvicorn_error = logging.getLogger("uvicorn.error")
-uvicorn_error.disabled = True
-uvicorn_access = logging.getLogger("uvicorn.access")
-uvicorn_access.disabled = True
 
 
 async def some_startup_task():
-
     global inference_handler
     # 1. check if model artifacts available in HF_MODEL_DIR
     if len(list(Path(HF_MODEL_DIR).glob("**/*"))) <= 0:
@@ -64,7 +65,6 @@ async def predict(request):
     try:
         # tracks request time
         start_time = perf_counter()
-
         # extracts content from request
         content_type = request.headers.get("content-Type", None)
         # try to deserialize payload
@@ -73,11 +73,14 @@ async def predict(request):
         if "inputs" not in deserialized_body:
             raise ValueError(f"Body needs to provide a inputs key, recieved: {orjson.dumps(deserialized_body)}")
 
-        # runs inference
-        pred = inference_handler(deserialized_body)
+        # run async not blocking call
+        pred = await async_handler_call(inference_handler, deserialized_body)
+        # run sync blocking call -> slighty faster for < 200ms prediction time
+        # pred = inference_handler(deserialized_body)
+
         # log request time
         # TODO: repalce with middleware
-        logger.info(f"POST {request.url.path} |  Duration: {(perf_counter()-start_time) *1000:.2f} ms")
+        logger.info(f"POST {request.url.path} | Duration: {(perf_counter()-start_time) *1000:.2f} ms")
         # deserialized and resonds with json
         return Response(Jsoner.serialize(pred))
     except Exception as e:
@@ -95,3 +98,22 @@ app = Starlette(
     ],
     on_startup=[some_startup_task],
 )
+
+
+# for pegasus it was async
+# 1.2rps at 20 with 17s latency
+# 1rps at 1 user with 930ms latency
+
+# for pegasus it was sync
+# 1.2rps at 20 with 17s latency
+# 1rps at 1 user with 980ms latency
+# health is blocking with 17s latency
+
+
+# for tiny it was async
+# 107.7rps at 500 with 4.7s latency
+# 8.5rps at 1 user with 120ms latency
+
+# for tiny it was sync
+# 109rps at 500 with 4.6s latency
+# 8.5rps at 1 user with 120ms latency

@@ -16,25 +16,18 @@ MODEL = "hf-internal-testing/tiny-random-distilbert"
 INPUT = {"inputs": "My name is Wolfgang and I live in Berlin"}
 
 
-def test_get_device_cpu():
+@require_torch
+def test_get_device():
     import torch
 
     with tempfile.TemporaryDirectory() as tmpdirname:
         # https://github.com/huggingface/infinity/blob/test-ovh/test/integ/utils.py
         storage_dir = _load_repository_from_hf(MODEL, tmpdirname, framework="pytorch")
         h = HuggingFaceHandler(model_dir=str(storage_dir), task=TASK)
-        assert h.pipeline.model.device == torch.device(type="cpu")
-
-
-@slow
-def test_get_device_gpu():
-    import torch
-
-    with tempfile.TemporaryDirectory() as tmpdirname:
-        # https://github.com/huggingface/infinity/blob/test-ovh/test/integ/utils.py
-        storage_dir = _load_repository_from_hf(MODEL, tmpdirname, framework="pytorch")
-        h = HuggingFaceHandler(model_dir=str(storage_dir), task=TASK)
-        assert h.pipeline.model.device == torch.device(type="cuda")
+        if torch.cuda.is_available():
+            assert h.pipeline.model.device == torch.device(type="cuda", index=0)
+        else:
+            assert h.pipeline.model.device == torch.device(type="cpu")
 
 
 @require_torch
@@ -62,7 +55,9 @@ def test_custom_pipeline():
 @require_torch
 def test_sentence_transformers_pipeline():
     with tempfile.TemporaryDirectory() as tmpdirname:
-        storage_dir = _load_repository_from_hf("sentence-transformers/all-MiniLM-L6-v2", tmpdirname, framework="pytorch")
+        storage_dir = _load_repository_from_hf(
+            "sentence-transformers/all-MiniLM-L6-v2", tmpdirname, framework="pytorch"
+        )
         h = get_inference_handler_either_custom_or_default_handler(str(storage_dir), task="sentence-embeddings")
         pred = h(INPUT)
         assert isinstance(pred["embeddings"], list)

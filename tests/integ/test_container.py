@@ -93,7 +93,7 @@ def test_cpu_container_remote_model(task) -> None:
     container_image = "starlette-transformers:cpu"
     framework = "pytorch"
     model = task2model[task][framework]
-    port = random.randint(5000, 8501)
+    port = random.randint(5000, 6000)
     make_sure_other_containers_are_stopped(client, container_name)
     with tempfile.TemporaryDirectory() as tmpdirname:
         # https://github.com/huggingface/infinity/blob/test-ovh/test/integ/utils.py
@@ -146,7 +146,7 @@ def test_cpu_container_local_model(task) -> None:
     container_image = "starlette-transformers:cpu"
     framework = "pytorch"
     model = task2model[task][framework]
-    port = random.randint(5000, 8501)
+    port = random.randint(5000, 6000)
     make_sure_other_containers_are_stopped(client, container_name)
     with tempfile.TemporaryDirectory() as tmpdirname:
         # https://github.com/huggingface/infinity/blob/test-ovh/test/integ/utils.py
