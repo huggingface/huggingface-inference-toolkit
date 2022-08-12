@@ -212,6 +212,7 @@ def get_pipeline(task: str, model_dir: Path, **kwargs) -> Pipeline:
     create pipeline class for a specific task based on local saved model
     """
     device = get_device()
+    logger.info(f"Using device { 'GPU' if device == 0 else 'CPU'}")
 
     if task is None:
         raise EnvironmentError(

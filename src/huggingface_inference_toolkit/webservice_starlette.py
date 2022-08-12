@@ -21,15 +21,17 @@ from starlette.responses import PlainTextResponse, Response
 from starlette.routing import Route
 
 
+def config_logging(level=logging.INFO):
+    logging.basicConfig(format="%(asctime)s | %(levelname)s | %(message)s", datefmt="", level=logging.INFO)
+    # disable uvicorn access logs to hide /health
+    uvicorn_access = logging.getLogger("uvicorn.access")
+    uvicorn_access.disabled = True
+    # remove double logs for errors
+    logging.getLogger("uvicorn").removeHandler(logging.getLogger("uvicorn").handlers[0])
+
+
+config_logging()
 logger = logging.getLogger(__name__)
-if os.environ.get("HF_ENDPOINT", None) is not None:
-    logging.basicConfig(format="| %(levelname)s | %(message)s", level=logging.INFO)
-else:
-    logging.basicConfig(format="%(asctime)s | %(levelname)s | %(message)s", level=logging.INFO)
-uvicorn_error = logging.getLogger("uvicorn.error")
-uvicorn_error.disabled = True
-uvicorn_access = logging.getLogger("uvicorn.access")
-uvicorn_access.disabled = True
 
 
 async def some_startup_task():
@@ -77,7 +79,7 @@ async def predict(request):
         pred = inference_handler(deserialized_body)
         # log request time
         # TODO: repalce with middleware
-        logger.info(f"POST {request.url.path} |  Duration: {(perf_counter()-start_time) *1000:.2f} ms")
+        logger.info(f"POST {request.url.path} | Duration: {(perf_counter()-start_time) *1000:.2f} ms")
         # deserialized and resonds with json
         return Response(Jsoner.serialize(pred))
     except Exception as e:
