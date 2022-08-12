@@ -13,9 +13,11 @@ Hugging Face Inference Toolkit is for serving 🤗 Transformers models in contai
 ### Local run
 
 ```bash
-mkdir tmp/
-HF_MODEL_ID=hf-internal-testing/tiny-random-distilbert HF_MODEL_DIR=tmp HF_TASK=text-classification uvicorn src.huggingface_inference_toolkit.webservice_starlette:app 
+mkdir tmp2/
+HF_MODEL_ID=hf-internal-testing/tiny-random-distilbert HF_MODEL_DIR=tmp2 HF_TASK=text-classification uvicorn src.huggingface_inference_toolkit.webservice_starlette:app  --port 5000
 ```
+
+HF_MODEL_ID=RobertoFont/pegasus-large-samsum HF_MODEL_DIR=tmp HF_TASK=text2text-generation uvicorn src.huggingface_inference_toolkit.webservice_starlette:app  --port 5000
 
 ### Container
 
@@ -184,4 +186,3 @@ TBD.
 TBD. 
 
 ---
-

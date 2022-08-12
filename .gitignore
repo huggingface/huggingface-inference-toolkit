@@ -166,3 +166,4 @@ cython_debug/
 .sagemaker
 model
 tests/tmp
+tmp/

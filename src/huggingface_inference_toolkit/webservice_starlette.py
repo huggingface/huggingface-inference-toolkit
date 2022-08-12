@@ -1,5 +1,4 @@
 import logging
-import os
 from pathlib import Path
 from time import perf_counter
 
@@ -16,6 +15,7 @@ from huggingface_inference_toolkit.handler import get_inference_handler_either_c
 from huggingface_inference_toolkit.serialization.base import ContentType
 from huggingface_inference_toolkit.serialization.json_utils import Jsoner
 from huggingface_inference_toolkit.utils import _load_repository_from_hf
+from huggingface_inference_toolkit.async_utils import async_handler_call
 from starlette.applications import Starlette
 from starlette.responses import PlainTextResponse, Response
 from starlette.routing import Route
@@ -35,7 +35,6 @@ logger = logging.getLogger(__name__)
 
 
 async def some_startup_task():
-
     global inference_handler
     # 1. check if model artifacts available in HF_MODEL_DIR
     if len(list(Path(HF_MODEL_DIR).glob("**/*"))) <= 0:
@@ -66,7 +65,6 @@ async def predict(request):
     try:
         # tracks request time
         start_time = perf_counter()
-
         # extracts content from request
         content_type = request.headers.get("content-Type", None)
         # try to deserialize payload
@@ -75,8 +73,11 @@ async def predict(request):
         if "inputs" not in deserialized_body:
             raise ValueError(f"Body needs to provide a inputs key, recieved: {orjson.dumps(deserialized_body)}")
 
-        # runs inference
-        pred = inference_handler(deserialized_body)
+        # run async not blocking call
+        pred = await async_handler_call(inference_handler, deserialized_body)
+        # run sync blocking call -> slighty faster for < 200ms prediction time
+        # pred = inference_handler(deserialized_body)
+
         # log request time
         # TODO: repalce with middleware
         logger.info(f"POST {request.url.path} | Duration: {(perf_counter()-start_time) *1000:.2f} ms")
@@ -97,3 +98,22 @@ app = Starlette(
     ],
     on_startup=[some_startup_task],
 )
+
+
+# for pegasus it was async
+# 1.2rps at 20 with 17s latency
+# 1rps at 1 user with 930ms latency
+
+# for pegasus it was sync
+# 1.2rps at 20 with 17s latency
+# 1rps at 1 user with 980ms latency
+# health is blocking with 17s latency
+
+
+# for tiny it was async
+# 107.7rps at 500 with 4.7s latency
+# 8.5rps at 1 user with 120ms latency
+
+# for tiny it was sync
+# 109rps at 500 with 4.6s latency
+# 8.5rps at 1 user with 120ms latency
