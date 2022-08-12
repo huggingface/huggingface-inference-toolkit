@@ -8,7 +8,7 @@ unit-test:
 	python -m pytest -s -v ./tests/unit
 
 integ-test:
-	python -m pytest -n auto -s -v ./tests/integ/
+	python -m pytest -s -v ./tests/integ/
 
 # Check that source code meets quality standards
 

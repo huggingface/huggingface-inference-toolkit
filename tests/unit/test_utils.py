@@ -86,11 +86,6 @@ def test_load_pytorch_repository_from_hf():
         assert "tokenizer_config.json" in folder_contents
 
 
-def test_gpu_is_not_available():
-    device = _is_gpu_available()
-    assert device is False
-
-
 @slow
 def test_gpu_available():
     device = _is_gpu_available()

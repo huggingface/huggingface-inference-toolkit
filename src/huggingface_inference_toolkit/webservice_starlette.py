@@ -3,6 +3,7 @@ from pathlib import Path
 from time import perf_counter
 
 import orjson
+from huggingface_inference_toolkit.async_utils import async_handler_call
 from huggingface_inference_toolkit.const import (
     HF_FRAMEWORK,
     HF_HUB_TOKEN,
@@ -15,7 +16,6 @@ from huggingface_inference_toolkit.handler import get_inference_handler_either_c
 from huggingface_inference_toolkit.serialization.base import ContentType
 from huggingface_inference_toolkit.serialization.json_utils import Jsoner
 from huggingface_inference_toolkit.utils import _load_repository_from_hf
-from huggingface_inference_toolkit.async_utils import async_handler_call
 from starlette.applications import Starlette
 from starlette.responses import PlainTextResponse, Response
 from starlette.routing import Route
