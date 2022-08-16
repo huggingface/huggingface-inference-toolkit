@@ -185,6 +185,8 @@ def check_and_register_custom_pipeline_from_directory(model_dir):
         logger.info(f"Found custom pipeline at {custom_module}")
         spec = importlib.util.spec_from_file_location(HF_MODULE_NAME, custom_module)
         if spec:
+            # add the whole directory to path for submodlues
+            sys.path.insert(0, model_dir)
             # import custom handler
             pipeline = importlib.util.module_from_spec(spec)
             sys.modules[HF_MODULE_NAME] = pipeline
