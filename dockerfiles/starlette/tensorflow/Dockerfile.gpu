@@ -1,4 +1,4 @@
-FROM huggingface/transformers-inference:4.20.1-pt1.11-cuda11.5
+FROM huggingface/transformers-inference:4.21.1-tf2.9-cuda11.2
 
 # install starlette framework
 COPY starlette_requirements.txt /tmp/requirements.txt
