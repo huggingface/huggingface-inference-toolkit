@@ -26,12 +26,12 @@ install_requires = [
     "librosa",
     "pyctcdecode>=0.3.0",
     "phonemizer",
-    # sentence transformers
-    "sentence_transformers",
-    "torchvision<=0.12.0",
 ]
 
 extras = {}
+
+extras["st"] = ["sentence_transformers"]
+
 
 # Hugging Face specific dependencies
 # framework specific dependencies

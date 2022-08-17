@@ -3,6 +3,7 @@ FROM huggingface/transformers-inference:4.21.1-pt1.11-cuda11.5
 # install starlette framework
 COPY starlette_requirements.txt /tmp/requirements.txt
 RUN pip install  --no-cache-dir -r /tmp/requirements.txt && rm /tmp/requirements.txt
+RUN pip install  --no-cache-dir sentence_transformers
 
 # copy application
 COPY src/huggingface_inference_toolkit huggingface_inference_toolkit

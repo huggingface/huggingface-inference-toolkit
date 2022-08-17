@@ -154,7 +154,7 @@ def test_local_custom_pipeline():
     pipeline = check_and_register_custom_pipeline_from_directory(model_dir)
     payload = "test"
     assert pipeline.path == model_dir
-    assert pipeline(payload) == payload[::-1] 
+    assert pipeline(payload) == payload[::-1]
 
 
 def test_remote_custom_pipeline():

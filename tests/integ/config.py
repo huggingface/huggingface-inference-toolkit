@@ -23,7 +23,7 @@ task2model = {
     },
     "zero-shot-classification": {
         "pytorch": "hf-internal-testing/tiny-random-bart",
-        "tensorflow": "hf-internal-testing/tiny-random-bart",
+        "tensorflow": "typeform/distilbert-base-uncased-mnli",
     },
     "feature-extraction": {
         "pytorch": "hf-internal-testing/tiny-random-bert",
@@ -63,7 +63,7 @@ task2model = {
     },
     "automatic-speech-recognition": {
         "pytorch": "hf-internal-testing/tiny-random-wav2vec2",
-        "tensorflow": "hf-internal-testing/tiny-random-wav2vec2",
+        "tensorflow": None,
     },
     "audio-classification": {
         "pytorch": "hf-internal-testing/tiny-random-wavlm",

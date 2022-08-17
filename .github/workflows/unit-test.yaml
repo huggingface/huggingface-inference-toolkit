@@ -21,7 +21,7 @@ jobs:
       with:
         python-version: 3.9.12
     - name: Install Python dependencies
-      run: pip install -e .[test,dev,torch]
+      run: pip install -e .[test,dev,torch,st]
     - name: Run Unit test_const
       run: 	python -m pytest -s -v ./tests/unit/test_const.py
     - name: Run Unit test_handler

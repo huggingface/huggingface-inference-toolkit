@@ -13,7 +13,10 @@ from transformers.file_utils import is_tf_available, is_torch_available
 from transformers.pipelines import Conversation, Pipeline
 
 from huggingface_inference_toolkit.const import HF_DEFAULT_PIPELINE_NAME, HF_MODULE_NAME
-from huggingface_inference_toolkit.sentence_transformers_utils import get_sentence_transformers_pipeline
+from huggingface_inference_toolkit.sentence_transformers_utils import (
+    get_sentence_transformers_pipeline,
+    is_sentence_transformers_available,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -27,17 +30,12 @@ if is_torch_available():
     import torch
 
 _optimum_available = importlib.util.find_spec("optimum") is not None
-_sentence_transformers = importlib.util.find_spec("sentence_transformers") is not None
 
 
 def is_optimum_available():
     return False
     # TODO: change when supported
     # return _optimum_available
-
-
-def is_sentence_transformers():
-    return _sentence_transformers
 
 
 framework2weight = {
@@ -122,6 +120,9 @@ def _load_repository_from_hf(
     """
     Load a model from huggingface hub.
     """
+    if framework is None:
+        framework = _get_framework()
+
     if isinstance(target_dir, str):
         target_dir = Path(target_dir)
 
@@ -238,7 +239,11 @@ def get_pipeline(task: str, model_dir: Path, **kwargs) -> Pipeline:
         # TODO: add check for optimum accelerated pipeline
         logger.info("Optimum is not implement yet using default pipeline.")
         hf_pipeline = pipeline(task=task, model=model_dir, device=device, **kwargs)
-    elif is_sentence_transformers() and task in ["sentence-similarity", "sentence-embeddings", "sentence-ranking"]:
+    elif is_sentence_transformers_available() and task in [
+        "sentence-similarity",
+        "sentence-embeddings",
+        "sentence-ranking",
+    ]:
         hf_pipeline = get_sentence_transformers_pipeline(task=task, model_dir=model_dir, device=device, **kwargs)
     else:
         hf_pipeline = pipeline(task=task, model=model_dir, device=device, **kwargs)
