@@ -2,5 +2,3 @@ orjson
 starlette
 uvicorn
 pandas
-sentence-transformers
-torchvision==0.12.0 # needed for st and should be installed in the main one

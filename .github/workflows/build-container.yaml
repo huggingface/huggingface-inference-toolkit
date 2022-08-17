@@ -14,23 +14,43 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  starlette-cpu:
+  starlette-pytorch-cpu:
     uses: ./.github/workflows/docker-build-action.yaml
     with:
       context: ./
       repository: huggingface
-      image: hf-endpoints-inference-cpu
-      dockerfile: dockerfiles/starlette/Dockerfile.cpu
+      image: hf-endpoints-inference-pytorch-cpu
+      dockerfile: dockerfiles/starlette/pytorch/Dockerfile.cpu
     secrets:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-  starlette-gpu:
+  starlette-pytorch-gpu:
     uses: ./.github/workflows/docker-build-action.yaml
     with:
       context: ./
       repository: huggingface
-      image: hf-endpoints-inference-gpu
-      dockerfile: dockerfiles/starlette/Dockerfile.gpu
+      image: hf-endpoints-inference-pytorch-gpu
+      dockerfile: dockerfiles/starlette/pytorch/Dockerfile.gpu
+    secrets:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+  starlette-tensorflow-cpu:
+    uses: ./.github/workflows/docker-build-action.yaml
+    with:
+      context: ./
+      repository: huggingface
+      image: hf-endpoints-inference-tensorflow-cpu
+      dockerfile: dockerfiles/starlette/tensorflow/Dockerfile.cpu
+    secrets:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+  starlette-tensorflow-gpu:
+    uses: ./.github/workflows/docker-build-action.yaml
+    with:
+      context: ./
+      repository: huggingface
+      image: hf-endpoints-inference-tensorflow-gpu
+      dockerfile: dockerfiles/starlette/tensorflow/Dockerfile.gpu
     secrets:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}

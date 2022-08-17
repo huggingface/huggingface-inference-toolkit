@@ -17,21 +17,21 @@ mkdir tmp2/
 HF_MODEL_ID=hf-internal-testing/tiny-random-distilbert HF_MODEL_DIR=tmp2 HF_TASK=text-classification uvicorn src.huggingface_inference_toolkit.webservice_starlette:app  --port 5000
 ```
 
-HF_MODEL_ID=RobertoFont/pegasus-large-samsum HF_MODEL_DIR=tmp HF_TASK=text2text-generation uvicorn src.huggingface_inference_toolkit.webservice_starlette:app  --port 5000
-
 ### Container
 
 
-1. build the preferred container for either CPU or GPU.
+1. build the preferred container for either CPU or GPU for PyTorch or TensorFlow.
 
 _cpu images_
 ```bash
-docker build -t starlette-transformers:cpu -f dockerfiles/starlette/Dockerfile.cpu .
+docker build -t starlette-transformers:cpu -f dockerfiles/starlette/pytorch/Dockerfile.cpu .
+docker build -t starlette-transformers:cpu -f dockerfiles/starlette/tensorflow/Dockerfile.cpu .
 ```
 
 _gpu images_
 ```bash
-docker build -t starlette-transformers:gpu -f dockerfiles/starlette/Dockerfile.gpu .
+docker build -t starlette-transformers:gpu -f dockerfiles/starlette/pytorch/Dockerfile.gpu .
+docker build -t starlette-transformers:gpu -f dockerfiles/starlette/tensorflow/Dockerfile.gpu .
 ```
 
 2. Run the container and provide either environment variables to the HUB model you want to use or mount a volume to the container, where your model is stored.

@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import tempfile
 
 from transformers import pipeline
@@ -28,9 +29,6 @@ def test_load_revision_repository_from_hf():
         storage_folder = _load_repository_from_hf(MODEL, tmpdirname, revision=REVISION)
         # folder contains all config files and pytorch_model.bin
         folder_contents = os.listdir(storage_folder)
-        assert "pytorch_model.bin" in folder_contents
-        # filter framework
-        assert "tf_model.h5" in folder_contents
         # revision doesn't have tokenizer
         assert "tokenizer_config.json" not in folder_contents
 
@@ -39,7 +37,10 @@ def test_load_revision_repository_from_hf():
 def test_load_tensorflow_repository_from_hf():
     MODEL = "lysandre/tiny-bert-random"
     with tempfile.TemporaryDirectory() as tmpdirname:
-        storage_folder = _load_repository_from_hf(MODEL, tmpdirname, framework="tensorflow")
+        tf_tmp = Path(tmpdirname).joinpath("tf")
+        tf_tmp.mkdir(parents=True, exist_ok=True)
+
+        storage_folder = _load_repository_from_hf(MODEL, tf_tmp, framework="tensorflow")
         # folder contains all config files and pytorch_model.bin
         folder_contents = os.listdir(storage_folder)
         assert "pytorch_model.bin" not in folder_contents
@@ -54,7 +55,10 @@ def test_load_tensorflow_repository_from_hf():
 def test_load_onnx_repository_from_hf():
     MODEL = "philschmid/distilbert-onnx-banking77"
     with tempfile.TemporaryDirectory() as tmpdirname:
-        storage_folder = _load_repository_from_hf(MODEL, tmpdirname, framework="onnx")
+        ox_tmp = Path(tmpdirname).joinpath("onnx")
+        ox_tmp.mkdir(parents=True, exist_ok=True)
+
+        storage_folder = _load_repository_from_hf(MODEL, ox_tmp, framework="onnx")
         # folder contains all config files and pytorch_model.bin
         folder_contents = os.listdir(storage_folder)
         assert "pytorch_model.bin" not in folder_contents
@@ -74,7 +78,10 @@ def test_load_onnx_repository_from_hf():
 def test_load_pytorch_repository_from_hf():
     MODEL = "lysandre/tiny-bert-random"
     with tempfile.TemporaryDirectory() as tmpdirname:
-        storage_folder = _load_repository_from_hf(MODEL, tmpdirname, framework="pytorch")
+        pt_tmp = Path(tmpdirname).joinpath("pt")
+        pt_tmp.mkdir(parents=True, exist_ok=True)
+
+        storage_folder = _load_repository_from_hf(MODEL, pt_tmp, framework="pytorch")
         # folder contains all config files and pytorch_model.bin
         folder_contents = os.listdir(storage_folder)
         assert "pytorch_model.bin" in folder_contents
@@ -107,6 +114,7 @@ def test_get_framework_tensorflow():
         assert framework == "tensorflow"
 
 
+@require_torch
 def test_get_pipeline():
     with tempfile.TemporaryDirectory() as tmpdirname:
         storage_dir = _load_repository_from_hf(MODEL, tmpdirname, framework="pytorch")
@@ -154,7 +162,7 @@ def test_local_custom_pipeline():
     pipeline = check_and_register_custom_pipeline_from_directory(model_dir)
     payload = "test"
     assert pipeline.path == model_dir
-    assert pipeline(payload) == payload[::-1] 
+    assert pipeline(payload) == payload[::-1]
 
 
 def test_remote_custom_pipeline():

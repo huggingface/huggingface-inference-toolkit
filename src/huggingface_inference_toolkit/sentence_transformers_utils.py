@@ -1,4 +1,15 @@
-from sentence_transformers import CrossEncoder, SentenceTransformer, util
+import importlib.util
+
+
+_sentence_transformers = importlib.util.find_spec("sentence_transformers") is not None
+
+
+def is_sentence_transformers_available():
+    return _sentence_transformers
+
+
+if is_sentence_transformers_available():
+    from sentence_transformers import CrossEncoder, SentenceTransformer, util
 
 
 class SentenceSimilarityPipeline:
