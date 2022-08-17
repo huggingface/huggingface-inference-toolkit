@@ -28,9 +28,6 @@ def test_load_revision_repository_from_hf():
         storage_folder = _load_repository_from_hf(MODEL, tmpdirname, revision=REVISION)
         # folder contains all config files and pytorch_model.bin
         folder_contents = os.listdir(storage_folder)
-        assert "pytorch_model.bin" in folder_contents
-        # filter framework
-        assert "tf_model.h5" in folder_contents
         # revision doesn't have tokenizer
         assert "tokenizer_config.json" not in folder_contents
 
