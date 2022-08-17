@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import tempfile
 
 from transformers import pipeline
@@ -36,7 +37,10 @@ def test_load_revision_repository_from_hf():
 def test_load_tensorflow_repository_from_hf():
     MODEL = "lysandre/tiny-bert-random"
     with tempfile.TemporaryDirectory() as tmpdirname:
-        storage_folder = _load_repository_from_hf(MODEL, tmpdirname, framework="tensorflow")
+        tf_tmp = Path(tmpdirname).joinpath("tf")
+        tf_tmp.mkdir(parents=True, exist_ok=True)
+
+        storage_folder = _load_repository_from_hf(MODEL, tf_tmp, framework="tensorflow")
         # folder contains all config files and pytorch_model.bin
         folder_contents = os.listdir(storage_folder)
         assert "pytorch_model.bin" not in folder_contents
@@ -51,7 +55,10 @@ def test_load_tensorflow_repository_from_hf():
 def test_load_onnx_repository_from_hf():
     MODEL = "philschmid/distilbert-onnx-banking77"
     with tempfile.TemporaryDirectory() as tmpdirname:
-        storage_folder = _load_repository_from_hf(MODEL, tmpdirname, framework="onnx")
+        ox_tmp = Path(tmpdirname).joinpath("onnx")
+        ox_tmp.mkdir(parents=True, exist_ok=True)
+
+        storage_folder = _load_repository_from_hf(MODEL, ox_tmp, framework="onnx")
         # folder contains all config files and pytorch_model.bin
         folder_contents = os.listdir(storage_folder)
         assert "pytorch_model.bin" not in folder_contents
@@ -71,7 +78,10 @@ def test_load_onnx_repository_from_hf():
 def test_load_pytorch_repository_from_hf():
     MODEL = "lysandre/tiny-bert-random"
     with tempfile.TemporaryDirectory() as tmpdirname:
-        storage_folder = _load_repository_from_hf(MODEL, tmpdirname, framework="pytorch")
+        pt_tmp = Path(tmpdirname).joinpath("pt")
+        pt_tmp.mkdir(parents=True, exist_ok=True)
+
+        storage_folder = _load_repository_from_hf(MODEL, pt_tmp, framework="pytorch")
         # folder contains all config files and pytorch_model.bin
         folder_contents = os.listdir(storage_folder)
         assert "pytorch_model.bin" in folder_contents

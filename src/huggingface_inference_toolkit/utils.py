@@ -47,10 +47,13 @@ framework2weight = {
     "rust": "rust*",
     "onnx": "*onnx",
 }
-ignore_regex_list = ["pytorch*", "tf*", "flax*", "rust*", "*onnx"]
 
 
 def create_artifact_filter(framework):
+    """
+    Returns a list of regex pattern based on the DL Framework. which will be to used to ignore files when downloading
+    """
+    ignore_regex_list = ["pytorch*", "tf*", "flax*", "rust*", "*onnx"]
     pattern = framework2weight.get(framework, None)
     if pattern in ignore_regex_list:
         ignore_regex_list.remove(pattern)
@@ -60,6 +63,10 @@ def create_artifact_filter(framework):
 
 
 def wrap_conversation_pipeline(pipeline):
+    """
+    Wrap a Conversation with a helper for better UX when using REST API
+    """
+
     def wrapped_pipeline(inputs, *args, **kwargs):
         converted_input = Conversation(
             inputs["text"],
