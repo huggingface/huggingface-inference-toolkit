@@ -114,6 +114,7 @@ def test_get_framework_tensorflow():
         assert framework == "tensorflow"
 
 
+@require_tf
 def test_get_pipeline():
     with tempfile.TemporaryDirectory() as tmpdirname:
         storage_dir = _load_repository_from_hf(MODEL, tmpdirname, framework="pytorch")
