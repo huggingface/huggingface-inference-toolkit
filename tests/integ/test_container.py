@@ -10,10 +10,11 @@ from huggingface_inference_toolkit.utils import _is_gpu_available, _load_reposit
 from integ.config import task2input, task2model, task2output, task2validation
 from transformers.testing_utils import require_torch, slow, require_tf, _run_slow_tests
 
+IS_GPU = _run_slow_tests
+DEVICE = "gpu" if IS_GPU else "cpu"
 
 client = docker.from_env()
-IS_GPU = _run_slow_tests and _is_gpu_available()
-DEVICE = "gpu" if IS_GPU else "cpu"
+
 
 
 def make_sure_other_containers_are_stopped(client: DockerClient, container_name: str):
