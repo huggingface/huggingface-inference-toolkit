@@ -5,10 +5,10 @@ check_dirs := src
 # run tests
 
 unit-test:
-	python -m pytest -s -v ./tests/unit
+	python3 -m pytest -s -v ./tests/unit
 
 integ-test:
-	python -m pytest -s -v ./tests/integ/
+	python3 -m pytest -s -v ./tests/integ/
 
 # Check that source code meets quality standards
 
