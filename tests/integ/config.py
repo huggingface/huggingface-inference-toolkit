@@ -47,11 +47,11 @@ task2model = {
     },
     "translation_xx_to_yy": {
         "pytorch": "hf-internal-testing/tiny-random-t5",
-        "tensorflow": "hf-internal-testing/tiny-random-t5",
+        "tensorflow": "hf-internal-testing/tiny-random-marian",
     },
     "text2text-generation": {
         "pytorch": "hf-internal-testing/tiny-random-t5",
-        "tensorflow": "hf-internal-testing/tiny-random-t5",
+        "tensorflow": "hf-internal-testing/tiny-random-bart",
     },
     "text-generation": {
         "pytorch": "hf-internal-testing/tiny-random-gpt2",
