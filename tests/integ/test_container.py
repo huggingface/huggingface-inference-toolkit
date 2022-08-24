@@ -13,7 +13,6 @@ from transformers.testing_utils import require_torch, slow, require_tf, _run_slo
 
 client = docker.from_env()
 IS_GPU = _run_slow_tests and _is_gpu_available()
-IS_GPU = True
 DEVICE = "gpu" if IS_GPU else "cpu"
 
 
