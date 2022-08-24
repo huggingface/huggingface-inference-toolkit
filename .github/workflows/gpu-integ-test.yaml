@@ -48,24 +48,24 @@ jobs:
               {"Key": "Name", "Value": "ec2-optimum-github-runner"},
               {"Key": "GitHubRepository", "Value": "${{ github.repository }}"}
             ]
-  # pytorch-integration-test:
-  #   needs: start-runner # required to start the main job when the runner is ready
-  #   runs-on: ${{ needs.start-runner.outputs.label }} # run the job on the newly created runner
-  #   env:
-  #     AWS_REGION: us-east-1
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v2
-  #     - name: Set up Python 3.9
-  #       uses: actions/setup-python@v2
-  #       with:
-  #         python-version: 3.9
-  #     - name: Install Python dependencies
-  #       run: pip install -e .[test,dev,torch]
-  #     - name: Build Docker
-  #       run: docker build -t starlette-transformers:gpu -f dockerfiles/starlette/pytorch/Dockerfile.gpu .
-  #     - name: Run Integration Tests
-  #       run: RUN_SLOW=True make integ-test
+  pytorch-integration-test:
+    needs: start-runner # required to start the main job when the runner is ready
+    runs-on: ${{ needs.start-runner.outputs.label }} # run the job on the newly created runner
+    env:
+      AWS_REGION: us-east-1
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - name: Install Python dependencies
+        run: pip install -e .[test,dev,torch]
+      - name: Build Docker
+        run: docker build -t starlette-transformers:gpu -f dockerfiles/starlette/pytorch/Dockerfile.gpu .
+      - name: Run Integration Tests
+        run: RUN_SLOW=True make integ-test
   tensorflow-integration-test:
     needs:
       - start-runner
