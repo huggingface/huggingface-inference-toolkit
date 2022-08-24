@@ -93,7 +93,7 @@ jobs:
     name: Stop self-hosted EC2 runner
     needs:
       - start-runner
-      - pytorch-integration-test
+      # - pytorch-integration-test
       - tensorflow-integration-test
     runs-on: ubuntu-latest
     env:
