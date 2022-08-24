@@ -56,6 +56,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
       - name: Install Python dependencies
         run: pip install -e .[test,dev,torch]
       - name: Build Docker
@@ -72,6 +76,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
       - name: Install Python dependencies
         run: pip install -e .[test,dev,tensorflow]
       - name: Build Docker
