@@ -1,10 +1,9 @@
 name: GPU - Run Integration Tests
 
 on:
-  push:
+  pull_request:
     branches:
       - main
-  pull_request:
   workflow_dispatch:
 
 concurrency:
@@ -62,11 +61,7 @@ jobs:
       - name: Build Docker
         run: docker build -t starlette-transformers:gpu -f dockerfiles/starlette/pytorch/Dockerfile.gpu .
       - name: Run Integration Tests
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: us-east-1
-        run: make integ-test
+        run: RUN_SLOW=True make integ-test
   tensorflow-integration-test:
     needs:
       - start-runner
@@ -82,11 +77,7 @@ jobs:
       - name: Build Docker
         run: docker build -t starlette-transformers:gpu -f dockerfiles/starlette/tensorflow/Dockerfile.gpu .
       - name: Run Integration Tests
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: us-east-1
-        run: make integ-test
+        run: RUN_SLOW=True make integ-test
 
   stop-runner:
     name: Stop self-hosted EC2 runner

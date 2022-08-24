@@ -22,7 +22,7 @@ from starlette.routing import Route
 
 
 def config_logging(level=logging.INFO):
-    logging.basicConfig(format="%(asctime)s | %(levelname)s | %(message)s", datefmt="", level=logging.INFO)
+    logging.basicConfig(format="%(asctime)s | %(levelname)s | %(message)s", datefmt="", level=level)
     # disable uvicorn access logs to hide /health
     uvicorn_access = logging.getLogger("uvicorn.access")
     uvicorn_access.disabled = True
