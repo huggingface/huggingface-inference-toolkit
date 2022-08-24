@@ -6,8 +6,8 @@ from pathlib import Path
 from typing import Optional, Union
 
 from huggingface_hub import HfApi
-from huggingface_hub._snapshot_download import _filter_repo_files
 from huggingface_hub.file_download import cached_download, hf_hub_url
+from huggingface_hub.utils import filter_repo_objects
 from transformers import pipeline
 from transformers.file_utils import is_tf_available, is_torch_available
 from transformers.pipelines import Conversation, Pipeline
@@ -149,9 +149,9 @@ def _load_repository_from_hf(
         token=hf_hub_token,
     )
     # apply regex to filter out non-framework specific weights if args.framework is set
-    filtered_repo_files = _filter_repo_files(
-        repo_files=[f.rfilename for f in repo_info.siblings],
-        ignore_regex=ignore_regex,
+    filtered_repo_files = filter_repo_objects(
+        items=[f.rfilename for f in repo_info.siblings],
+        ignore_patterns=ignore_regex,
     )
 
     # iterate over all files and download them

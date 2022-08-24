@@ -6,12 +6,15 @@ import docker
 import pytest
 import requests
 from docker.client import DockerClient
-from huggingface_inference_toolkit.utils import _load_repository_from_hf
+from huggingface_inference_toolkit.utils import _is_gpu_available, _load_repository_from_hf
 from integ.config import task2input, task2model, task2output, task2validation
-from transformers.testing_utils import require_torch, slow, require_tf
+from transformers.testing_utils import require_torch, slow, require_tf, _run_slow_tests
 
+IS_GPU = _run_slow_tests
+DEVICE = "gpu" if IS_GPU else "cpu"
 
 client = docker.from_env()
+
 
 
 def make_sure_other_containers_are_stopped(client: DockerClient, container_name: str):
@@ -90,12 +93,14 @@ def verify_task(container: DockerClient, task: str, port: int = 5000, framework:
         "sentence-ranking",
     ],
 )
-def test_pt_cpu_container_remote_model(task) -> None:
+def test_pt_container_remote_model(task) -> None:
     container_name = f"integration-test-{task}"
-    container_image = "starlette-transformers:cpu"
+    container_image = f"starlette-transformers:{DEVICE}"
     framework = "pytorch"
     model = task2model[task][framework]
     port = random.randint(5000, 6000)
+    device_request = [docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])] if IS_GPU else []
+
     make_sure_other_containers_are_stopped(client, container_name)
     container = client.containers.run(
         container_image,
@@ -104,7 +109,7 @@ def test_pt_cpu_container_remote_model(task) -> None:
         environment={"HF_MODEL_ID": model, "HF_TASK": task},
         detach=True,
         # GPU
-        # device_requests=[docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])]
+        device_requests=device_request,
     )
     # time.sleep(5)
     verify_task(container, task, port)
@@ -141,12 +146,13 @@ def test_pt_cpu_container_remote_model(task) -> None:
         "sentence-ranking",
     ],
 )
-def test_pt_cpu_container_local_model(task) -> None:
+def test_pt_container_local_model(task) -> None:
     container_name = f"integration-test-{task}"
-    container_image = "starlette-transformers:cpu"
+    container_image = f"starlette-transformers:{DEVICE}"
     framework = "pytorch"
     model = task2model[task][framework]
     port = random.randint(5000, 6000)
+    device_request = [docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])] if IS_GPU else []
     make_sure_other_containers_are_stopped(client, container_name)
     with tempfile.TemporaryDirectory() as tmpdirname:
         # https://github.com/huggingface/infinity/blob/test-ovh/test/integ/utils.py
@@ -159,7 +165,7 @@ def test_pt_cpu_container_local_model(task) -> None:
             volumes={tmpdirname: {"bind": "/opt/huggingface/model", "mode": "ro"}},
             detach=True,
             # GPU
-            # device_requests=[docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])]
+            device_requests=device_request,
         )
         # time.sleep(5)
         verify_task(container, task, port)
@@ -172,9 +178,11 @@ def test_pt_cpu_container_local_model(task) -> None:
     "repository_id",
     ["philschmid/custom-pipeline-text-classification"],
 )
-def test_pt_cpu_container_custom_pipeline(repository_id) -> None:
+def test_pt_container_custom_pipeline(repository_id) -> None:
     container_name = "integration-test-custom"
-    container_image = "starlette-transformers:cpu"
+    container_image = f"starlette-transformers:{DEVICE}"
+    device_request = [docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])] if IS_GPU else []
+
     make_sure_other_containers_are_stopped(client, container_name)
     with tempfile.TemporaryDirectory() as tmpdirname:
         # https://github.com/huggingface/infinity/blob/test-ovh/test/integ/utils.py
@@ -189,7 +197,7 @@ def test_pt_cpu_container_custom_pipeline(repository_id) -> None:
             volumes={tmpdirname: {"bind": tmpdirname, "mode": "ro"}},
             detach=True,
             # GPU
-            # device_requests=[docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])]
+            device_requests=device_request,
         )
         BASE_URL = "http://localhost:5000"
         wait_for_container_to_be_ready(BASE_URL)
@@ -230,11 +238,12 @@ def test_pt_cpu_container_custom_pipeline(repository_id) -> None:
         "sentence-ranking",
     ],
 )
-def test_tf_cpu_container_remote_model(task) -> None:
+def test_tf_container_remote_model(task) -> None:
     container_name = f"integration-test-{task}"
-    container_image = "starlette-transformers:cpu"
+    container_image = f"starlette-transformers:{DEVICE}"
     framework = "tensorflow"
     model = task2model[task][framework]
+    device_request = [docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])] if IS_GPU else []
     if model is None:
         pytest.skip("no supported TF model")
     port = random.randint(5000, 6000)
@@ -246,7 +255,7 @@ def test_tf_cpu_container_remote_model(task) -> None:
         environment={"HF_MODEL_ID": model, "HF_TASK": task},
         detach=True,
         # GPU
-        # device_requests=[docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])]
+        device_requests=device_request,
     )
     # time.sleep(5)
     verify_task(container, task, port)
@@ -283,11 +292,12 @@ def test_tf_cpu_container_remote_model(task) -> None:
         "sentence-ranking",
     ],
 )
-def test_tf_cpu_container_local_model(task) -> None:
+def test_tf_container_local_model(task) -> None:
     container_name = f"integration-test-{task}"
-    container_image = "starlette-transformers:cpu"
+    container_image = f"starlette-transformers:{DEVICE}"
     framework = "tensorflow"
     model = task2model[task][framework]
+    device_request = [docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])] if IS_GPU else []
     if model is None:
         pytest.skip("no supported TF model")
     port = random.randint(5000, 6000)
@@ -303,7 +313,7 @@ def test_tf_cpu_container_local_model(task) -> None:
             volumes={tmpdirname: {"bind": "/opt/huggingface/model", "mode": "ro"}},
             detach=True,
             # GPU
-            # device_requests=[docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])]
+            device_requests=device_request,
         )
         # time.sleep(5)
         verify_task(container, task, port)

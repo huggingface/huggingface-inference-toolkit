@@ -1,10 +1,9 @@
 name: GPU - Run Integration Tests
 
 on:
-  push:
+  pull_request:
     branches:
       - main
-  pull_request:
   workflow_dispatch:
 
 concurrency:
@@ -57,42 +56,44 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
       - name: Install Python dependencies
         run: pip install -e .[test,dev,torch]
       - name: Build Docker
         run: docker build -t starlette-transformers:gpu -f dockerfiles/starlette/pytorch/Dockerfile.gpu .
       - name: Run Integration Tests
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: us-east-1
-        run: make integ-test
+        run: RUN_SLOW=True make integ-test
   tensorflow-integration-test:
     needs:
       - start-runner
-      - pytorch-integration-test
+      # - pytorch-integration-test
     runs-on: ${{ needs.start-runner.outputs.label }} # run the job on the newly created runner
     env:
       AWS_REGION: us-east-1
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - name: Uninstall pytorch
+        run: pip uninstall torch torchvision -y
       - name: Install Python dependencies
         run: pip install -e .[test,dev,tensorflow]
       - name: Build Docker
         run: docker build -t starlette-transformers:gpu -f dockerfiles/starlette/tensorflow/Dockerfile.gpu .
       - name: Run Integration Tests
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: us-east-1
-        run: make integ-test
+        run: RUN_SLOW=True make integ-test
 
   stop-runner:
     name: Stop self-hosted EC2 runner
     needs:
       - start-runner
-      - pytorch-integration-test
+      # - pytorch-integration-test
       - tensorflow-integration-test
     runs-on: ubuntu-latest
     env:
