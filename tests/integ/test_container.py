@@ -16,7 +16,6 @@ DEVICE = "gpu" if IS_GPU else "cpu"
 client = docker.from_env()
 
 
-
 def make_sure_other_containers_are_stopped(client: DockerClient, container_name: str):
     try:
         previous = client.containers.get(container_name)
@@ -176,21 +175,22 @@ def test_pt_container_local_model(task) -> None:
 @require_torch
 @pytest.mark.parametrize(
     "repository_id",
-    ["philschmid/custom-pipeline-text-classification"],
+    ["philschmid/custom-handler-test", "philschmid/custom-handler-distilbert"],
 )
-def test_pt_container_custom_pipeline(repository_id) -> None:
+def test_pt_container_custom_handler(repository_id) -> None:
     container_name = "integration-test-custom"
     container_image = f"starlette-transformers:{DEVICE}"
     device_request = [docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])] if IS_GPU else []
+    port = random.randint(5000, 6000)
 
     make_sure_other_containers_are_stopped(client, container_name)
     with tempfile.TemporaryDirectory() as tmpdirname:
         # https://github.com/huggingface/infinity/blob/test-ovh/test/integ/utils.py
-        storage_dir = _load_repository_from_hf("philschmid/custom-pipeline-text-classification", tmpdirname)
+        storage_dir = _load_repository_from_hf(repository_id, tmpdirname)
         container = client.containers.run(
             container_image,
             name=container_name,
-            ports={"5000": "5000"},
+            ports={"5000": port},
             environment={
                 "HF_MODEL_DIR": tmpdirname,
             },
@@ -199,7 +199,44 @@ def test_pt_container_custom_pipeline(repository_id) -> None:
             # GPU
             device_requests=device_request,
         )
-        BASE_URL = "http://localhost:5000"
+        BASE_URL = f"http://localhost:{port}"
+        wait_for_container_to_be_ready(BASE_URL)
+        payload = {"inputs": "this is a test"}
+        prediction = requests.post(f"{BASE_URL}", json=payload).json()
+        assert prediction == payload
+        # time.sleep(5)
+        container.stop()
+        container.remove()
+
+
+@require_torch
+@pytest.mark.parametrize(
+    "repository_id",
+    ["philschmid/custom-pipeline-text-classification"],
+)
+def test_pt_container_legacy_custom_pipeline(repository_id) -> None:
+    container_name = "integration-test-custom"
+    container_image = f"starlette-transformers:{DEVICE}"
+    device_request = [docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])] if IS_GPU else []
+    port = random.randint(5000, 6000)
+
+    make_sure_other_containers_are_stopped(client, container_name)
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        # https://github.com/huggingface/infinity/blob/test-ovh/test/integ/utils.py
+        storage_dir = _load_repository_from_hf(repository_id, tmpdirname)
+        container = client.containers.run(
+            container_image,
+            name=container_name,
+            ports={"5000": port},
+            environment={
+                "HF_MODEL_DIR": tmpdirname,
+            },
+            volumes={tmpdirname: {"bind": tmpdirname, "mode": "ro"}},
+            detach=True,
+            # GPU
+            device_requests=device_request,
+        )
+        BASE_URL = f"http://localhost:{port}"
         wait_for_container_to_be_ready(BASE_URL)
         payload = {"inputs": "this is a test"}
         prediction = requests.post(f"{BASE_URL}", json=payload).json()

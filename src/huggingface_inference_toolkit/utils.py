@@ -1,3 +1,4 @@
+from genericpath import isfile
 import importlib.util
 import logging
 import os
@@ -189,6 +190,7 @@ def check_and_register_custom_pipeline_from_directory(model_dir):
     """
     # path to custom handler
     custom_module = Path(model_dir).joinpath(HF_DEFAULT_PIPELINE_NAME)
+    legacy_module = Path(model_dir).joinpath("pipeline.py")
     if custom_module.is_file():
         logger.info(f"Found custom pipeline at {custom_module}")
         spec = importlib.util.spec_from_file_location(HF_MODULE_NAME, custom_module)
@@ -196,8 +198,22 @@ def check_and_register_custom_pipeline_from_directory(model_dir):
             # add the whole directory to path for submodlues
             sys.path.insert(0, model_dir)
             # import custom handler
+            handler = importlib.util.module_from_spec(spec)
+            sys.modules[HF_MODULE_NAME] = handler
+            spec.loader.exec_module(handler)
+            # init custom handler with model_dir
+            custom_pipeline = handler.EndpointHandler(model_dir)
+    elif legacy_module.is_file():
+        logger.warning(
+            f"You are using a legacy custom pipeline with. Please update to the new format. See documentation for more information."
+        )
+        spec = importlib.util.spec_from_file_location("pipeline.PreTrainedPipeline", legacy_module)
+        if spec:
+            # add the whole directory to path for submodlues
+            sys.path.insert(0, model_dir)
+            # import custom handler
             pipeline = importlib.util.module_from_spec(spec)
-            sys.modules[HF_MODULE_NAME] = pipeline
+            sys.modules["pipeline.PreTrainedPipeline"] = pipeline
             spec.loader.exec_module(pipeline)
             # init custom handler with model_dir
             custom_pipeline = pipeline.PreTrainedPipeline(model_dir)
