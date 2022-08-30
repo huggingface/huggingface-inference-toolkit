@@ -1,4 +1,3 @@
-from genericpath import isfile
 import importlib.util
 import logging
 import os
@@ -205,7 +204,7 @@ def check_and_register_custom_pipeline_from_directory(model_dir):
             custom_pipeline = handler.EndpointHandler(model_dir)
     elif legacy_module.is_file():
         logger.warning(
-            f"You are using a legacy custom pipeline with. Please update to the new format. See documentation for more information."
+            "You are using a legacy custom pipeline with. Please update to the new format. See documentation for more information."
         )
         spec = importlib.util.spec_from_file_location("pipeline.PreTrainedPipeline", legacy_module)
         if spec:
