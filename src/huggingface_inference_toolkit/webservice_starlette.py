@@ -82,10 +82,10 @@ async def predict(request):
         # TODO: repalce with middleware
         logger.info(f"POST {request.url.path} | Duration: {(perf_counter()-start_time) *1000:.2f} ms")
         # deserialized and resonds with json
-        return Response(Jsoner.serialize(pred))
+        return Response(Jsoner.serialize(pred), media_type="application/json")
     except Exception as e:
         logger.error(e)
-        return Response(Jsoner.serialize({"error": str(e)}), status_code=400)
+        return Response(Jsoner.serialize({"error": str(e)}), status_code=400, media_type="application/json")
 
 
 app = Starlette(
