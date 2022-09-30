@@ -25,6 +25,8 @@ content_type_mapping = {
     "audio/x-wav": Audioer,
     "audio/ogg": Audioer,
     "audio/x-audio": Audioer,
+    "audio/webm": Audioer,
+    "audio/webm;codecs=opus": Audioer,
 }
 
 
