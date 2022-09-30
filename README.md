@@ -5,7 +5,7 @@
 </div>
 
 
-Hugging Face Inference Toolkit is for serving 🤗 Transformers models in containers. This library provides default pre-processing, predict and postprocessing for Transformers, Sentence Tranfsformers. It is also possible to define custom `pipeline.py` for customization. The Toolkit is build to work with the [Hugging Face Hub](https://huggingface.co/models).
+Hugging Face Inference Toolkit is for serving 🤗 Transformers models in containers. This library provides default pre-processing, predict and postprocessing for Transformers, Sentence Tranfsformers. It is also possible to define custom `handler.py` for customization. The Toolkit is build to work with the [Hugging Face Hub](https://huggingface.co/models).
 
 ---
 ## 💻  Getting Started with Hugging Face Inference Toolkit
@@ -124,24 +124,24 @@ HF_ENDPOINT="True"
 
 ---
 
-## 🧑🏻‍💻 Custom Pipeline and dependency support
+## 🧑🏻‍💻 Custom Handler and dependency support
 
-The Hugging Face Inference Toolkit allows user to provide a custom inference through a `pipeline.py` file which is located in the repository. 
+The Hugging Face Inference Toolkit allows user to provide a custom inference through a `handler.py` file which is located in the repository. 
 For an example check [https://huggingface.co/philschmid/custom-pipeline-text-classification](https://huggingface.co/philschmid/custom-pipeline-text-classification):  
 ```bash
 model.tar.gz/
 |- pytorch_model.bin
 |- ....
-|- pipeline.py
+|- handler.py
 |- requirements.txt 
 ```
-In this example, `pytroch_model.bin` is the model file saved from training, `pipeline.py` is the custom inference pipeline, and `requirements.txt` is a requirements file to add additional dependencies.
+In this example, `pytroch_model.bin` is the model file saved from training, `handler.py` is the custom inference handler, and `requirements.txt` is a requirements file to add additional dependencies.
 The custom module can override the following methods:  
 
 
 ## ☑️ Supported & Tested Tasks
 
-Below you ll find a list of supported and tested transformers and sentence transformers tasks. Each of those are always tested through integration tests. In addition to those tasks you can always provide `custom`, which expect a `pipeline.py` file to be provided.
+Below you ll find a list of supported and tested transformers and sentence transformers tasks. Each of those are always tested through integration tests. In addition to those tasks you can always provide `custom`, which expect a `handler.py` file to be provided.
 
 ```bash
 "text-classification",
