@@ -69,7 +69,7 @@ def test_load_onnx_repository_from_hf():
         # onnx model
         assert "model.onnx" in folder_contents
         # custom pipeline
-        assert "pipeline.py" in folder_contents
+        assert "handler.py" in folder_contents
         # revision doesn't have tokenizer
         assert "tokenizer_config.json" in folder_contents
 
