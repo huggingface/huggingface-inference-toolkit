@@ -78,7 +78,7 @@ task2model = {
         "tensorflow": None,
     },
     "table-question-answering": {
-        "pytorch": "microsoft/tapex-base-finetuned-wtq",
+        "pytorch": "philschmid/tapex-tiny",
         "tensorflow": None,
     },
     "zero-shot-image-classification": {
