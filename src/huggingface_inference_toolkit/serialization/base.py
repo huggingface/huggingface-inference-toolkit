@@ -20,6 +20,7 @@ content_type_mapping = {
     "audio/x-flac": Audioer,
     "audio/flac": Audioer,
     "audio/mpeg": Audioer,
+    "audio/x-mpeg-3": Audioer,
     "audio/wave": Audioer,
     "audio/wav": Audioer,
     "audio/x-wav": Audioer,
@@ -27,6 +28,12 @@ content_type_mapping = {
     "audio/x-audio": Audioer,
     "audio/webm": Audioer,
     "audio/webm;codecs=opus": Audioer,
+    "audio/AMR": Audioer,
+    "audio/amr": Audioer,
+    "audio/AMR-WB": Audioer,
+    "audio/AMR-WB+": Audioer,
+    "audio/m4a": Audioer,
+    "audio/x-m4a": Audioer,
 }
 
 
