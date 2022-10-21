@@ -3,6 +3,7 @@ FROM huggingface/transformers-inference:4.23.1-pt1.11-cuda11.5
 # install starlette framework
 COPY starlette_requirements.txt /tmp/requirements.txt
 RUN pip install  --no-cache-dir -r /tmp/requirements.txt && rm /tmp/requirements.txt
+
 # Think about a better solution -> base contaienr has pt 1.11. thats why need below 0.13
 RUN pip install  --no-cache-dir sentence_transformers torchvision~="0.12.0"
 
