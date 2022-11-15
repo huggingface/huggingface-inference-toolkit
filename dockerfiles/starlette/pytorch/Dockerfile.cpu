@@ -1,4 +1,4 @@
-FROM huggingface/transformers-inference:4.23.1-pt1.11-cpu
+FROM huggingface/transformers-inference:4.24.0-pt1.13-cpu
 
 # install starlette framework
 COPY starlette_requirements.txt /tmp/requirements.txt
