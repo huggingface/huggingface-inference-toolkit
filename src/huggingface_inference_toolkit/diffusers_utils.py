@@ -11,8 +11,9 @@ def is_diffusers_available():
 
 
 if is_diffusers_available():
-    from diffusers import StableDiffusionPipeline
     import torch
+
+    from diffusers import StableDiffusionPipeline
 
 
 def check_supported_pipeline(model_dir):
