@@ -11,7 +11,6 @@ from integ.config import task2input, task2model, task2output, task2validation
 from transformers.testing_utils import require_torch, slow, require_tf, _run_slow_tests
 
 IS_GPU = _run_slow_tests
-IS_GPU = True
 DEVICE = "gpu" if IS_GPU else "cpu"
 
 client = docker.from_env()
