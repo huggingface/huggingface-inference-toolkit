@@ -14,9 +14,9 @@ from transformers.pipelines import Conversation, Pipeline
 
 from huggingface_inference_toolkit.const import HF_DEFAULT_PIPELINE_NAME, HF_MODULE_NAME
 from huggingface_inference_toolkit.diffusers_utils import (
+    check_supported_pipeline,
     get_diffusers_pipeline,
     is_diffusers_available,
-    check_supported_pipeline,
 )
 from huggingface_inference_toolkit.sentence_transformers_utils import (
     get_sentence_transformers_pipeline,

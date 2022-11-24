@@ -2,6 +2,9 @@ import importlib.util
 import json
 import os
 
+import torch
+
+
 _diffusers = importlib.util.find_spec("diffusers") is not None
 
 
@@ -21,7 +24,7 @@ def check_supported_pipeline(model_dir):
                 return True
             else:
                 return False
-    except:
+    except Exception:
         return False
 
 
@@ -30,7 +33,7 @@ class DiffusersPipelineImageToText:
         # try:
         #   pipeline = DIFFUSERS_TASKS[task].from_pretrained(model_dir, torch_dtype=torch.float16,)
         # except:
-        self.pipeline = StableDiffusionPipeline.from_pretrained(model_dir)
+        self.pipeline = StableDiffusionPipeline.from_pretrained(model_dir, torch_dtype=torch.float16)
         self.pipeline.to(device)
 
     def __call__(self, prompt, **kwargs):
