@@ -14,15 +14,15 @@ if is_diffusers_available():
 
 
 def check_supported_pipeline(model_dir):
-    try: 
-      with open(os.path.join(model_dir), "model_index.json") as json_file:
-          data = json.load(json_file)
-          if data["_class_name"] == "StableDiffusionPipeline":
-              return True
-          else: 
-              return False
-    except: 
-      return False      
+    try:
+        with open(os.path.join(model_dir, "model_index.json")) as json_file:
+            data = json.load(json_file)
+            if data["_class_name"] == "StableDiffusionPipeline":
+                return True
+            else:
+                return False
+    except:
+        return False
 
 
 class DiffusersPipelineImageToText:

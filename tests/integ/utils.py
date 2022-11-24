@@ -84,4 +84,3 @@ def validate_object_detection(result=None, snapshot=None):
 def validate_text_to_image(result=None, snapshot=None):
     assert isinstance(result, snapshot)
     return True
-    

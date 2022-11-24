@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 from typing import Optional, Union
 
-from huggingface_hub import HfApi
+from huggingface_hub import HfApi, login
 from huggingface_hub.file_download import cached_download, hf_hub_url
 from huggingface_hub.utils import filter_repo_objects
 from transformers import pipeline
@@ -132,6 +132,9 @@ def _load_repository_from_hf(
     """
     Load a model from huggingface hub.
     """
+    if hf_hub_token is not None:
+        login(token=hf_hub_token)
+
     if framework is None:
         framework = _get_framework()
 
@@ -151,7 +154,6 @@ def _load_repository_from_hf(
         repo_id=repository_id,
         repo_type="model",
         revision=revision,
-        token=hf_hub_token,
     )
     # apply regex to filter out non-framework specific weights if args.framework is set
     filtered_repo_files = filter_repo_objects(
