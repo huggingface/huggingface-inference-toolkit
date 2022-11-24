@@ -13,6 +13,11 @@ from transformers.file_utils import is_tf_available, is_torch_available
 from transformers.pipelines import Conversation, Pipeline
 
 from huggingface_inference_toolkit.const import HF_DEFAULT_PIPELINE_NAME, HF_MODULE_NAME
+from huggingface_inference_toolkit.diffusers_utils import (
+    get_diffusers_pipeline,
+    is_diffusers_available,
+    check_supported_pipeline,
+)
 from huggingface_inference_toolkit.sentence_transformers_utils import (
     get_sentence_transformers_pipeline,
     is_sentence_transformers_available,
@@ -267,6 +272,8 @@ def get_pipeline(task: str, model_dir: Path, **kwargs) -> Pipeline:
         "sentence-ranking",
     ]:
         hf_pipeline = get_sentence_transformers_pipeline(task=task, model_dir=model_dir, device=device, **kwargs)
+    elif is_diffusers_available() and check_supported_pipeline(model_dir) and task == "text-to-image":
+        hf_pipeline = get_diffusers_pipeline(task=task, model_dir=model_dir, device=device, **kwargs)
     else:
         hf_pipeline = pipeline(task=task, model=model_dir, device=device, **kwargs)
 

@@ -21,6 +21,11 @@ def test_json_image_serialization():
     Jsoner.serialize(t)
 
 
+def test_image_serialization():
+    image = Image.new("RGB", (60, 30), color="red")
+    Imager.serialize(image, accept="image/png")
+
+
 def test_json_deserialization():
     raw_content = b'{\n\t"inputs": "i like you"\n}'
     assert {"inputs": "i like you"} == Jsoner.deserialize(raw_content)

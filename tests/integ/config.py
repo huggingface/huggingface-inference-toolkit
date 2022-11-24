@@ -11,6 +11,7 @@ from integ.utils import (
     validate_summarization,
     validate_text2text_generation,
     validate_text_generation,
+    validate_text_to_image,
     validate_translation,
     validate_zero_shot_classification,
 )
@@ -101,6 +102,10 @@ task2model = {
         "pytorch": "cross-encoder/ms-marco-MiniLM-L-6-v2",
         "tensorflow": None,
     },
+    "text-to-image": {
+        "pytorch": "diffusers/tiny-stable-diffusion-torch",
+        "tensorflow": None,
+    },
 }
 
 
@@ -156,6 +161,7 @@ task2input = {
     },
     "sentence-embeddings": {"inputs": "Lets create an embedding"},
     "sentence-ranking": {"inputs": ["Lets create an embedding", "Lets create an embedding"]},
+    "text-to-image": {"inputs": "a man on a horse jumps over a broken down airplane."},
 }
 
 task2output = {
@@ -204,6 +210,7 @@ task2output = {
     "sentence-similarity": {"similarities": ""},
     "sentence-embeddings": {"embeddings": ""},
     "sentence-ranking": {"scores": ""},
+    "text-to-image": bytes,
 }
 
 
@@ -229,4 +236,5 @@ task2validation = {
     "sentence-similarity": validate_zero_shot_classification,
     "sentence-embeddings": validate_zero_shot_classification,
     "sentence-ranking": validate_zero_shot_classification,
+    "text-to-image": validate_text_to_image,
 }

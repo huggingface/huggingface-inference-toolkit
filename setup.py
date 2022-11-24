@@ -31,6 +31,7 @@ install_requires = [
 extras = {}
 
 extras["st"] = ["sentence_transformers"]
+extras["diffusers"] = ["diffusers==0.8.1", "accelerate==0.14.0"]
 
 
 # Hugging Face specific dependencies

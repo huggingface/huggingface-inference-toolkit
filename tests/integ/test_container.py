@@ -11,6 +11,7 @@ from integ.config import task2input, task2model, task2output, task2validation
 from transformers.testing_utils import require_torch, slow, require_tf, _run_slow_tests
 
 IS_GPU = _run_slow_tests
+IS_GPU = True
 DEVICE = "gpu" if IS_GPU else "cpu"
 
 client = docker.from_env()
@@ -58,6 +59,8 @@ def verify_task(container: DockerClient, task: str, port: int = 5000, framework:
         prediction = requests.post(
             f"{BASE_URL}", data=task2input[task], headers={"content-type": "audio/x-audio"}
         ).json()
+    elif task == "text-to-image":
+        prediction = requests.post(f"{BASE_URL}", json=input, headers={"accept": "image/png"}).content
     else:
         prediction = requests.post(f"{BASE_URL}", json=input).json()
     assert task2validation[task](result=prediction, snapshot=task2output[task]) is True
@@ -90,6 +93,8 @@ def verify_task(container: DockerClient, task: str, port: int = 5000, framework:
         "sentence-similarity",
         "sentence-embeddings",
         "sentence-ranking",
+        # diffusers
+        "text-to-image",
     ],
 )
 def test_pt_container_remote_model(task) -> None:
@@ -111,6 +116,7 @@ def test_pt_container_remote_model(task) -> None:
         device_requests=device_request,
     )
     # time.sleep(5)
+
     verify_task(container, task, port)
     container.stop()
     container.remove()
@@ -143,6 +149,8 @@ def test_pt_container_remote_model(task) -> None:
         "sentence-similarity",
         "sentence-embeddings",
         "sentence-ranking",
+        # diffusers
+        "text-to-image",
     ],
 )
 def test_pt_container_local_model(task) -> None:
