@@ -12,7 +12,7 @@ from huggingface_inference_toolkit.utils import _load_repository_from_hf, get_pi
 def test_get_diffusers_pipeline():
     with tempfile.TemporaryDirectory() as tmpdirname:
         storage_dir = _load_repository_from_hf(
-            "diffusers/tiny-stable-diffusion-torch", tmpdirname, framework="pytorch"
+            "hf-internal-testing/tiny-stable-diffusion-torch", tmpdirname, framework="pytorch"
         )
         pipe = get_pipeline("text-to-image", storage_dir.as_posix())
         assert isinstance(pipe, DiffusersPipelineImageToText)
@@ -23,7 +23,7 @@ def test_get_diffusers_pipeline():
 def test_pipe_on_gpu():
     with tempfile.TemporaryDirectory() as tmpdirname:
         storage_dir = _load_repository_from_hf(
-            "diffusers/tiny-stable-diffusion-torch", tmpdirname, framework="pytorch"
+            "hf-internal-testing/tiny-stable-diffusion-torch", tmpdirname, framework="pytorch"
         )
         pipe = get_pipeline("text-to-image", storage_dir.as_posix())
         assert pipe.device.type == "cuda"
@@ -33,7 +33,7 @@ def test_pipe_on_gpu():
 def test_text_to_image_task():
     with tempfile.TemporaryDirectory() as tmpdirname:
         storage_dir = _load_repository_from_hf(
-            "diffusers/tiny-stable-diffusion-torch", tmpdirname, framework="pytorch"
+            "hf-internal-testing/tiny-stable-diffusion-torch", tmpdirname, framework="pytorch"
         )
         pipe = get_pipeline("text-to-image", storage_dir.as_posix())
         res = pipe("Lets create an embedding")

@@ -103,7 +103,7 @@ task2model = {
         "tensorflow": None,
     },
     "text-to-image": {
-        "pytorch": "diffusers/tiny-stable-diffusion-torch",
+        "pytorch": "hf-internal-testing/tiny-stable-diffusion-torch",
         "tensorflow": None,
     },
 }
