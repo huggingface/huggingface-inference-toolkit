@@ -20,7 +20,7 @@ class Jsoner:
         return orjson.loads(body)
 
     @staticmethod
-    def serialize(body):
+    def serialize(body, accept=None):
         return orjson.dumps(body, option=orjson.OPT_SERIALIZE_NUMPY, default=default)
 
 

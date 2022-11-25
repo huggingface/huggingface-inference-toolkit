@@ -4,5 +4,5 @@ class Audioer:
         return {"inputs": bytes(body)}
 
     @staticmethod
-    def serialize(body):
+    def serialize(body, accept=None):
         raise NotImplementedError("Audio serialization not implemented")

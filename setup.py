@@ -31,12 +31,13 @@ install_requires = [
 extras = {}
 
 extras["st"] = ["sentence_transformers"]
+extras["diffusers"] = ["diffusers==0.8.1", "accelerate==0.14.0"]
 
 
 # Hugging Face specific dependencies
 # framework specific dependencies
 extras["torch"] = ["torch>=1.8.0", "torchaudio"]
-extras["tensorflow"] = ["tensorflow>=2.4.0"]
+extras["tensorflow"] = ["tensorflow==2.9.0"]
 # test and quality
 extras["test"] = [
     "pytest",

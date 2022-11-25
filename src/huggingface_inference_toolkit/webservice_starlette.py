@@ -81,8 +81,14 @@ async def predict(request):
         # log request time
         # TODO: repalce with middleware
         logger.info(f"POST {request.url.path} | Duration: {(perf_counter()-start_time) *1000:.2f} ms")
+
+        # response extracts content from request
+        accept = request.headers.get("accept", None)
+        if accept is None or accept == "*/*":
+            accept = "application/json"
         # deserialized and resonds with json
-        return Response(Jsoner.serialize(pred), media_type="application/json")
+        serialized_response_body = ContentType.get_serializer(accept).serialize(pred, accept)
+        return Response(serialized_response_body, media_type=accept)
     except Exception as e:
         logger.error(e)
         return Response(Jsoner.serialize({"error": str(e)}), status_code=400, media_type="application/json")
@@ -98,22 +104,3 @@ app = Starlette(
     ],
     on_startup=[some_startup_task],
 )
-
-
-# for pegasus it was async
-# 1.2rps at 20 with 17s latency
-# 1rps at 1 user with 930ms latency
-
-# for pegasus it was sync
-# 1.2rps at 20 with 17s latency
-# 1rps at 1 user with 980ms latency
-# health is blocking with 17s latency
-
-
-# for tiny it was async
-# 107.7rps at 500 with 4.7s latency
-# 8.5rps at 1 user with 120ms latency
-
-# for tiny it was sync
-# 109rps at 500 with 4.6s latency
-# 8.5rps at 1 user with 120ms latency

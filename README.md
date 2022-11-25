@@ -41,6 +41,7 @@ docker build -t starlette-transformers:gpu -f dockerfiles/starlette/tensorflow/D
 docker run -ti -p 5000:5000 -e HF_MODEL_ID=distilbert-base-uncased-distilled-squad -e HF_TASK=question-answering starlette-transformers:cpu
 ```
 
+
 3. Send request. The API schema is the same as from the [inference API](https://huggingface.co/docs/api-inference/detailed_parameters)
 
 ```bash

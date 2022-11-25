@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 from typing import Optional, Union
 
-from huggingface_hub import HfApi
+from huggingface_hub import HfApi, login
 from huggingface_hub.file_download import cached_download, hf_hub_url
 from huggingface_hub.utils import filter_repo_objects
 from transformers import pipeline
@@ -13,6 +13,11 @@ from transformers.file_utils import is_tf_available, is_torch_available
 from transformers.pipelines import Conversation, Pipeline
 
 from huggingface_inference_toolkit.const import HF_DEFAULT_PIPELINE_NAME, HF_MODULE_NAME
+from huggingface_inference_toolkit.diffusers_utils import (
+    check_supported_pipeline,
+    get_diffusers_pipeline,
+    is_diffusers_available,
+)
 from huggingface_inference_toolkit.sentence_transformers_utils import (
     get_sentence_transformers_pipeline,
     is_sentence_transformers_available,
@@ -127,6 +132,9 @@ def _load_repository_from_hf(
     """
     Load a model from huggingface hub.
     """
+    if hf_hub_token is not None:
+        login(token=hf_hub_token)
+
     if framework is None:
         framework = _get_framework()
 
@@ -146,7 +154,6 @@ def _load_repository_from_hf(
         repo_id=repository_id,
         repo_type="model",
         revision=revision,
-        token=hf_hub_token,
     )
     # apply regex to filter out non-framework specific weights if args.framework is set
     filtered_repo_files = filter_repo_objects(
@@ -267,6 +274,8 @@ def get_pipeline(task: str, model_dir: Path, **kwargs) -> Pipeline:
         "sentence-ranking",
     ]:
         hf_pipeline = get_sentence_transformers_pipeline(task=task, model_dir=model_dir, device=device, **kwargs)
+    elif is_diffusers_available() and check_supported_pipeline(model_dir) and task == "text-to-image":
+        hf_pipeline = get_diffusers_pipeline(task=task, model_dir=model_dir, device=device, **kwargs)
     else:
         hf_pipeline = pipeline(task=task, model=model_dir, device=device, **kwargs)
 

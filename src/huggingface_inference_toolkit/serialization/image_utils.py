@@ -10,5 +10,11 @@ class Imager:
         return {"inputs": image}
 
     @staticmethod
-    def serialize(body):
-        raise NotImplementedError("Image serialization not implemented")
+    def serialize(image, accept=None):
+        if isinstance(image, Image.Image):
+            img_byte_arr = BytesIO()
+            image.save(img_byte_arr, format=accept.split("/")[-1].upper())
+            img_byte_arr = img_byte_arr.getvalue()
+            return img_byte_arr
+        else:
+            raise ValueError(f"Can only serialize PIL.Image.Image, got {type(image)}")

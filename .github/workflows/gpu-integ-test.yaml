@@ -69,7 +69,7 @@ jobs:
   tensorflow-integration-test:
     needs:
       - start-runner
-      # - pytorch-integration-test
+      - pytorch-integration-test
     runs-on: ${{ needs.start-runner.outputs.label }} # run the job on the newly created runner
     env:
       AWS_REGION: us-east-1

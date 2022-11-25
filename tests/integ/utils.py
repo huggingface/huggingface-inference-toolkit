@@ -79,3 +79,8 @@ def validate_automatic_speech_recognition(result=None, snapshot=None):
 def validate_object_detection(result=None, snapshot=None):
     assert result[0].keys() == snapshot[0].keys()
     return True
+
+
+def validate_text_to_image(result=None, snapshot=None):
+    assert isinstance(result, snapshot)
+    return True
