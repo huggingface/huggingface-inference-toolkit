@@ -3,5 +3,3 @@ starlette
 uvicorn
 pandas
 huggingface_hub>=0.11.0
-diffusers==0.8.1
-accelerate==0.14.0
