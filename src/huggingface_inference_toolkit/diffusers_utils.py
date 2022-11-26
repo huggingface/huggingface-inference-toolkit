@@ -13,7 +13,7 @@ def is_diffusers_available():
 if is_diffusers_available():
     import torch
 
-    from diffusers import StableDiffusionPipeline
+    from diffusers import StableDiffusionPipeline, DPMSolverMultistepScheduler
 
 
 def check_supported_pipeline(model_dir):
@@ -30,7 +30,13 @@ def check_supported_pipeline(model_dir):
 
 class DiffusersPipelineImageToText:
     def __init__(self, model_dir: str, device: str = None):  # needs "cuda" for GPU
+
         self.pipeline = StableDiffusionPipeline.from_pretrained(model_dir, torch_dtype=torch.float16)
+        # try to use DPMSolverMultistepScheduler
+        try:
+            self.pipeline.scheduler = DPMSolverMultistepScheduler.from_config(self.pipeline.scheduler.config)
+        except Exception:
+            pass
         self.pipeline.to(device)
 
     def __call__(self, prompt, **kwargs):
