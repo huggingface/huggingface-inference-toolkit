@@ -13,7 +13,7 @@ def is_diffusers_available():
 if is_diffusers_available():
     import torch
 
-    from diffusers import StableDiffusionPipeline, DPMSolverMultistepScheduler
+    from diffusers import DPMSolverMultistepScheduler, StableDiffusionPipeline
 
 
 def check_supported_pipeline(model_dir):
