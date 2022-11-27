@@ -39,14 +39,30 @@ class DiffusersPipelineImageToText:
             pass
         self.pipeline.to(device)
 
-    def __call__(self, prompt, **kwargs):
+    def __call__(
+        self,
+        prompt,
+        num_inference_steps=25,
+        guidance_scale=7.5,
+        num_images_per_prompt=1,
+        height=None,
+        width=None,
+        negative_prompt=None,
+    ):
+        # TODO: add support for more images (Reason is correct output)
+        num_images_per_prompt = 1
 
-        if kwargs:
-            out = self.pipeline(prompt, **kwargs)
-        else:
-            out = self.pipeline(prompt)
+        # Call pipeline with parameters
+        out = self.pipeline(
+            prompt,
+            num_inference_steps=num_inference_steps,
+            guidance_scale=guidance_scale,
+            num_images_per_prompt=num_images_per_prompt,
+            negative_prompt=negative_prompt,
+            height=height,
+            width=width,
+        )
 
-        # TODO: return more than 1 image if requested
         return out.images[0]
 
 
