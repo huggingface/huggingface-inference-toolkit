@@ -124,6 +124,17 @@ def test_get_pipeline():
 
 
 @require_torch
+def test_whisper_long_audio():
+    with tempfile.TemporaryDirectory() as tmpdirname:
+
+        storage_dir = _load_repository_from_hf("openai/whisper-tiny", tmpdirname, framework="pytorch")
+        pipe = get_pipeline("automatic-speech-recognition", storage_dir.as_posix())
+        res = pipe(os.path.join(os.getcwd(), "tests/resources/audio", "long_sample.mp3"))
+
+        assert len(res["text"]) > 700
+
+
+@require_torch
 def test_wrap_conversation_pipeline():
     init_pipeline = pipeline(
         "conversational",

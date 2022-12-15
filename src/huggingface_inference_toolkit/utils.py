@@ -8,7 +8,7 @@ from typing import Optional, Union
 from huggingface_hub import HfApi, login
 from huggingface_hub.file_download import cached_download, hf_hub_url
 from huggingface_hub.utils import filter_repo_objects
-from transformers import pipeline
+from transformers import pipeline, WhisperForConditionalGeneration
 from transformers.file_utils import is_tf_available, is_torch_available
 from transformers.pipelines import Conversation, Pipeline
 
@@ -282,5 +282,16 @@ def get_pipeline(task: str, model_dir: Path, **kwargs) -> Pipeline:
     # wrapp specific pipeline to support better ux
     if task == "conversational":
         hf_pipeline = wrap_conversation_pipeline(hf_pipeline)
-
+    elif task == "automatic-speech-recognition" and isinstance(hf_pipeline.model, WhisperForConditionalGeneration):
+        # set chunk length to 30s for whisper to enable long audio files
+        hf_pipeline._preprocess_params["chunk_length_s"] = 30
+        hf_pipeline._preprocess_params["ignore_warning"] = True
+        # set decoder to english by default
+        # TODO: replace when transformers 4.26.0 is release with
+        # hf_pipeline.model.config.forced_decoder_ids = pipe.tokenizer.get_decoder_prompt_ids(language=lang, task="transcribe")
+        hf_pipeline.tokenizer.language = "english"
+        hf_pipeline.tokenizer.task = "transcribe"
+        hf_pipeline.model.config.forced_decoder_ids = [
+            (rank + 1, token) for rank, token in enumerate(hf_pipeline.tokenizer.prefix_tokens[1:])
+        ]
     return hf_pipeline
