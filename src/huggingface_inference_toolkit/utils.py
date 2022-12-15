@@ -8,7 +8,7 @@ from typing import Optional, Union
 from huggingface_hub import HfApi, login
 from huggingface_hub.file_download import cached_download, hf_hub_url
 from huggingface_hub.utils import filter_repo_objects
-from transformers import pipeline, WhisperForConditionalGeneration
+from transformers import WhisperForConditionalGeneration, pipeline
 from transformers.file_utils import is_tf_available, is_torch_available
 from transformers.pipelines import Conversation, Pipeline
 
