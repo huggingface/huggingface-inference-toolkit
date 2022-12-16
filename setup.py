@@ -17,6 +17,7 @@ VERSION = "0.1.0"
 install_requires = [
     # transformers
     "transformers[sklearn,sentencepiece]>=4.25.1",
+    "huggingface_hub>=0.11.0"
     # api stuff
     "orjson",
     # "robyn",
@@ -36,7 +37,7 @@ extras["diffusers"] = ["diffusers==0.8.1", "accelerate==0.14.0"]
 
 # Hugging Face specific dependencies
 # framework specific dependencies
-extras["torch"] = ["torch>=1.8.0", "torchaudio"]
+extras["torch"] = ["torch>=1.13.0", "torchaudio", "torchvision", "accelerate==0.14.0"]
 extras["tensorflow"] = ["tensorflow==2.9.0"]
 # test and quality
 extras["test"] = [

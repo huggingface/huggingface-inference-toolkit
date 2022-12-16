@@ -27,6 +27,8 @@ from huggingface_inference_toolkit.sentence_transformers_utils import (
 logger = logging.getLogger(__name__)
 logging.basicConfig(format="%(asctime)s | %(levelname)s | %(message)s", level=logging.INFO)
 
+_optimum_available = importlib.util.find_spec("optimum") is not None
+_accelerate_available = importlib.util.find_spec("accelerate") is not None
 
 if is_tf_available():
     import tensorflow as tf
@@ -34,13 +36,15 @@ if is_tf_available():
 if is_torch_available():
     import torch
 
-_optimum_available = importlib.util.find_spec("optimum") is not None
-
 
 def is_optimum_available():
     return False
     # TODO: change when supported
     # return _optimum_available
+
+
+def is_accelerate_available():
+    return _accelerate_available
 
 
 framework2weight = {
@@ -263,6 +267,20 @@ def get_pipeline(task: str, model_dir: Path, **kwargs) -> Pipeline:
     else:
         kwargs["tokenizer"] = model_dir
 
+    # set model kwargs for low cpu usage load and device map to load lager models with accelerate
+    if is_accelerate_available() and _get_framework() == "pytorch":
+        print("accelerate is available")
+        # loading the model took 4.595603253000036 seconds
+        # to
+        # loading the model took 2.9555797050002184 seconds
+        model_kwargs = kwargs.get("model_kwargs", {})
+        kwargs["model_kwargs"] = {
+            "low_cpu_mem_usage": True,
+            "device_map": "auto" if device == 0 else None,
+            "torch_dtype": "auto" if device == 0 else None,
+            **model_kwargs,
+        }
+
     # add check for optimum accelerated pipeline
     if is_optimum_available():
         # TODO: add check for optimum accelerated pipeline
@@ -277,7 +295,7 @@ def get_pipeline(task: str, model_dir: Path, **kwargs) -> Pipeline:
     elif is_diffusers_available() and check_supported_pipeline(model_dir) and task == "text-to-image":
         hf_pipeline = get_diffusers_pipeline(task=task, model_dir=model_dir, device=device, **kwargs)
     else:
-        hf_pipeline = pipeline(task=task, model=model_dir, device=device, **kwargs)
+        hf_pipeline = pipeline(task=task, model=model_dir, **kwargs)
 
     # wrapp specific pipeline to support better ux
     if task == "conversational":
