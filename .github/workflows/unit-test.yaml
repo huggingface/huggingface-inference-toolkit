@@ -22,6 +22,8 @@ jobs:
         python-version: 3.9.12
     - name: Install Python dependencies
       run: pip install -e .[test,dev,torch,st]
+    - uses: FedericoCarboni/setup-ffmpeg@v2
+      id: setup-ffmpeg
     - name: Run Unit test_const
       run: 	python -m pytest -s -v ./tests/unit/test_const.py
     - name: Run Unit test_handler
