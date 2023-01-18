@@ -1,7 +1,9 @@
 import importlib.util
-from typing import Union
 from pathlib import Path
+from typing import Union
+
 from transformers import AutoConfig
+
 
 _accelerate_available = importlib.util.find_spec("accelerate") is not None
 

@@ -11,8 +11,8 @@ from huggingface_hub.utils import filter_repo_objects
 from transformers import WhisperForConditionalGeneration, pipeline
 from transformers.file_utils import is_tf_available, is_torch_available
 from transformers.pipelines import Conversation, Pipeline
-from huggingface_inference_toolkit.accelerate_utils import check_support_for_model_parallelism, is_accelerate_available
 
+from huggingface_inference_toolkit.accelerate_utils import check_support_for_model_parallelism, is_accelerate_available
 from huggingface_inference_toolkit.const import HF_DEFAULT_PIPELINE_NAME, HF_MODULE_NAME
 from huggingface_inference_toolkit.diffusers_utils import (
     check_supported_pipeline,
@@ -264,7 +264,7 @@ def get_pipeline(task: str, model_dir: Path, **kwargs) -> Pipeline:
         kwargs["tokenizer"] = model_dir
 
     # set model kwargs for low cpu usage load and device map to load lager models with accelerate
-    if is_accelerate_available() and _get_framework() == "pytorch" and check_support_for_model_parallelism():
+    if is_accelerate_available() and _get_framework() == "pytorch" and check_support_for_model_parallelism(model_dir):
         model_kwargs = kwargs.get("model_kwargs", {})
         kwargs["model_kwargs"] = {
             "low_cpu_mem_usage": True,
