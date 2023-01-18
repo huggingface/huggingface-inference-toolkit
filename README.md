@@ -38,7 +38,7 @@ docker build -t starlette-transformers:gpu -f dockerfiles/starlette/tensorflow/D
 
 
 ```bash
-docker run -ti -p 5000:5000 -e HF_MODEL_ID=distilbert-base-uncased-distilled-squad -e HF_TASK=question-answering starlette-transformers:cpu
+docker run -ti --gpus all -p 5000:5000 -e HF_MODEL_ID=distilbert-base-uncased-distilled-squad -e HF_TASK=question-answering starlette-transformers:gpu
 ```
 
 

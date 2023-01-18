@@ -8,9 +8,10 @@ from typing import Optional, Union
 from huggingface_hub import HfApi, login
 from huggingface_hub.file_download import cached_download, hf_hub_url
 from huggingface_hub.utils import filter_repo_objects
-from transformers import AutoConfig, WhisperForConditionalGeneration, pipeline
+from transformers import WhisperForConditionalGeneration, pipeline
 from transformers.file_utils import is_tf_available, is_torch_available
 from transformers.pipelines import Conversation, Pipeline
+from huggingface_inference_toolkit.accelerate_utils import check_support_for_model_parallelism, is_accelerate_available
 
 from huggingface_inference_toolkit.const import HF_DEFAULT_PIPELINE_NAME, HF_MODULE_NAME
 from huggingface_inference_toolkit.diffusers_utils import (
@@ -28,7 +29,6 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(format="%(asctime)s | %(levelname)s | %(message)s", level=logging.INFO)
 
 _optimum_available = importlib.util.find_spec("optimum") is not None
-_accelerate_available = importlib.util.find_spec("accelerate") is not None
 
 if is_tf_available():
     import tensorflow as tf
@@ -41,10 +41,6 @@ def is_optimum_available():
     return False
     # TODO: change when supported
     # return _optimum_available
-
-
-def is_accelerate_available():
-    return _accelerate_available
 
 
 framework2weight = {
@@ -108,13 +104,6 @@ def _is_gpu_available():
             "To install TensorFlow 2.0, read the instructions at https://www.tensorflow.org/install/ "
             "To install PyTorch, read the instructions at https://pytorch.org/."
         )
-
-
-def _get_model_config(path_to_model_artifacts: Union[str, Path]):
-    """
-    extracts the model config from the model artifacts
-    """
-    return AutoConfig.from_pretrained(path_to_model_artifacts)
 
 
 def _get_framework():
@@ -275,10 +264,11 @@ def get_pipeline(task: str, model_dir: Path, **kwargs) -> Pipeline:
         kwargs["tokenizer"] = model_dir
 
     # set model kwargs for low cpu usage load and device map to load lager models with accelerate
-    if is_accelerate_available() and _get_framework() == "pytorch":
+    if is_accelerate_available() and _get_framework() == "pytorch" and check_support_for_model_parallelism():
         model_kwargs = kwargs.get("model_kwargs", {})
         kwargs["model_kwargs"] = {
             "low_cpu_mem_usage": True,
+            "device_map": "auto",
             **model_kwargs,
         }
 
