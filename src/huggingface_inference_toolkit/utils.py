@@ -301,13 +301,20 @@ def get_pipeline(task: str, model_dir: Path, **kwargs) -> Pipeline:
             (rank + 1, token) for rank, token in enumerate(hf_pipeline.tokenizer.prefix_tokens[1:])
         ]
 
+    # device >= 0 is GPU, we don't want to enable IPEx on such device.
     if HF_USE_IPEX:
-        logger.info(
-            f"Enabling IPEx on: "
-            f"{hf_pipeline.task},"
-            f"{hf_pipeline.model.base_model_prefix},"
-            f"{'CPU' if device == -1 else 'GPU'}"
-        )
-        hf_pipeline = _patch_pipeline_with_ipex(hf_pipeline)
+        if device < 0:
+            logger.info(
+                f"Enabling IPEx on: "
+                f"{hf_pipeline.task},"
+                f"{hf_pipeline.model.base_model_prefix},"
+                f"CPU"
+            )
+            hf_pipeline = _patch_pipeline_with_ipex(hf_pipeline)
+        else:
+            logger.warning(
+                f"Attempt to enable IPEx while targeting GPU device ({device}). ",
+                "Disabling IPEx target."
+            )
 
     return hf_pipeline
