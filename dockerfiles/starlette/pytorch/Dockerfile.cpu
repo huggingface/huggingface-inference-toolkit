@@ -1,4 +1,3 @@
-FROM tiangolo/uvicorn-gunicorn-starlette:python3.10 as builder
 FROM registry.internal.huggingface.tech/pytorch_docker/pytorch_1.13.1_sm_cpu:latest
 
 RUN apt-get update -y && \
@@ -13,15 +12,15 @@ RUN python -m pip install --force --extra-index-url https://download.pytorch.org
 
 # install starlette framework
 RUN --mount=target=requirements.txt,source=starlette_requirements.txt \
-    pip install --no-cache-dir -r requirements.txt && \
+    python -m pip install --no-cache-dir -r requirements.txt && \
     python -m pip install optimum-intel intel_extension_for_pytorch
 
 # copy application
 COPY src/huggingface_inference_toolkit /app/huggingface_inference_toolkit
 COPY src/huggingface_inference_toolkit/webservice_starlette.py /app/webservice_starlette.py
 
-COPY --from=builder /app/ /app
-COPY --from=builder /start.sh /
+COPY --from=tiangolo/uvicorn-gunicorn-starlette:python3.10 /app/ /app
+COPY --from=tiangolo/uvicorn-gunicorn-starlette:python3.10 /start.sh /
 
 # Intel OMP specific variables
 ## Number of threads to use when dispatching // sections
@@ -41,7 +40,7 @@ ENV KMP_HW_SUBSET ${KMP_HW_SUBSET}
 
 # Preload Intel's IOMP and Google TCMalloc
 #ENV LD_PRELOAD "/opt/intel/oneapi/compiler/latest/linux/compiler/lib/intel64_lin/libiomp5.so /usr/lib/x86_64-linux-gnu/libtcmalloc.so"
-ENV LD_PRELOAD "/usr/lib/x86_64-linux-gnu/libtcmalloc.so"
+ENV LD_PRELOAD "/usr/lib/x86_64-linux-gnu/libtcmalloc_minimal.so.4"
 
 # run app
 WORKDIR /app
