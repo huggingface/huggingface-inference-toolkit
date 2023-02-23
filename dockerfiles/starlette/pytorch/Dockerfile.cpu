@@ -24,8 +24,9 @@ COPY --from=tiangolo/uvicorn-gunicorn-starlette:python3.10 /start.sh /
 
 # Intel OMP specific variables
 ## Number of threads to use when dispatching // sections
-ARG OMP_NUM_THREADS=1
-ENV OMP_NUM_THREADS ${OMP_NUM_THREADS}
+ARG NUM_THREADS=1
+ENV OMP_NUM_THREADS ${NUM_THREADS}
+ENV MKL_NUM_THREADS ${NUM_THREADS}
 
 ## Time to actively wait (spinning) before sleeping threads while awaiting work
 ARG KMP_BLOCKTIME=1s
@@ -35,11 +36,14 @@ ENV KMP_BLOCKTIME ${KMP_BLOCKTIME}
 ### Use 1 socket (1s),
 ### Use ${OMP_NUM_THREADS} cores for // sections (${X}c)
 ### Use 1 thread per core (No SMT) (1t)
-ARG KMP_HW_SUBSET=1s,${OMP_NUM_THREADS}c,1t
+ARG KMP_HW_SUBSET=${OMP_NUM_THREADS}c,1t
 ENV KMP_HW_SUBSET ${KMP_HW_SUBSET}
 
+# Let's put thread <n> + 1 as close as possible to thread <n>, permuting with 1 (i.e consecutive), offsetting by 0
+ENV KMP_AFFINITY=granularity=fine,compact,1,0
+
 # Preload Intel's IOMP and Google TCMalloc
-ENV LD_PRELOAD "/usr/lib/x86_64-linux-gnu/libtcmalloc_minimal.so.4"
+ENV LD_PRELOAD "/usr/lib/x86_64-linux-gnu/libiomp5.so /usr/lib/x86_64-linux-gnu/libtcmalloc_minimal.so.4"
 
 # run app
 WORKDIR /app
