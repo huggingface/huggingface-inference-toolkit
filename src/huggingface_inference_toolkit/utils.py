@@ -12,7 +12,7 @@ from transformers import WhisperForConditionalGeneration, pipeline
 from transformers.file_utils import is_tf_available, is_torch_available
 from transformers.pipelines import Conversation, Pipeline
 
-from huggingface_inference_toolkit.const import HF_DEFAULT_PIPELINE_NAME, HF_MODULE_NAME
+from huggingface_inference_toolkit.const import HF_DEFAULT_PIPELINE_NAME, HF_USE_IPEX, HF_MODULE_NAME
 from huggingface_inference_toolkit.diffusers_utils import (
     check_supported_pipeline,
     get_diffusers_pipeline,
@@ -120,6 +120,12 @@ def _get_framework():
             "To install TensorFlow 2.0, read the instructions at https://www.tensorflow.org/install/ "
             "To install PyTorch, read the instructions at https://pytorch.org/."
         )
+
+
+def _patch_pipeline_with_ipex(pipeline: Pipeline) -> Pipeline:
+    from optimum.intel import inference_mode
+    with inference_mode(pipeline, jit=True) as ipex_pipeline:
+        return ipex_pipeline
 
 
 def _load_repository_from_hf(
@@ -294,4 +300,14 @@ def get_pipeline(task: str, model_dir: Path, **kwargs) -> Pipeline:
         hf_pipeline.model.config.forced_decoder_ids = [
             (rank + 1, token) for rank, token in enumerate(hf_pipeline.tokenizer.prefix_tokens[1:])
         ]
+
+    if HF_USE_IPEX:
+        logger.info(
+            f"Enabling IPEx on: "
+            f"{hf_pipeline.task},"
+            f"{hf_pipeline.model.base_model_prefix},"
+            f"{'CPU' if device == -1 else 'GPU'}"
+        )
+        hf_pipeline = _patch_pipeline_with_ipex(hf_pipeline)
+
     return hf_pipeline
