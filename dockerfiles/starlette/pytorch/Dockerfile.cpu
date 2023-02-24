@@ -14,7 +14,7 @@ RUN python -m pip install --force --extra-index-url https://download.pytorch.org
 # TODO: Update transformers to fix version when 4.27.0 goes out
 # TODO: needed for https://github.com/huggingface/transformers/commit/f3a7befffa36170e0266fdc48d3d571a9bd5fa44
 RUN --mount=target=requirements.txt,source=starlette_requirements.txt \
-    python -m pip install git+https://github.com/huggingface/transformers
+    python -m pip install git+https://github.com/huggingface/transformers && \
     python -m pip install --no-cache-dir -r requirements.txt && \
     python -m pip install optimum-intel intel_extension_for_pytorch
 
