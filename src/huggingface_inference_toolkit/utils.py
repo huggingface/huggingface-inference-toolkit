@@ -124,7 +124,10 @@ def _get_framework():
 
 def _patch_pipeline_with_ipex(pipeline: Pipeline) -> Pipeline:
     from optimum.intel import inference_mode
-    with inference_mode(pipeline, jit=True) as ipex_pipeline:
+
+    use_jit = pipeline.task not in {"summarization", "text-generation", "text2text-generation", "translation"}
+    logger.info(f"Enabling Optimum inference_mode(jit={use_jit})")
+    with inference_mode(pipeline, jit=use_jit) as ipex_pipeline:
         return ipex_pipeline
 
 
