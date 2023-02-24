@@ -22,11 +22,16 @@ COPY src/huggingface_inference_toolkit/webservice_starlette.py /app/webservice_s
 COPY --from=tiangolo/uvicorn-gunicorn-starlette:python3.10 /app/ /app
 COPY --from=tiangolo/uvicorn-gunicorn-starlette:python3.10 /start.sh /
 
+# Endpoint parameters
+ARG ENDPOINT_IF=0.0.0.0
+ARG ENDPOINT_PORT=5000
+ENV ENDPOINT_IF ${ENDPOINT_IF}
+ENV ENDPOINT_PORT ${ENDPOINT_PORT}
+
 # Intel OMP specific variables
 ## Number of threads to use when dispatching // sections
-ARG NUM_THREADS=1
-ENV OMP_NUM_THREADS ${NUM_THREADS}
-ENV MKL_NUM_THREADS ${NUM_THREADS}
+ARG OMP_NUM_THREADS=1
+ENV OMP_NUM_THREADS ${OMP_NUM_THREADS}
 
 ## Time to actively wait (spinning) before sleeping threads while awaiting work
 ARG KMP_BLOCKTIME=1s
@@ -47,6 +52,8 @@ ENV LD_PRELOAD "/usr/lib/x86_64-linux-gnu/libiomp5.so /usr/lib/x86_64-linux-gnu/
 
 # run app
 WORKDIR /app
-ENTRYPOINT ["uvicorn", "webservice_starlette:app", "--host", "0.0.0.0", "--port", "5000"]
+COPY run_endpoint.sh run_endpoint.sh
+
+ENTRYPOINT ["./run_endpoint.sh"]
 
 
