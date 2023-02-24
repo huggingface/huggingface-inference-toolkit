@@ -292,14 +292,10 @@ def get_pipeline(task: str, model_dir: Path, **kwargs) -> Pipeline:
         # set chunk length to 30s for whisper to enable long audio files
         hf_pipeline._preprocess_params["chunk_length_s"] = 30
         hf_pipeline._preprocess_params["ignore_warning"] = True
+
         # set decoder to english by default
-        # TODO: replace when transformers 4.26.0 is release with
-        # hf_pipeline.model.config.forced_decoder_ids = pipe.tokenizer.get_decoder_prompt_ids(language=lang, task="transcribe")
-        hf_pipeline.tokenizer.language = "english"
-        hf_pipeline.tokenizer.task = "transcribe"
-        hf_pipeline.model.config.forced_decoder_ids = [
-            (rank + 1, token) for rank, token in enumerate(hf_pipeline.tokenizer.prefix_tokens[1:])
-        ]
+        hf_pipeline.model.config.forced_decoder_ids = \
+            hf_pipeline.tokenizer.get_decoder_prompt_ids(language="english", task="transcribe")
 
     # device == GPU, we don't want to enable IPEx on such device.
     if HF_USE_IPEX:
