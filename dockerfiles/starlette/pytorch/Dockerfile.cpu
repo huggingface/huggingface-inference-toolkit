@@ -1,4 +1,4 @@
-FROM registry.internal.huggingface.tech/pytorch-docker/pytorch_cpu_1.13.1:latest
+FROM registry.internal.huggingface.tech/pytorch-docker/pytorch-cpu:cpu_1.13.1
 
 # TODO: Remove git when transformers 4.27.0 comes out.
 RUN apt-get update -y && \
