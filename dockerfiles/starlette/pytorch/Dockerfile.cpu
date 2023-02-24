@@ -1,8 +1,10 @@
 FROM registry.internal.huggingface.tech/pytorch_docker/pytorch_1.13.1_sm_cpu:latest
 
+# TODO: Remove git when transformers 4.27.0 comes out.
 RUN apt-get update -y && \
     apt-get install --no-install-recommends -y \
     libsndfile1 \
+    git \
     ffmpeg \
     libtcmalloc-minimal4 \
     libnuma1 && \
@@ -11,7 +13,7 @@ RUN apt-get update -y && \
 RUN python -m pip install --force --extra-index-url https://download.pytorch.org/whl/cpu torch
 
 # Install python dependencies
-# TODO: Update transformers to fix version when 4.27.0 goes out
+# TODO: Update transformers to fix version when 4.27.0 comes out.
 # TODO: needed for https://github.com/huggingface/transformers/commit/f3a7befffa36170e0266fdc48d3d571a9bd5fa44
 RUN --mount=target=requirements.txt,source=starlette_requirements.txt \
     python -m pip install git+https://github.com/huggingface/transformers && \
