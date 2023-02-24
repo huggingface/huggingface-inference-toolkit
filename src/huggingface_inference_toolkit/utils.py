@@ -240,9 +240,9 @@ def get_device():
     The get device function will return the device for the DL Framework.
     """
     if _is_gpu_available():
-        return 0
+        return "cuda"
     else:
-        return -1
+        return "cpu"
 
 
 def get_pipeline(task: str, model_dir: Path, **kwargs) -> Pipeline:
@@ -250,7 +250,7 @@ def get_pipeline(task: str, model_dir: Path, **kwargs) -> Pipeline:
     create pipeline class for a specific task based on local saved model
     """
     device = get_device()
-    logger.info(f"Using device { 'GPU' if device == 0 else 'CPU'}")
+    logger.info(f"Using device { 'GPU' if device == 'cuda' else 'CPU'}")
 
     if task is None:
         raise EnvironmentError(
@@ -301,9 +301,9 @@ def get_pipeline(task: str, model_dir: Path, **kwargs) -> Pipeline:
             (rank + 1, token) for rank, token in enumerate(hf_pipeline.tokenizer.prefix_tokens[1:])
         ]
 
-    # device >= 0 is GPU, we don't want to enable IPEx on such device.
+    # device == GPU, we don't want to enable IPEx on such device.
     if HF_USE_IPEX:
-        if device < 0:
+        if device == "cpu":
             logger.info(
                 f"Enabling IPEx on: "
                 f"{hf_pipeline.task},"
