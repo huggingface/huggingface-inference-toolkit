@@ -30,7 +30,6 @@ def check_supported_pipeline(model_dir):
 
 class DiffusersPipelineImageToText:
     def __init__(self, model_dir: str, device: str = None):  # needs "cuda" for GPU
-
         self.pipeline = StableDiffusionPipeline.from_pretrained(model_dir, torch_dtype=torch.float16)
         # try to use DPMSolverMultistepScheduler
         try:
