@@ -8,7 +8,9 @@ RUN pip install  --no-cache-dir -r /tmp/requirements.txt && rm /tmp/requirements
 COPY src/huggingface_inference_toolkit huggingface_inference_toolkit
 COPY src/huggingface_inference_toolkit/webservice_starlette.py webservice_starlette.py
 
+# copy entrypoint and change permissions
+COPY scripts/entrypoint.sh entrypoint.sh
+RUN chmod +x entrypoint.sh
+
 # run app
-ENTRYPOINT ["uvicorn", "webservice_starlette:app", "--host", "0.0.0.0", "--port", "5000"]
-
-
+ENTRYPOINT ["/bin/bash", "entrypoint.sh"]
