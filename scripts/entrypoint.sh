@@ -1,7 +1,7 @@
 # /bin/bash
 
 # check if HF_MODEL_DIR is set and if not skip installing custom dependencies
-if [ -z "${HF_MODEL_DIR}" ]; then 
+if [[ ! -z "${HF_MODEL_DIR}" ]]; then
   # check if requirements.txt exists and if so install dependencies
   if [ -f "${HF_MODEL_DIR}/requirements.txt" ]; then
     echo "Installing custom dependencies from ${HF_MODEL_DIR}/requirements.txt"
