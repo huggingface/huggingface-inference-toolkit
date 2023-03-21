@@ -31,7 +31,7 @@ RUN curl -L https://micromamba.snakepit.net/api/micromamba/linux-64/latest | tar
 WORKDIR /app
 
 # install base python dependencies
-COPY dockerfiles/pytorch/cpu/environment.yaml /app/environment.yaml
+COPY dockerfiles/tensorflow/cpu/environment.yaml /app/environment.yaml
 RUN micromamba install -y -n base -f environment.yaml \
     && rm environment.yaml \
     && micromamba clean --all --yes

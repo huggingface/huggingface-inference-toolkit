@@ -3,6 +3,7 @@ FROM nvidia/cuda:11.2.2-base-ubuntu20.04
 LABEL maintainer="Hugging Face"
 
 ENV DEBIAN_FRONTEND=noninteractive
+ENV CONDA_OVERRIDE_CUDA="11.2"
 
 RUN apt-get update \
     && apt-get -y upgrade --only-upgrade systemd openssl cryptsetup \
@@ -33,7 +34,7 @@ RUN curl -L https://micromamba.snakepit.net/api/micromamba/linux-64/latest | tar
 WORKDIR /app
 
 # install base python dependencies
-COPY dockerfiles/pytorch/gpu/environment.yaml /app/environment.yaml
+COPY dockerfiles/tensorflow/gpu/environment.yaml /app/environment.yaml
 RUN micromamba install -y -n base -f environment.yaml \
     && rm environment.yaml \
     && micromamba clean --all --yes
