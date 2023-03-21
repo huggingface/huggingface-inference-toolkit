@@ -10,10 +10,6 @@ on:
       image:
         type: string
         required: true
-      platforms:
-        type: string
-        required: false
-        default: linux/amd64
       build_args:
         type: string
         required: false
