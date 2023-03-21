@@ -3,6 +3,10 @@ from pathlib import Path
 from time import perf_counter
 
 import orjson
+from starlette.applications import Starlette
+from starlette.responses import PlainTextResponse, Response
+from starlette.routing import Route
+
 from huggingface_inference_toolkit.async_utils import async_handler_call
 from huggingface_inference_toolkit.const import (
     HF_FRAMEWORK,
@@ -16,9 +20,6 @@ from huggingface_inference_toolkit.handler import get_inference_handler_either_c
 from huggingface_inference_toolkit.serialization.base import ContentType
 from huggingface_inference_toolkit.serialization.json_utils import Jsoner
 from huggingface_inference_toolkit.utils import _load_repository_from_hf
-from starlette.applications import Starlette
-from starlette.responses import PlainTextResponse, Response
-from starlette.routing import Route
 
 
 def config_logging(level=logging.INFO):

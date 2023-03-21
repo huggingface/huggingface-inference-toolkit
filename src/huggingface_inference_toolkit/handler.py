@@ -1,16 +1,14 @@
 import logging
-from abc import ABC
 from pathlib import Path
 from typing import Optional, Union
 
 from huggingface_inference_toolkit.utils import check_and_register_custom_pipeline_from_directory, get_pipeline
 
-
 logger = logging.getLogger(__name__)
 logging.basicConfig(format="%(asctime)s | %(levelname)s | %(message)s", level=logging.INFO)
 
 
-class HuggingFaceHandler(ABC):
+class HuggingFaceHandler:
     """
     A Default Hugging Face Inference Handler which works with all transformers pipelines, Sentence Transformers and Optimum.
     """

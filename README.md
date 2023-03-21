@@ -30,8 +30,8 @@ docker build -t starlette-transformers:cpu -f dockerfiles/tensorflow/cpu/Dockerf
 
 _gpu images_
 ```bash
-docker build -t starlette-transformers:gpu -f dockerfiles/pytorch/gpu/Dockerfile.
-docker build -t starlette-transformers:gpu -f dockerfiles/starlette/tensorflow/Dockerfile.gpu .
+docker build -t starlette-transformers:gpu -f dockerfiles/pytorch/gpu/Dockerfile .
+docker build -t starlette-transformers:gpu -f dockerfiles/tensorflow/gpu/Dockerfile .
 ```
 
 2. Run the container and provide either environment variables to the HUB model you want to use or mount a volume to the container, where your model is stored.

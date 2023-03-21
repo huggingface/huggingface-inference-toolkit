@@ -1,6 +1,5 @@
 import importlib.util
 import logging
-import os
 import sys
 from pathlib import Path
 from typing import Optional, Union
@@ -20,7 +19,6 @@ from huggingface_inference_toolkit.sentence_transformers_utils import (
     get_sentence_transformers_pipeline,
     is_sentence_transformers_available,
 )
-
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(format="%(asctime)s | %(levelname)s | %(message)s", level=logging.INFO)

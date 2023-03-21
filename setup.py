@@ -55,6 +55,7 @@ extras["quality"] = [
     "black",
     "isort",
     "flake8",
+    "ruff",
 ]
 
 setup(
