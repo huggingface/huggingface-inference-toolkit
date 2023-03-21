@@ -5,9 +5,7 @@ import sys
 from pathlib import Path
 from typing import Optional, Union
 
-from huggingface_hub import HfApi, login
-from huggingface_hub.file_download import cached_download, hf_hub_url
-from huggingface_hub.utils import filter_repo_objects
+from huggingface_hub import login, snapshot_download
 from transformers import WhisperForConditionalGeneration, pipeline
 from transformers.file_utils import is_tf_available, is_torch_available
 from transformers.pipelines import Conversation, Pipeline
@@ -51,6 +49,11 @@ framework2weight = {
     "flax": "flax*",
     "rust": "rust*",
     "onnx": "*onnx",
+    "safetensors": "*safetensors",
+    "coreml": "*mlmodel",
+    "tflite": "*tflite",
+    "savedmodel": "*tar.gz",
+    "ckpt": "*ckpt",
 }
 
 
@@ -58,7 +61,18 @@ def create_artifact_filter(framework):
     """
     Returns a list of regex pattern based on the DL Framework. which will be to used to ignore files when downloading
     """
-    ignore_regex_list = ["pytorch*", "tf*", "flax*", "rust*", "*onnx"]
+    ignore_regex_list = [
+        "pytorch*",
+        "tf*",
+        "flax*",
+        "rust*",
+        "*onnx",
+        "*safetensors",
+        "*mlmodel",
+        "*tflite",
+        "*tar.gz",
+        "*ckpt",
+    ]
     pattern = framework2weight.get(framework, None)
     if pattern in ignore_regex_list:
         ignore_regex_list.remove(pattern)
@@ -147,45 +161,16 @@ def _load_repository_from_hf(
 
     # create regex to only include the framework specific weights
     ignore_regex = create_artifact_filter(framework)
+    logger.info(f"Ignore regex pattern for files, which are not downloaded: { ', '.join(ignore_regex) }")
 
-    # get image artifact files
-    _api = HfApi()
-    repo_info = _api.repo_info(
-        repo_id=repository_id,
-        repo_type="model",
+    # Download the repository to the workdir and filter out non-framework specific weights
+    snapshot_download(
+        repository_id,
         revision=revision,
-    )
-    # apply regex to filter out non-framework specific weights if args.framework is set
-    filtered_repo_files = filter_repo_objects(
-        items=[f.rfilename for f in repo_info.siblings],
+        local_dir=str(target_dir),
+        local_dir_use_symlinks=False,
         ignore_patterns=ignore_regex,
     )
-
-    # iterate over all files and download them
-    for repo_file in filtered_repo_files:
-        url = hf_hub_url(repo_id=repository_id, filename=repo_file, revision=revision)
-
-        # define values if repo has nested strucutre
-        if isinstance(repo_file, str):
-            repo_file = Path(repo_file)
-
-        repo_file_is_dir = repo_file.parent != Path(".")
-        real_target_dir = target_dir / repo_file.parent if repo_file_is_dir else target_dir
-        real_file_name = str(repo_file.name) if repo_file_is_dir else repo_file
-
-        # download files
-        path = cached_download(
-            url,
-            cache_dir=real_target_dir.as_posix(),
-            force_filename=real_file_name,
-            use_auth_token=hf_hub_token,
-        )
-        if os.path.exists(path + ".lock"):
-            os.remove(path + ".lock")
-
-    # create requirements.txt if not exists
-    if not (target_dir / "requirements.txt").exists():
-        target_dir.joinpath("requirements.txt").touch()
 
     return target_dir
 

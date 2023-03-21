@@ -17,6 +17,7 @@ VERSION = "0.1.0"
 install_requires = [
     # transformers
     "transformers[sklearn,sentencepiece]>=4.25.1",
+    "huggingface_hub>=0.13.3",
     # api stuff
     "orjson",
     # "robyn",
