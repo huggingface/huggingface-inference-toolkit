@@ -3,10 +3,12 @@ on:
     inputs:
       context:
         type: string
-        required: true
+        required: false
+        default: "./"
       repository:
         type: string
-        required: true
+        required: false
+        default: "registry.internal.huggingface.tech/hf-endpoints"
       image:
         type: string
         required: true
@@ -19,9 +21,9 @@ on:
         required: false
         default: "Dockerfile"
     secrets:
-      DOCKER_USERNAME:
+      REGISTRY_USERNAME:
         required: true
-      DOCKER_PASSWORD:
+      REGISTRY_PASSWORD:
         required: true
 
 jobs:
@@ -43,9 +45,9 @@ jobs:
       - name: Login to container registry
         uses: docker/login-action@v2.0.0
         with:
-          registry: registry.internal.huggingface.tech/hf-endpoints
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          registry: ${{ inputs.repository }}
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
 
       - name: Inject slug/short variables
         uses: rlespinasse/github-slug-action@v4
@@ -57,4 +59,4 @@ jobs:
           context: ${{ inputs.context }}
           build-args: ${{ inputs.build_args }}
           file:  ${{ inputs.context }}/${{ inputs.dockerfile }}
-          tags: ${{ inputs.repository }}/${{ inputs.image }}:${{ env.GITHUB_SHA_SHORT }},${{ inputs.repository }}/${{ inputs.image }}:latest,
+          tags: ${{ inputs.repository }}/${{ inputs.image }}:${{ env.GITHUB_SHA_SHORT }},${{ inputs.repository }}/${{ inputs.image }}:latest
