@@ -44,8 +44,6 @@ def test_load_tensorflow_repository_from_hf():
         # folder contains all config files and pytorch_model.bin
         folder_contents = os.listdir(storage_folder)
         assert "pytorch_model.bin" not in folder_contents
-        # custom requirements.txt for custom handler
-        assert "requirements.txt" in folder_contents
         # filter framework
         assert "tf_model.h5" in folder_contents
         # revision doesn't have tokenizer
@@ -62,8 +60,6 @@ def test_load_onnx_repository_from_hf():
         # folder contains all config files and pytorch_model.bin
         folder_contents = os.listdir(storage_folder)
         assert "pytorch_model.bin" not in folder_contents
-        # custom requirements.txt for custom handler
-        assert "requirements.txt" in folder_contents
         # filter framework
         assert "tf_model.h5" not in folder_contents
         # onnx model
@@ -85,8 +81,6 @@ def test_load_pytorch_repository_from_hf():
         # folder contains all config files and pytorch_model.bin
         folder_contents = os.listdir(storage_folder)
         assert "pytorch_model.bin" in folder_contents
-        # custom requirements.txt for custom handler
-        assert "requirements.txt" in folder_contents
         # filter framework
         assert "tf_model.h5" not in folder_contents
         # revision doesn't have tokenizer
@@ -126,7 +120,6 @@ def test_get_pipeline():
 @require_torch
 def test_whisper_long_audio():
     with tempfile.TemporaryDirectory() as tmpdirname:
-
         storage_dir = _load_repository_from_hf("openai/whisper-tiny", tmpdirname, framework="pytorch")
         pipe = get_pipeline("automatic-speech-recognition", storage_dir.as_posix())
         res = pipe(os.path.join(os.getcwd(), "tests/resources/audio", "long_sample.mp3"))

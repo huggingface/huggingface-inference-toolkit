@@ -24,14 +24,14 @@ HF_MODEL_ID=hf-internal-testing/tiny-random-distilbert HF_MODEL_DIR=tmp2 HF_TASK
 
 _cpu images_
 ```bash
-docker build -t starlette-transformers:cpu -f dockerfiles/starlette/pytorch/Dockerfile.cpu .
-docker build -t starlette-transformers:cpu -f dockerfiles/starlette/tensorflow/Dockerfile.cpu .
+docker build -t starlette-transformers:cpu -f dockerfiles/pytorch/cpu/Dockerfile .
+docker build -t starlette-transformers:cpu -f dockerfiles/tensorflow/cpu/Dockerfile .
 ```
 
 _gpu images_
 ```bash
-docker build -t starlette-transformers:gpu -f dockerfiles/starlette/pytorch/Dockerfile.gpu .
-docker build -t starlette-transformers:gpu -f dockerfiles/starlette/tensorflow/Dockerfile.gpu .
+docker build -t starlette-transformers:gpu -f dockerfiles/pytorch/gpu/Dockerfile .
+docker build -t starlette-transformers:gpu -f dockerfiles/tensorflow/gpu/Dockerfile .
 ```
 
 2. Run the container and provide either environment variables to the HUB model you want to use or mount a volume to the container, where your model is stored.
@@ -39,6 +39,7 @@ docker build -t starlette-transformers:gpu -f dockerfiles/starlette/tensorflow/D
 
 ```bash
 docker run -ti -p 5000:5000 -e HF_MODEL_ID=distilbert-base-uncased-distilled-squad -e HF_TASK=question-answering starlette-transformers:cpu
+docker run -ti -p 5000:5000 -e HF_MODEL_DIR=/repository -v $(pwd)/distilbert-base-uncased-emotion:/repository starlette-transformers:cpu
 ```
 
 
@@ -55,6 +56,7 @@ curl --request POST \
 	}
 }'
 ```
+
 
 ---
 

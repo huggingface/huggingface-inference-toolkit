@@ -2,7 +2,6 @@ import importlib.util
 import json
 import os
 
-
 _diffusers = importlib.util.find_spec("diffusers") is not None
 
 
@@ -12,7 +11,6 @@ def is_diffusers_available():
 
 if is_diffusers_available():
     import torch
-
     from diffusers import DPMSolverMultistepScheduler, StableDiffusionPipeline
 
 

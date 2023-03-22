@@ -18,40 +18,32 @@ jobs:
   starlette-pytorch-cpu:
     uses: ./.github/workflows/docker-build-action.yaml
     with:
-      context: ./
-      repository: huggingface
-      image: hf-endpoints-inference-pytorch-cpu
-      dockerfile: dockerfiles/starlette/pytorch/Dockerfile.cpu
+      image: inference-pytorch-cpu
+      dockerfile: dockerfiles/pytorch/cpu/Dockerfile
     secrets:
-      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
+      REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
   starlette-pytorch-gpu:
     uses: ./.github/workflows/docker-build-action.yaml
     with:
-      context: ./
-      repository: huggingface
-      image: hf-endpoints-inference-pytorch-gpu
-      dockerfile: dockerfiles/starlette/pytorch/Dockerfile.gpu
+      image: inference-pytorch-gpu
+      dockerfile: dockerfiles/pytorch/gpu/Dockerfile
     secrets:
-      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
+      REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
   starlette-tensorflow-cpu:
     uses: ./.github/workflows/docker-build-action.yaml
     with:
-      context: ./
-      repository: huggingface
-      image: hf-endpoints-inference-tensorflow-cpu
-      dockerfile: dockerfiles/starlette/tensorflow/Dockerfile.cpu
+      image: inference-tensorflow-cpu
+      dockerfile: dockerfiles/tensorflow/cpu/Dockerfile
     secrets:
-      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
+      REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
   starlette-tensorflow-gpu:
     uses: ./.github/workflows/docker-build-action.yaml
     with:
-      context: ./
-      repository: huggingface
-      image: hf-endpoints-inference-tensorflow-gpu
-      dockerfile: dockerfiles/starlette/tensorflow/Dockerfile.gpu
+      image: inference-tensorflow-gpu
+      dockerfile: dockerfiles/tensorflow/gpu/Dockerfile
     secrets:
-      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
+      REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}

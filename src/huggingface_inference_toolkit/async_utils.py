@@ -5,7 +5,6 @@ import anyio
 from anyio import Semaphore
 from typing_extensions import ParamSpec
 
-
 # To not have too many threads running (which could happen on too many concurrent
 # requests, we limit it with a semaphore.
 MAX_CONCURRENT_THREADS = 1
