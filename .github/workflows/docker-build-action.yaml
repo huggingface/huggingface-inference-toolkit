@@ -25,6 +25,8 @@ on:
         required: true
       REGISTRY_PASSWORD:
         required: true
+      TAILSCALE_AUTHKEY:
+        required: true
 
 jobs:
   buildx:
