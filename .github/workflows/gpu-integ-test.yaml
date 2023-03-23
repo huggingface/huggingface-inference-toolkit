@@ -64,7 +64,7 @@ jobs:
       - name: Install Python dependencies
         run: pip install -e .[test,dev,torch]
       - name: Build Docker
-        run: docker build -t starlette-transformers:gpu -f dockerfiles/starlette/pytorch/Dockerfile.gpu .
+        run: docker build -t starlette-transformers:gpu -f dockerfiles/pytorch/gpu/Dockerfile .
       - name: Run Integration Tests
         run: RUN_SLOW=True make integ-test
   tensorflow-integration-test:
@@ -86,7 +86,7 @@ jobs:
       - name: Install Python dependencies
         run: pip install -e .[test,dev,tensorflow]
       - name: Build Docker
-        run: docker build -t starlette-transformers:gpu -f dockerfiles/starlette/tensorflow/Dockerfile.gpu .
+        run: docker build -t starlette-transformers:gpu -f dockerfiles/tensorflow/gpu/Dockerfile .
       - name: Run Integration Tests
         run: RUN_SLOW=True make integ-test
 
