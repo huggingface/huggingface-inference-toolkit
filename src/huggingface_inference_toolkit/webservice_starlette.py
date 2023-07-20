@@ -19,7 +19,7 @@ from huggingface_inference_toolkit.const import (
 from huggingface_inference_toolkit.handler import get_inference_handler_either_custom_or_default_handler
 from huggingface_inference_toolkit.serialization.base import ContentType
 from huggingface_inference_toolkit.serialization.json_utils import Jsoner
-from huggingface_inference_toolkit.utils import _load_repository_from_hf
+from huggingface_inference_toolkit.utils import _load_repository_from_hf, convert_params_to_int_or_bool
 
 
 def config_logging(level=logging.INFO):
@@ -64,8 +64,6 @@ async def health(request):
 
 async def predict(request):
     try:
-        # tracks request time
-        start_time = perf_counter()
         # extracts content from request
         content_type = request.headers.get("content-Type", None)
         # try to deserialize payload
@@ -74,13 +72,16 @@ async def predict(request):
         if "inputs" not in deserialized_body:
             raise ValueError(f"Body needs to provide a inputs key, recieved: {orjson.dumps(deserialized_body)}")
 
+        # check for query parameter and add them to the body
+        if request.query_params and "parameters" not in deserialized_body:
+            deserialized_body["parameters"] = convert_params_to_int_or_bool(dict(request.query_params))
+        print(deserialized_body)
+
+        # tracks request time
+        start_time = perf_counter()
         # run async not blocking call
         pred = await async_handler_call(inference_handler, deserialized_body)
-        # run sync blocking call -> slighty faster for < 200ms prediction time
-        # pred = inference_handler(deserialized_body)
-
         # log request time
-        # TODO: repalce with middleware
         logger.info(f"POST {request.url.path} | Duration: {(perf_counter()-start_time) *1000:.2f} ms")
 
         # response extracts content from request

@@ -243,6 +243,8 @@ def get_pipeline(task: str, model_dir: Path, **kwargs) -> Pipeline:
         "zero-shot-image-classification",
     }:
         kwargs["feature_extractor"] = model_dir
+    elif task in {"image-to-text"}:
+        pass
     else:
         kwargs["tokenizer"] = model_dir
 
@@ -278,3 +280,15 @@ def get_pipeline(task: str, model_dir: Path, **kwargs) -> Pipeline:
             (rank + 1, token) for rank, token in enumerate(hf_pipeline.tokenizer.prefix_tokens[1:])
         ]
     return hf_pipeline
+
+
+def convert_params_to_int_or_bool(params):
+    """Converts query params to int or bool if possible"""
+    for k, v in params.items():
+        if v.isnumeric():
+            params[k] = int(v)
+        if v == 'false':
+            params[k] = False
+        if v == 'true':
+            params[k] = True
+    return params
