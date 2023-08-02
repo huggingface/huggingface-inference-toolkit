@@ -1,6 +1,9 @@
 import importlib.util
 import logging
 
+logger = logging.getLogger(__name__)
+logging.basicConfig(format="%(asctime)s | %(levelname)s | %(message)s", level=logging.INFO)
+
 _diffusers = importlib.util.find_spec("diffusers") is not None
 
 
@@ -11,9 +14,6 @@ def is_diffusers_available():
 if is_diffusers_available():
     import torch
     from diffusers import AutoPipelineForText2Image, DPMSolverMultistepScheduler, StableDiffusionPipeline
-
-logger = logging.getLogger(__name__)
-logging.basicConfig(format="%(asctime)s | %(levelname)s | %(message)s", level=logging.INFO)
 
 
 class IEAutoPipelineForText2Image:

@@ -3,8 +3,8 @@ import tempfile
 from PIL import Image
 from transformers.testing_utils import require_torch, slow
 
-from huggingface_inference_toolkit.handler import get_inference_handler_either_custom_or_default_handler
-from huggingface_inference_toolkit.diffusers_utils import get_diffusers_pipeline, DiffusersPipelineImageToText
+
+from huggingface_inference_toolkit.diffusers_utils import get_diffusers_pipeline, IEAutoPipelineForText2Image
 from huggingface_inference_toolkit.utils import _load_repository_from_hf, get_pipeline
 
 
@@ -15,7 +15,7 @@ def test_get_diffusers_pipeline():
             "hf-internal-testing/tiny-stable-diffusion-torch", tmpdirname, framework="pytorch"
         )
         pipe = get_pipeline("text-to-image", storage_dir.as_posix())
-        assert isinstance(pipe, DiffusersPipelineImageToText)
+        assert isinstance(pipe, IEAutoPipelineForText2Image)
 
 
 @slow

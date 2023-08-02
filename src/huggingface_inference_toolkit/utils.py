@@ -59,7 +59,7 @@ def create_artifact_filter(framework):
     """
     Returns a list of regex pattern based on the DL Framework. which will be to used to ignore files when downloading
     """
-    ignore_regex_list = list(framework2weight.values())
+    ignore_regex_list = list(set(framework2weight.values()))
 
     pattern = framework2weight.get(framework, None)
     if pattern in ignore_regex_list:
@@ -152,7 +152,6 @@ def _load_repository_from_hf(
         files = HfApi().model_info(repository_id).siblings
         if any(f.rfilename.endswith("safetensors") for f in files):
             framework = "safetensors"
-
 
     # create regex to only include the framework specific weights
     ignore_regex = create_artifact_filter(framework)
@@ -284,8 +283,8 @@ def convert_params_to_int_or_bool(params):
     for k, v in params.items():
         if v.isnumeric():
             params[k] = int(v)
-        if v == 'false':
+        if v == "false":
             params[k] = False
-        if v == 'true':
+        if v == "true":
             params[k] = True
     return params
