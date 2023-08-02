@@ -1,6 +1,5 @@
 import importlib.util
-import json
-import os
+import logging
 
 _diffusers = importlib.util.find_spec("diffusers") is not None
 
@@ -11,60 +10,46 @@ def is_diffusers_available():
 
 if is_diffusers_available():
     import torch
-    from diffusers import DPMSolverMultistepScheduler, StableDiffusionPipeline
+    from diffusers import AutoPipelineForText2Image, DPMSolverMultistepScheduler, StableDiffusionPipeline
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(format="%(asctime)s | %(levelname)s | %(message)s", level=logging.INFO)
 
 
-def check_supported_pipeline(model_dir):
-    try:
-        with open(os.path.join(model_dir, "model_index.json")) as json_file:
-            data = json.load(json_file)
-            if data["_class_name"] == "StableDiffusionPipeline":
-                return True
-            else:
-                return False
-    except Exception:
-        return False
-
-
-class DiffusersPipelineImageToText:
+class IEAutoPipelineForText2Image:
     def __init__(self, model_dir: str, device: str = None):  # needs "cuda" for GPU
-        self.pipeline = StableDiffusionPipeline.from_pretrained(model_dir, torch_dtype=torch.float16)
+        dtype = torch.float32
+        if device == "cuda":
+            dtype = torch.float16
+        device_map = "auto" if device == "cuda" else None
+
+        self.pipeline = AutoPipelineForText2Image.from_pretrained(model_dir, torch_dtype=dtype, device_map=device_map)
         # try to use DPMSolverMultistepScheduler
-        try:
-            self.pipeline.scheduler = DPMSolverMultistepScheduler.from_config(self.pipeline.scheduler.config)
-        except Exception:
-            pass
+        if isinstance(self.pipeline, StableDiffusionPipeline):
+            try:
+                self.pipeline.scheduler = DPMSolverMultistepScheduler.from_config(self.pipeline.scheduler.config)
+            except Exception:
+                pass
         self.pipeline.to(device)
 
     def __call__(
         self,
         prompt,
-        num_inference_steps=25,
-        guidance_scale=7.5,
-        num_images_per_prompt=1,
-        height=None,
-        width=None,
-        negative_prompt=None,
+        **kwargs,
     ):
         # TODO: add support for more images (Reason is correct output)
-        num_images_per_prompt = 1
+        if "num_images_per_prompt" in kwargs:
+            kwargs.pop("num_images_per_prompt")
+            logger.warning("Sending num_images_per_prompt > 1 to pipeline is not supported. Using default value 1.")
 
         # Call pipeline with parameters
-        out = self.pipeline(
-            prompt,
-            num_inference_steps=num_inference_steps,
-            guidance_scale=guidance_scale,
-            num_images_per_prompt=num_images_per_prompt,
-            negative_prompt=negative_prompt,
-            height=height,
-            width=width,
-        )
+        out = self.pipeline(prompt, num_images_per_prompt=1)
 
         return out.images[0]
 
 
 DIFFUSERS_TASKS = {
-    "text-to-image": DiffusersPipelineImageToText,
+    "text-to-image": IEAutoPipelineForText2Image,
 }
 
 
