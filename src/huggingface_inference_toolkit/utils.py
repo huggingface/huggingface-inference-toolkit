@@ -4,14 +4,13 @@ import sys
 from pathlib import Path
 from typing import Optional, Union
 
-from huggingface_hub import login, snapshot_download
+from huggingface_hub import HfApi, login, snapshot_download
 from transformers import WhisperForConditionalGeneration, pipeline
 from transformers.file_utils import is_tf_available, is_torch_available
 from transformers.pipelines import Conversation, Pipeline
 
 from huggingface_inference_toolkit.const import HF_DEFAULT_PIPELINE_NAME, HF_MODULE_NAME
 from huggingface_inference_toolkit.diffusers_utils import (
-    check_supported_pipeline,
     get_diffusers_pipeline,
     is_diffusers_available,
 )
@@ -46,11 +45,12 @@ framework2weight = {
     "pt": "pytorch*",
     "flax": "flax*",
     "rust": "rust*",
-    "onnx": "*onnx",
+    "onnx": "*onnx*",
     "safetensors": "*safetensors",
     "coreml": "*mlmodel",
     "tflite": "*tflite",
     "savedmodel": "*tar.gz",
+    "openvino": "*openvino*",
     "ckpt": "*ckpt",
 }
 
@@ -59,18 +59,8 @@ def create_artifact_filter(framework):
     """
     Returns a list of regex pattern based on the DL Framework. which will be to used to ignore files when downloading
     """
-    ignore_regex_list = [
-        "pytorch*",
-        "tf*",
-        "flax*",
-        "rust*",
-        "*onnx",
-        "*safetensors",
-        "*mlmodel",
-        "*tflite",
-        "*tar.gz",
-        "*ckpt",
-    ]
+    ignore_regex_list = list(framework2weight.values())
+
     pattern = framework2weight.get(framework, None)
     if pattern in ignore_regex_list:
         ignore_regex_list.remove(pattern)
@@ -156,6 +146,13 @@ def _load_repository_from_hf(
     # create workdir
     if not target_dir.exists():
         target_dir.mkdir(parents=True)
+
+    # check if safetensors weights are available
+    if framework == "pytorch":
+        files = HfApi().model_info(repository_id).siblings
+        if any(f.rfilename.endswith("safetensors") for f in files):
+            framework = "safetensors"
+
 
     # create regex to only include the framework specific weights
     ignore_regex = create_artifact_filter(framework)
@@ -259,7 +256,7 @@ def get_pipeline(task: str, model_dir: Path, **kwargs) -> Pipeline:
         "sentence-ranking",
     ]:
         hf_pipeline = get_sentence_transformers_pipeline(task=task, model_dir=model_dir, device=device, **kwargs)
-    elif is_diffusers_available() and check_supported_pipeline(model_dir) and task == "text-to-image":
+    elif is_diffusers_available() and task == "text-to-image":
         hf_pipeline = get_diffusers_pipeline(task=task, model_dir=model_dir, device=device, **kwargs)
     else:
         hf_pipeline = pipeline(task=task, model=model_dir, device=device, **kwargs)

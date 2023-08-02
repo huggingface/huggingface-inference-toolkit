@@ -43,8 +43,11 @@ class IEAutoPipelineForText2Image:
             logger.warning("Sending num_images_per_prompt > 1 to pipeline is not supported. Using default value 1.")
 
         # Call pipeline with parameters
-        out = self.pipeline(prompt, num_images_per_prompt=1)
-
+        if self.pipeline.device.type == "cuda":
+            with torch.autocast("cuda"):
+                out = self.pipeline(prompt, num_images_per_prompt=1)
+        else:
+            out = self.pipeline(prompt, num_images_per_prompt=1)
         return out.images[0]
 
 
