@@ -9,5 +9,6 @@ dependencies:
   - transformers[sklearn,sentencepiece,audio,vision]==4.31.0
   - sentence_transformers==2.2.2
   - torchvision==0.14.1
-  - diffusers==0.18.2
+  - diffusers==0.19.3
   - accelerate==0.21.0
+  - safetensors
