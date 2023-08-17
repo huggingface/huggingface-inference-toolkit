@@ -75,7 +75,6 @@ async def predict(request):
         # check for query parameter and add them to the body
         if request.query_params and "parameters" not in deserialized_body:
             deserialized_body["parameters"] = convert_params_to_int_or_bool(dict(request.query_params))
-        print(deserialized_body)
 
         # tracks request time
         start_time = perf_counter()
