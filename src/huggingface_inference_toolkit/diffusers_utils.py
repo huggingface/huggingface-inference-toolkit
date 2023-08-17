@@ -1,5 +1,6 @@
 import importlib.util
 import logging
+from transformers.utils.import_utils import is_torch_bf16_gpu_available
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(format="%(asctime)s | %(levelname)s | %(message)s", level=logging.INFO)
@@ -20,7 +21,7 @@ class IEAutoPipelineForText2Image:
     def __init__(self, model_dir: str, device: str = None):  # needs "cuda" for GPU
         dtype = torch.float32
         if device == "cuda":
-            dtype = torch.float16
+            dtype = torch.bfloat16 if is_torch_bf16_gpu_available() else torch.float16
         device_map = "auto" if device == "cuda" else None
 
         self.pipeline = AutoPipelineForText2Image.from_pretrained(model_dir, torch_dtype=dtype, device_map=device_map)
@@ -43,11 +44,7 @@ class IEAutoPipelineForText2Image:
             logger.warning("Sending num_images_per_prompt > 1 to pipeline is not supported. Using default value 1.")
 
         # Call pipeline with parameters
-        if self.pipeline.device.type == "cuda":
-            with torch.autocast("cuda"):
-                out = self.pipeline(prompt, num_images_per_prompt=1)
-        else:
-            out = self.pipeline(prompt, num_images_per_prompt=1)
+        out = self.pipeline(prompt, num_images_per_prompt=1, **kwargs)
         return out.images[0]
 
 
