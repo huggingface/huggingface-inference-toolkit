@@ -6,7 +6,7 @@ dependencies:
 - nvidia::pytorch-cuda=12.1
 - pytorch::pytorch=2.1.2=py3.9_cuda12.1*
 - pip:
-  - transformers[sklearn,sentencepiece,audio,vision]==4.37.2
+  - transformers[sklearn,sentencepiece,audio,vision]==4.36.2
   - sentence_transformers==2.3.1
   - torchvision==0.16.2
   - diffusers==0.26.1
