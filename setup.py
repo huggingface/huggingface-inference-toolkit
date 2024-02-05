@@ -31,7 +31,7 @@ install_requires = [
 
 extras = {}
 
-extras["st"] = ["sentence_transformers==2.3.1==2.3.1"]
+extras["st"] = ["sentence_transformers==2.3.1"]
 extras["diffusers"] = ["diffusers==0.26.1", "accelerate==0.26.1"]
 
 
