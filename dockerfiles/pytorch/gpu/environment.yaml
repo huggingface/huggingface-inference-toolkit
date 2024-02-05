@@ -3,12 +3,11 @@ channels:
 - conda-forge
 dependencies:
 - python=3.9.13
-- nvidia::cudatoolkit=11.7
-- pytorch::pytorch=1.13.1=py3.9_cuda11.7*
+- nvidia::pytorch-cuda=12.1
+- pytorch::pytorch=2.1.2=py3.9_cuda12.1*
 - pip:
-  - transformers[sklearn,sentencepiece,audio,vision]==4.31.0
-  - sentence_transformers==2.2.2
-  - torchvision==0.14.1
-  - diffusers==0.20.0
-  - accelerate==0.21.0
-  - safetensors
+  - transformers[sklearn,sentencepiece,audio,vision]==4.37.2
+  - sentence_transformers==2.3.1
+  - torchvision==0.16.2
+  - diffusers==0.26.1
+  - accelerate==0.26.1
