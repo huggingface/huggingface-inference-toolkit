@@ -7,6 +7,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update \
     && apt-get -y upgrade --only-upgrade systemd openssl cryptsetup \
     && apt-get install -y \
+    build-essential \
     bzip2 \
     curl \
     git \

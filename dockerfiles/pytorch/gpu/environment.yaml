@@ -1,13 +1,15 @@
 name: base
 channels:
 - conda-forge
+- pytorch
+- nvidia
 dependencies:
 - python=3.9.13
-- nvidia::pytorch-cuda=12.1
-- pytorch::pytorch=2.1.2=py3.9_cuda12.1*
+- pytorch-cuda=12.1
+- pytorch=2.1.2
+- torchvision==0.16.2
 - pip:
   - transformers[sklearn,sentencepiece,audio,vision]==4.36.2
   - sentence_transformers==2.3.1
-  - torchvision==0.16.2
   - diffusers==0.26.1
   - accelerate==0.26.1
