@@ -39,9 +39,15 @@ RUN micromamba install -y -n base -f environment.yaml \
     && rm environment.yaml \
     && micromamba clean --all --yes
 
+# install dependencies
+COPY dockerfiles/pytorch/gpu/requirements.txt /tmp/requirements.txt
+RUN pip install -r /tmp/requirements.txt && rm /tmp/requirements.txt
+
 # install huggingface inference toolkit
 COPY requirements.txt /tmp/requirements.txt
-RUN pip install  --no-cache-dir -r /tmp/requirements.txt && rm /tmp/requirements.txt
+RUN pip install -r /tmp/requirements.txt && rm /tmp/requirements.txt
+
+
 
 # copy application
 COPY src/huggingface_inference_toolkit huggingface_inference_toolkit

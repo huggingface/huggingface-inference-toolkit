@@ -1,4 +1,4 @@
-FROM nvidia/cuda:12.1.0-devel-ubuntu22.04
+FROM nvidia/cuda:12.3.1-devel-ubuntu22.04
 
 LABEL maintainer="Hugging Face"
 
@@ -15,29 +15,22 @@ RUN apt-get update \
     tar \
     gcc \
     g++ \
+    cmake \
+    libprotobuf-dev \
+    protobuf-compiler \
+    python3 \
+    python3-pip \
     # audio
     libsndfile1-dev \
     ffmpeg \
     && apt-get clean autoremove --yes \
     && rm -rf /var/lib/{apt,dpkg,cache,log}
 
-# install micromamba
-ENV MAMBA_ROOT_PREFIX=/opt/conda
-ENV PATH=/opt/conda/bin:$PATH
-ENV LD_LIBRARY_PATH="/opt/conda/lib:${LD_LIBRARY_PATH}"
-
-RUN curl -L https://micro.mamba.pm/api/micromamba/linux-64/latest | tar -xj "bin/micromamba" \
-    && touch /root/.bashrc \
-    && ./bin/micromamba shell init -s bash -p /opt/conda  \
-    && grep -v '[ -z "\$PS1" ] && return' /root/.bashrc  > /opt/conda/bashrc
-
 WORKDIR /app
 
-# install base python dependencies
-COPY dockerfiles/pytorch/gpu/environment.yaml /app/environment.yaml
-RUN micromamba install -y -n base -f environment.yaml \
-    && rm environment.yaml \
-    && micromamba clean --all --yes
+# install dependencies
+COPY dockerfiles/pytorch/gpu/requirements.txt /tmp/requirements.txt
+RUN pip install  --no-cache-dir -r /tmp/requirements.txt && rm /tmp/requirements.txt
 
 # install huggingface inference toolkit
 COPY requirements.txt /tmp/requirements.txt

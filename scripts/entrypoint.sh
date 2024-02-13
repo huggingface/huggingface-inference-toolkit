@@ -10,4 +10,4 @@ if [[ ! -z "${HF_MODEL_DIR}" ]]; then
 fi
 
 # start the server
-uvicorn webservice_starlette:app --host 0.0.0.0 --port 5000
+python3 -m uvicorn webservice_starlette:app --host 0.0.0.0 --port 5000

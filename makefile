@@ -19,3 +19,12 @@ quality:
 
 style: 
 	ruff $(check_dirs) --fix
+
+build-torch-gpu:
+	docker build -f dockerfiles/pytorch/gpu/Dockerfile -t starlette-transformers:gpu .
+
+build-torch-cpu:
+	docker build -f dockerfiles/pytorch/cpu/Dockerfile -t starlette-transformers:cpu .
+
+run-classification:
+	docker run -e HF_MODEL="hf-internal-testing/tiny-random-distilbert" -e HF_MODEL_DIR="/tmp2" -e HF_TASK="text-classification" --gpus all starlette-transformers:gpu
