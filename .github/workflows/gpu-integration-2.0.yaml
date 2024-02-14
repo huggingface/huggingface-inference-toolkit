@@ -1,164 +1,45 @@
-name: GPU integrationt ests
+name: GPU - Run Integration Tests
 
 on:
+  push:
+    branches:
+      - main
+  pull_request:
   workflow_dispatch:
 
-env:
-  HF_HOME: /mnt/cache
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
 
 jobs:
-  setup:
-    name: Setup
-    strategy:
-      matrix:
-        machine_type: [single-gpu, multi-gpu]
-    runs-on: ['${{ matrix.machine_type }}', nvidia-gpu, t4, daily-ci]
-    container:
-      image: huggingface/transformers-all-latest-gpu
-      options: --gpus 0 --shm-size "16gb" --ipc host -v /mnt/cache/.cache/huggingface:/mnt/cache/
-    outputs:
-      folder_slices: ${{ steps.set-matrix.outputs.folder_slices }}
-      slice_ids: ${{ steps.set-matrix.outputs.slice_ids }}
+  pytorch-build-image-gpu:
+    runs-on: [single-gpu, nvidia-gpu, t4, ci]
+    env:
+      AWS_REGION: us-east-1
     steps:
-      - name: Update clone
-        working-directory: /transformers
-        run: |
-          git fetch && git checkout ${{ github.sha }}
-
-      - name: Cleanup
-        working-directory: /transformers
-        run: |
-          rm -rf tests/__pycache__
-          rm -rf tests/models/__pycache__
-          rm -rf reports
-
-      - name: Show installed libraries and their versions
-        working-directory: /transformers
-        run: pip freeze
-
-      - id: set-matrix
-        name: Identify models to test
-        working-directory: /transformers/tests
-        run: |
-          echo "folder_slices=$(python3 ../utils/split_model_tests.py --num_splits ${{ env.NUM_SLICES }})" >> $GITHUB_OUTPUT
-          echo "slice_ids=$(python3 -c 'd = list(range(${{ env.NUM_SLICES }})); print(d)')" >> $GITHUB_OUTPUT
-
-      - name: NVIDIA-SMI
-        run: |
-          nvidia-smi
-
-  run_tests_gpu:
-    name: " "
-    needs: setup
-    strategy:
-      fail-fast: false
-      matrix:
-        machine_type: [single-gpu, multi-gpu]
-        slice_id: ${{ fromJSON(needs.setup.outputs.slice_ids) }}
-    uses: ./.github/workflows/model_jobs.yml
-    with:
-      folder_slices: ${{ needs.setup.outputs.folder_slices }}
-      machine_type: ${{ matrix.machine_type }}
-      slice_id: ${{ matrix.slice_id }}
-    secrets: inherit
-
-  run_examples_gpu:
-    name: Examples directory
-    strategy:
-      fail-fast: false
-      matrix:
-        machine_type: [single-gpu]
-    runs-on: ['${{ matrix.machine_type }}', nvidia-gpu, t4, daily-ci]
-    container:
-      image: huggingface/transformers-all-latest-gpu
-      options: --gpus 0 --shm-size "16gb" --ipc host -v /mnt/cache/.cache/huggingface:/mnt/cache/
-    needs: setup
-    steps:
-      - name: Update clone
-        working-directory: /transformers
-        run: git fetch && git checkout ${{ github.sha }}
-
-      - name: Reinstall transformers in edit mode (remove the one installed during docker image build)
-        working-directory: /transformers
-        run: python3 -m pip uninstall -y transformers && python3 -m pip install -e .
-
-      - name: NVIDIA-SMI
-        run: |
-          nvidia-smi
-
-      - name: Environment
-        working-directory: /transformers
-        run: |
-          python3 utils/print_env.py
-
-      - name: Show installed libraries and their versions
-        working-directory: /transformers
-        run: pip freeze
-
-      - name: Run examples tests on GPU
-        working-directory: /transformers
-        run: |
-          pip install -r examples/pytorch/_tests_requirements.txt
-          python3 -m pytest -v --make-reports=${{ matrix.machine_type }}_examples_gpu examples/pytorch
-
-      - name: Failure short reports
-        if: ${{ failure() }}
-        continue-on-error: true
-        run: cat /transformers/reports/${{ matrix.machine_type }}_examples_gpu/failures_short.txt
-
-      - name: "Test suite reports artifacts: ${{ matrix.machine_type }}_run_examples_gpu"
-        if: ${{ always() }}
-        uses: actions/upload-artifact@v3
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Build and export
+        uses: docker/build-push-action@v2
         with:
-          name: ${{ matrix.machine_type }}_run_examples_gpu
-          path: /transformers/reports/${{ matrix.machine_type }}_examples_gpu
-
-  run_pipelines_torch_gpu:
-    name: PyTorch pipelines
-    strategy:
-      fail-fast: false
-      matrix:
-        machine_type: [single-gpu, multi-gpu]
-    runs-on: ['${{ matrix.machine_type }}', nvidia-gpu, t4, daily-ci]
-    container:
-      image: huggingface/transformers-pytorch-gpu
-      options: --gpus all --shm-size "16gb" --ipc host -v /mnt/cache/.cache/huggingface:/mnt/cache/
-    needs: setup
-    steps:
-      - name: Update clone
-        working-directory: /transformers
-        run: git fetch && git checkout ${{ github.sha }}
-
-      - name: Reinstall transformers in edit mode (remove the one installed during docker image build)
-        working-directory: /transformers
-        run: python3 -m pip uninstall -y transformers && python3 -m pip install -e .
-
-      - name: NVIDIA-SMI
-        run: |
-          nvidia-smi
-
-      - name: Environment
-        working-directory: /transformers
-        run: |
-          python3 utils/print_env.py
-
-      - name: Show installed libraries and their versions
-        working-directory: /transformers
-        run: pip freeze
-
-      - name: Run all pipeline tests on GPU
-        working-directory: /transformers
-        run: |
-          python3 -m pytest -n 1 -v --dist=loadfile --make-reports=${{ matrix.machine_type }}_tests_torch_pipeline_gpu tests/pipelines
-
-      - name: Failure short reports
-        if: ${{ failure() }}
-        continue-on-error: true
-        run: cat /transformers/reports/${{ matrix.machine_type }}_tests_torch_pipeline_gpu/failures_short.txt
-
-      - name: "Test suite reports artifacts: ${{ matrix.machine_type }}_run_tests_torch_pipeline_gpu"
-        if: ${{ always() }}
-        uses: actions/upload-artifact@v3
+          context: .
+          file: dockerfiles/pytorch/gpu/Dockerfile
+          tags: starlette-transformers:gpu
+          outputs: type=oci,dest=/tmp/starlette-transformers-gpu.tar
+      - name: Upload starlette-gpu image as artifact
+        uses: actions/upload-artifact@v2
         with:
-          name: ${{ matrix.machine_type }}_run_tests_torch_pipeline_gpu
-          path: /transformers/reports/${{ matrix.machine_type }}_tests_torch_pipeline_gpu
+          name: starlette-transformers:gpu
+          path: /tmp/starlette-transformers-gpu.tar
+  pytorch-integration-test-gpu:
+    runs-on: [single-gpu, nvidia-gpu, t4, ci]
+    env:
+      AWS_REGION: us-east-1
+    steps:
+    - name: Download artifacts (Docker images) from previous workflows
+        uses: actions/download-artifact@v2
+      - name: Load Docker images from previous workflows
+        run: |
+          docker load --input /tmp/starlette-transformers-gpu.tar
+      - run: docker image ls
