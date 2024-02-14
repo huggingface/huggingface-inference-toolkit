@@ -43,6 +43,8 @@ jobs:
       AWS_REGION: us-east-1
       ACTIONS_STEP_DEBUG: true
     steps:
+      - run: |
+        ls -all /tmp/starlette-transformers-gpu.tar
       - name: Download artifacts (Docker images) from previous workflows
         uses: actions/download-artifact@v4
         with:
