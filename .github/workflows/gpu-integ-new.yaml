@@ -50,8 +50,6 @@ jobs:
         with:
           name: starlette-transformers-gpu
           path: /tmp
-      - run: |
-          ls /tmp/ *.tar
       - name: Load Docker images from previous workflows
         run: |
           docker load --input /tmp/starlette-transformers-gpu.tar
