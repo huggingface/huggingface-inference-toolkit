@@ -1,11 +1,4 @@
-FROM nvidia/cuda:12.3.1-devel-ubuntu22.04 as base
-
-WORKDIR /app
-
-ARG PYTHON_WHEEL_PATH=/var/cache/python/wheels
-RUN mkdir -p ${PYTHON_WHEEL_PATH}
-
-FROM base as builder
+FROM nvidia/cuda:12.3.1-devel-ubuntu22.04
 
 LABEL maintainer="Hugging Face"
 
@@ -33,14 +26,11 @@ RUN apt-get update \
     && apt-get clean autoremove --yes \
     && rm -rf /var/lib/{apt,dpkg,cache,log}
 
+WORKDIR /app
+
 # install dependencies
 COPY dockerfiles/pytorch/gpu/requirements.txt /tmp/requirements.txt
-RUN pip install \
-    --no-cache-dir \
-    --no-index \
-    --find-links=${PYTHON_WHEEL_PATH}
-    -r /tmp/requirements.txt && \
-    rm /tmp/requirements.txt
+RUN pip install  --no-cache-dir -r /tmp/requirements.txt && rm /tmp/requirements.txt
 
 # install huggingface inference toolkit
 COPY requirements.txt /tmp/requirements.txt
