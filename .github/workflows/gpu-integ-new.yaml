@@ -1,6 +1,10 @@
 name: GPU - Run Integration Tests 2.0
 
 on:
+  push:
+    branches:
+      - main
+  pull_request:
   workflow_dispatch:
 
 concurrency:
