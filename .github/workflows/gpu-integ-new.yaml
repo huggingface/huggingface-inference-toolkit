@@ -30,7 +30,9 @@ jobs:
           tags: starlette-transformers:gpu
           outputs: type=oci,dest=/tmp/starlette-transformers-gpu.tar
       - name: Upload starlette-gpu image as artifact
-        uses: actions/upload-artifact@v2
+        env:
+          ACTIONS_STEP_DEBUG: true
+        uses: actions/upload-artifact@v4
         with:
           name: starlette-transformers-gpu
           path: /tmp/starlette-transformers-gpu.tar
@@ -39,6 +41,7 @@ jobs:
     runs-on: [single-gpu, nvidia-gpu, t4, ci]
     env:
       AWS_REGION: us-east-1
+      ACTIONS_STEP_DEBUG: true
     steps:
       - name: Download artifacts (Docker images) from previous workflows
         uses: actions/download-artifact@v2
