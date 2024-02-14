@@ -32,7 +32,7 @@ jobs:
       - name: Upload starlette-gpu image as artifact
         uses: actions/upload-artifact@v2
         with:
-          name: starlette-transformers:gpu
+          name: starlette-transformers-gpu
           path: /tmp/starlette-transformers-gpu.tar
   pytorch-integration-test-gpu:
     needs: pytorch-build-image-gpu

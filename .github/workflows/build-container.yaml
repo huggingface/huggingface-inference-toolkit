@@ -1,13 +1,13 @@
 name: "Build applications images"
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - "src/**"
-      - "dockerfiles/**"
-      - "scripts/**"
+  #push:
+  #  branches:
+  #    - main
+  #  paths:
+  #    - "src/**"
+  #    - "dockerfiles/**"
+  #    - "scripts/**"
   workflow_dispatch:
 
 concurrency:
