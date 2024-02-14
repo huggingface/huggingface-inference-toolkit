@@ -37,7 +37,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: starlette-transformers-gpu
-          path: /tmp
+          path: /tmp/starlette-transformers-gpu.tar
   pytorch-integration-test-gpu:
     needs: pytorch-build-image-gpu
     runs-on: [single-gpu, nvidia-gpu, t4, ci]
