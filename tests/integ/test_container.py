@@ -13,7 +13,7 @@ from transformers.testing_utils import require_torch, slow, require_tf, _run_slo
 IS_GPU = _run_slow_tests
 DEVICE = "gpu" if IS_GPU else "cpu"
 
-client = docker.from_env()
+client = docker.DockerClient(base_url='unix://var/run/docker.sock')
 
 
 def make_sure_other_containers_are_stopped(client: DockerClient, container_name: str):

@@ -13,41 +13,34 @@ concurrency:
 
 
 jobs:
-  pytorch-integration-test:
+  pytorch-build-image-gpu:
     runs-on: [single-gpu, nvidia-gpu, t4, ci]
     env:
       AWS_REGION: us-east-1
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-      - name: Set up Python 3.9
-        uses: actions/setup-python@v2
+      - name: Build and export
+        uses: docker/build-push-action@v2
         with:
-          python-version: 3.9
-      - name: Install Python dependencies
-        run: pip install -e .[test,dev,torch]
-      - name: Build Docker
-        run: docker build -t starlette-transformers:gpu -f dockerfiles/pytorch/gpu/Dockerfile .
-      - name: Run Integration Tests
-        run: RUN_SLOW=True make integ-test
-  tensorflow-integration-test:
-    needs:
-      - pytorch-integration-test
+          context: .
+          file: dockerfiles/pytorch/gpu/Dockerfile
+          tags: starlette-transformers:gpu
+          outputs: type=oci,dest=/tmp/starlette-transformers-gpu.tar
+      - name: Upload starlette-gpu image as artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: starlette-transformers:gpu
+          path: /tmp/starlette-transformers-gpu.tar
+  pytorch-integration-test-gpu:
     runs-on: [single-gpu, nvidia-gpu, t4, ci]
     env:
       AWS_REGION: us-east-1
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Set up Python 3.9
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.9
-      - name: Uninstall pytorch
-        run: pip uninstall torch torchvision -y
-      - name: Install Python dependencies
-        run: pip install -e .[test,dev,tensorflow]
-      - name: Build Docker
-        run: docker build -t starlette-transformers:gpu -f dockerfiles/tensorflow/gpu/Dockerfile .
-      - name: Run Integration Tests
-        run: RUN_SLOW=True make integ-test
+    - name: Download artifacts (Docker images) from previous workflows
+        uses: actions/download-artifact@v2
+      - name: Load Docker images from previous workflows
+        run: |
+          docker load --input /tmp/starlette-transformers-gpu.tar
+      - run: docker image ls
+  
