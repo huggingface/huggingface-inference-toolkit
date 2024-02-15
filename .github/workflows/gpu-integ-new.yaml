@@ -53,4 +53,12 @@ jobs:
       - name: Load Docker images from previous workflows
         run: |
           docker load --input /tmp/starlette-transformers-gpu.tar
-      - run: docker image ls -a
+      - run: docker run -d starlette-transformers
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.11
+      - name: Install Python dependencies
+        run: pip install -e .[test,dev,torch]
+      - name: Run Integration Tests
+        run: RUN_SLOW=True pytest tests/integ/test_container_new.py
