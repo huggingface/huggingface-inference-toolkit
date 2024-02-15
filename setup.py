@@ -50,6 +50,7 @@ extras["test"] = [
     "mock==2.0.0",
     "docker",
     "requests",
+    "tenacity"
 ]
 extras["quality"] = [
     "black",

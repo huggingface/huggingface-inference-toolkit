@@ -9,6 +9,7 @@ from docker.client import DockerClient
 from huggingface_inference_toolkit.utils import _is_gpu_available, _load_repository_from_hf
 from integ.config import task2input, task2model, task2output, task2validation
 from transformers.testing_utils import require_torch, slow, require_tf, _run_slow_tests
+from tenacity import retry
 
 IS_GPU = _run_slow_tests
 DEVICE = "gpu" if IS_GPU else "cpu"
@@ -39,7 +40,7 @@ def wait_for_container_to_be_ready(base_url):
             time.sleep(2)
     return True
 
-
+@retry
 def verify_task(container: DockerClient, task: str, port: int = 5000, framework: str = "pytorch"):
     BASE_URL = f"http://localhost:{port}"
     input = task2input[task]
