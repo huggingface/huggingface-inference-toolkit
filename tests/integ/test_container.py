@@ -19,7 +19,6 @@ DEVICE = "gpu" if IS_GPU else "cpu"
 
 client = docker.DockerClient(base_url='unix://var/run/docker.sock')
 
-
 def make_sure_other_containers_are_stopped(client: DockerClient, container_name: str):
     try:
         previous = client.containers.get(container_name)
@@ -45,8 +44,8 @@ def wait_for_container_to_be_ready(base_url):
 
 @tenacity.retry(
     wait = tenacity.wait_random(min=1, max=2),
-    retry = tenacity.retry_if_exception(requests.exception.ConnectionError),
-    stop = tenacity.retry.stop_after_attempt(5)
+    retry = tenacity.retry_if_exception(requests.exceptions.ConnectionError),
+    stop = tenacity.stop_after_attempt(5)
 )
 def verify_task(container: DockerClient, task: str, port: int = 5000, framework: str = "pytorch"):
     BASE_URL = f"http://localhost:{port}"
