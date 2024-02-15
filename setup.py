@@ -37,7 +37,7 @@ extras["diffusers"] = ["diffusers==0.26.1", "accelerate==0.26.1"]
 
 # Hugging Face specific dependencies
 # framework specific dependencies
-extras["torch"] = ["torch>=1.8.0", "torchaudio"]
+extras["torch"] = ["torch>=2.1.2", "torchaudio"]
 extras["tensorflow"] = ["tensorflow==2.9.0"]
 # test and quality
 extras["test"] = [

@@ -21,7 +21,7 @@ style:
 	ruff $(check_dirs) --fix
 
 torch-gpu:
-	docker build --no-cache -f dockerfiles/pytorch/gpu/Dockerfile -t starlette-transformers:gpu .
+	docker build -f dockerfiles/pytorch/gpu/Dockerfile -t starlette-transformers:gpu .
 
 torch-cpu:
 	docker build -f dockerfiles/pytorch/cpu/Dockerfile -t starlette-transformers:cpu .
