@@ -5,7 +5,7 @@ LABEL maintainer="Hugging Face"
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-WORKDIR /build
+WORKDIR /app
 
 RUN apt-get update \
     && apt-get -y upgrade --only-upgrade systemd openssl cryptsetup \
@@ -35,11 +35,12 @@ COPY dockerfiles/pytorch/gpu/requirements.txt requirements-docker.txt
 COPY requirements.txt requirements-toolkit.txt
 
 # install wheel and setuptools
-RUN pip install -U pip && \
-    pip download --dest ./wheels -r requirements-docker.txt && \
-    pip download --dest ./wheels -r requirements-toolkit.txt && \
-    pip install --no-index --find-links=./wheels -r requirements-docker.txt && \
-    pip install --no-index --find-links=./wheels -r requirements-toolkit.txt
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
+    source $HOME/.cargo/env && \
+    uv venv && \
+    source .venv/bin/activate && \
+    uv pip install --no-cache-dir -r requirements-docker.txt && \
+    uv pip install --no-cache-dir -r requirements-toolkit.txt
 
 ### Runner
 
@@ -47,20 +48,21 @@ FROM nvidia/cuda:12.3.1-base-ubuntu22.04 as runner
 SHELL ["/bin/bash", "-c"]
 
 WORKDIR /app
-COPY --from=builder /build/wheels /app/wheels
 
 RUN apt-get update -y && apt-get upgrade -y && \
     apt-get install -y \
     python3 \
-    python3-pip
+    python3-pip \
+    python3.10-venv \
+    curl
 
 # install dependencies
-COPY dockerfiles/pytorch/gpu/requirements.txt requirements-docker.txt
-COPY requirements.txt requirements-toolkit.txt
+COPY --from=builder /app .
 
-RUN pip install -U pip && \
-    pip install --no-index --find-links=/app/wheels -r requirements-docker.txt && \
-    pip install --no-index --find-links=/app/wheels -r requirements-toolkit.txt
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
+    source $HOME/.cargo/env && \
+    source .venv/bin/activate && \
+    ls -all
 
 # copy application
 COPY src/huggingface_inference_toolkit huggingface_inference_toolkit
@@ -70,4 +72,4 @@ COPY src/huggingface_inference_toolkit/webservice_starlette.py webservice_starle
 COPY scripts/entrypoint.sh entrypoint.sh
 RUN chmod +x entrypoint.sh
 
-ENTRYPOINT ["bash", "-c", "./entrypoint.sh"]
+ENTRYPOINT ["bash", "-c", "source .venv/bin/activate && ./entrypoint.sh"]

@@ -6,7 +6,7 @@ from setuptools import find_packages, setup
 # We don't declare our dependency on transformers here because we build with
 # different packages for different variants
 
-VERSION = "0.1.0"
+VERSION = "0.2.0"
 
 
 # Ubuntu packages
@@ -16,7 +16,7 @@ VERSION = "0.1.0"
 
 install_requires = [
     # transformers
-    "transformers[sklearn,sentencepiece]>=4.25.1",
+    "transformers[sklearn,sentencepiece]>=4.37.2",
     "huggingface_hub>=0.13.3",
     # api stuff
     "orjson",
