@@ -20,7 +20,7 @@ from huggingface_inference_toolkit.sentence_transformers_utils import (
 )
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(format="%(asctime)s | %(levelname)s | %(message)s", level=logging.INFO)
+#logging.basicConfig(format="%(asctime)s | %(levelname)s | %(message)s", level=logging.INFO)
 
 
 if is_tf_available():
@@ -99,6 +99,7 @@ def _is_gpu_available():
     if is_tf_available():
         return True if len(tf.config.list_physical_devices("GPU")) > 0 else False
     elif is_torch_available():
+        logger.info(f"CUDA: {torch.cuda.is_available()}")
         return torch.cuda.is_available()
     else:
         raise RuntimeError(
@@ -212,7 +213,10 @@ def get_device():
     """
     The get device function will return the device for the DL Framework.
     """
-    if _is_gpu_available():
+    gpu = _is_gpu_available()
+    logger.info(f"GPU Available: {gpu}")
+
+    if gpu:
         return 0
     else:
         return -1
@@ -264,17 +268,18 @@ def get_pipeline(task: str, model_dir: Path, **kwargs) -> Pipeline:
     if task == "conversational":
         hf_pipeline = wrap_conversation_pipeline(hf_pipeline)
     elif task == "automatic-speech-recognition" and isinstance(hf_pipeline.model, WhisperForConditionalGeneration):
+        
+        language = kwargs.get("language")
+        if not language:
+            # If no lang parameter was passed, english is defult
+            language = "english"
+            
         # set chunk length to 30s for whisper to enable long audio files
         hf_pipeline._preprocess_params["chunk_length_s"] = 30
-        hf_pipeline._preprocess_params["ignore_warning"] = True
+        #hf_pipeline._preprocess_params["ignore_warning"] = True
         # set decoder to english by default
-        # TODO: replace when transformers 4.26.0 is release with
-        # hf_pipeline.model.config.forced_decoder_ids = pipe.tokenizer.get_decoder_prompt_ids(language=lang, task="transcribe")
-        hf_pipeline.tokenizer.language = "english"
-        hf_pipeline.tokenizer.task = "transcribe"
-        hf_pipeline.model.config.forced_decoder_ids = [
-            (rank + 1, token) for rank, token in enumerate(hf_pipeline.tokenizer.prefix_tokens[1:])
-        ]
+        hf_pipeline.model.config.forced_decoder_ids = hf_pipeline.tokenizer.get_decoder_prompt_ids(language=language, task="transcribe")
+        
     return hf_pipeline
 
 

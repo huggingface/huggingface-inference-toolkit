@@ -2,4 +2,4 @@ orjson
 starlette
 uvicorn
 pandas
-huggingface_hub>=0.13.2
+huggingface_hub>=0.20.3

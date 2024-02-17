@@ -32,6 +32,7 @@ class IEAutoPipelineForText2Image:
                 self.pipeline.scheduler = DPMSolverMultistepScheduler.from_config(self.pipeline.scheduler.config)
             except Exception:
                 pass
+            
         self.pipeline.to(device)
 
     def __call__(

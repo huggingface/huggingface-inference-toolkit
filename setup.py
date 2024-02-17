@@ -17,7 +17,7 @@ VERSION = "0.2.0"
 install_requires = [
     # transformers
     "transformers[sklearn,sentencepiece]>=4.37.2",
-    "huggingface_hub>=0.13.3",
+    "huggingface_hub>=0.20.3",
     # api stuff
     "orjson",
     # "robyn",
@@ -27,12 +27,13 @@ install_requires = [
     "librosa",
     "pyctcdecode>=0.3.0",
     "phonemizer",
+    "ffmpeg"
 ]
 
 extras = {}
 
 extras["st"] = ["sentence_transformers==2.3.1"]
-extras["diffusers"] = ["diffusers==0.26.1", "accelerate==0.26.1"]
+extras["diffusers"] = ["diffusers==0.26.3", "accelerate==0.27.2"]
 
 
 # Hugging Face specific dependencies
@@ -53,10 +54,8 @@ extras["test"] = [
     "tenacity"
 ]
 extras["quality"] = [
-    "black",
     "isort",
-    "flake8",
-    "ruff",
+    "ruff"
 ]
 
 setup(
@@ -64,9 +63,6 @@ setup(
     version=VERSION,
     author="HuggingFace",
     description=".",
-    # long_description=open("README.md", "r", encoding="utf-8").read(),
-    # long_description_content_type="text/markdown",
-    # keywords="NLP deep-learning transformer pytorch tensorflow BERT GPT GPT-2 AWS Amazon SageMaker Cloud",
     url="",
     package_dir={"": "src"},
     packages=find_packages(where="src"),
@@ -83,7 +79,7 @@ setup(
         "License :: OSI Approved :: Apache Software License",
         "Operating System :: OS Independent",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.11",
         "Topic :: Scientific/Engineering :: Artificial Intelligence",
     ],
 )
