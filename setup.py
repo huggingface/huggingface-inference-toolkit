@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-import os
 from datetime import date
 from setuptools import find_packages, setup
 
@@ -16,7 +15,7 @@ VERSION = "0.2.0"
 
 install_requires = [
     # transformers
-    "transformers[sklearn,sentencepiece]>=4.37.2",
+    "transformers[sklearn,sentencepiece]==4.27.0",
     "huggingface_hub>=0.20.3",
     # api stuff
     "orjson",
@@ -32,15 +31,10 @@ install_requires = [
 
 extras = {}
 
-extras["st"] = ["sentence_transformers==2.3.1"]
+extras["st"] = ["sentence_transformers==2.2.1"]
 extras["diffusers"] = ["diffusers==0.26.3", "accelerate==0.27.2"]
-
-
-# Hugging Face specific dependencies
-# framework specific dependencies
-extras["torch"] = ["torch>=2.1.2", "torchaudio"]
+extras["torch"] = ["torch>=1.8.0", "torchaudio"]
 extras["tensorflow"] = ["tensorflow==2.9.0"]
-# test and quality
 extras["test"] = [
     "pytest",
     "pytest-xdist",

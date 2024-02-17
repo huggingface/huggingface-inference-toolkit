@@ -189,9 +189,10 @@ def check_and_register_custom_pipeline_from_directory(model_dir):
             spec.loader.exec_module(handler)
             # init custom handler with model_dir
             custom_pipeline = handler.EndpointHandler(model_dir)
+
     elif legacy_module.is_file():
         logger.warning(
-            "You are using a legacy custom pipeline with. Please update to the new format. See documentation for more information."
+            "You are using a legacy custom pipeline. Please update to the new format. See documentation for more information."
         )
         spec = importlib.util.spec_from_file_location("pipeline.PreTrainedPipeline", legacy_module)
         if spec:
@@ -248,9 +249,7 @@ def get_pipeline(task: str, model_dir: Path, **kwargs) -> Pipeline:
     else:
         kwargs["tokenizer"] = model_dir
 
-    # add check for optimum accelerated pipeline
     if is_optimum_available():
-        # TODO: add check for optimum accelerated pipeline
         logger.info("Optimum is not implement yet using default pipeline.")
         hf_pipeline = pipeline(task=task, model=model_dir, device=device, **kwargs)
     elif is_sentence_transformers_available() and task in [
@@ -258,9 +257,19 @@ def get_pipeline(task: str, model_dir: Path, **kwargs) -> Pipeline:
         "sentence-embeddings",
         "sentence-ranking",
     ]:
-        hf_pipeline = get_sentence_transformers_pipeline(task=task, model_dir=model_dir, device=device, **kwargs)
+        hf_pipeline = get_sentence_transformers_pipeline(
+            task=task,
+            model_dir=model_dir,
+            device=device,
+            **kwargs
+        )
     elif is_diffusers_available() and task == "text-to-image":
-        hf_pipeline = get_diffusers_pipeline(task=task, model_dir=model_dir, device=device, **kwargs)
+        hf_pipeline = get_diffusers_pipeline(
+            task=task,
+            model_dir=model_dir,
+            device=device,
+            **kwargs
+        )
     else:
         hf_pipeline = pipeline(task=task, model=model_dir, device=device, **kwargs)
 
@@ -268,17 +277,19 @@ def get_pipeline(task: str, model_dir: Path, **kwargs) -> Pipeline:
     if task == "conversational":
         hf_pipeline = wrap_conversation_pipeline(hf_pipeline)
     elif task == "automatic-speech-recognition" and isinstance(hf_pipeline.model, WhisperForConditionalGeneration):
-        
-        language = kwargs.get("language")
-        if not language:
-            # If no lang parameter was passed, english is defult
-            language = "english"
-            
+
         # set chunk length to 30s for whisper to enable long audio files
         hf_pipeline._preprocess_params["chunk_length_s"] = 30
-        #hf_pipeline._preprocess_params["ignore_warning"] = True
+        hf_pipeline._preprocess_params["ignore_warning"] = True
         # set decoder to english by default
-        hf_pipeline.model.config.forced_decoder_ids = hf_pipeline.tokenizer.get_decoder_prompt_ids(language=language, task="transcribe")
+        # TODO: replace when transformers 4.26.0 is release with
+        hf_pipeline.model.config.forced_decoder_ids = hf_pipeline.tokenizer.get_decoder_prompt_ids(language="english", task="transcribe")
+        """"
+        hf_pipeline.tokenizer.language = "english"
+        hf_pipeline.tokenizer.task = "transcribe"
+        hf_pipeline.model.config.forced_decoder_ids = [
+            (rank + 1, token) for rank, token in enumerate(hf_pipeline.tokenizer.prefix_tokens[1:])
+        ]"""
         
     return hf_pipeline
 

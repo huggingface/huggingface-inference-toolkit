@@ -25,6 +25,7 @@ class HuggingFaceHandler:
         """
         inputs = data.pop("inputs", data)
         parameters = data.pop("parameters", None)
+
         # pass inputs with all kwargs in data
         if parameters is not None:
             prediction = self.pipeline(inputs, **parameters)
