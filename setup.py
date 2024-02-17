@@ -34,7 +34,7 @@ extras = {}
 extras["st"] = ["sentence_transformers==2.2.1"]
 extras["diffusers"] = ["diffusers==0.26.3", "accelerate==0.27.2"]
 extras["torch"] = ["torch>=1.8.0", "torchaudio"]
-extras["tensorflow"] = ["tensorflow==2.9.0"]
+extras["tensorflow"] = ["tensorflow==2.9.3"]
 extras["test"] = [
     "pytest",
     "pytest-xdist",
