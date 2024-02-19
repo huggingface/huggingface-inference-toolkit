@@ -1,8 +1,12 @@
 # Docker project generated files to ignore
 #  if you want to ignore files created by your editor/tools,
 #  please consider a global .gitignore https://help.github.com/articles/ignoring-files
+.gitignore
 .egg-info
 .vagrant*
+.hcl
+.terraform.lock.hcl
+.terraform
 __pycache__
 bin
 docker/docker

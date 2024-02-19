@@ -54,7 +54,8 @@ RUN apt-get update -y && apt-get upgrade -y && \
     python3 \
     python3-pip \
     python3.10-venv \
-    curl
+    curl \
+    ffmpeg
 
 # install dependencies
 COPY --from=builder /app .

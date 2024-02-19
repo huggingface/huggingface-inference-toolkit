@@ -1,6 +1,6 @@
 import os
 
-from integ.utils import (
+from tests.integ.utils import (
     validate_automatic_speech_recognition,
     validate_classification,
     validate_feature_extraction,

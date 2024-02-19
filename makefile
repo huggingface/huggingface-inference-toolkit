@@ -20,11 +20,17 @@ quality:
 style: 
 	ruff $(check_dirs) --fix
 
-torch-gpu:
-	docker build -f dockerfiles/pytorch/gpu/Dockerfile -t starlette-transformers:gpu .
+inference-pytorch-gpu:
+	docker build -f dockerfiles/pytorch/gpu/Dockerfile -t integration-test-pytorch:gpu .
 
-torch-cpu:
-	docker build -f dockerfiles/pytorch/cpu/Dockerfile -t starlette-transformers:cpu .
+inference-pytorch-cpu:
+	docker build -f dockerfiles/pytorch/cpu/Dockerfile -t integration-test-pytorch:cpu .
 
-run-classification:
-	docker run -e HF_MODEL="hf-internal-testing/tiny-random-distilbert" -e HF_MODEL_DIR="/tmp2" -e HF_TASK="text-classification" --gpus all starlette-transformers:gpu
+inference-tensorflow-gpu:
+	docker build -f dockerfiles/tensorflow/gpu/Dockerfile -t integration-test-tensorflow:gpu .
+
+inference-tensorflow-cpu:
+	docker build -f dockerfiles/tensorflow/cpu/Dockerfile -t integration-test-tensorflow:cpu .
+
+stop-all:
+	docker stop $$(docker ps -a -q)
