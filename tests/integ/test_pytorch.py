@@ -50,9 +50,6 @@ class TestPytorchInference:
         ["pytorch"]
     )
     @pytest.mark.usefixtures('start_container')
-    def test_classification(self, start_container, task, framework, device):
+    def test_inference(self, start_container, task, framework, device):
 
-        verify_task(
-            task = task,
-            port = start_container[1]
-        )
+        verify_task(task = task, port = start_container[1])
