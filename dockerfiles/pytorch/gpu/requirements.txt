@@ -1,8 +1,8 @@
 cmake==3.28.3
 wheel==0.42.0
 setuptools==69.1.0
-torch==2.1.2
-torchvision==0.16.2
+torch==2.2.0
+torchvision
 transformers[sklearn,sentencepiece,audio,vision]==4.37.2
 sentence_transformers==2.3.1
 diffusers==0.26.1

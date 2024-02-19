@@ -33,4 +33,4 @@ inference-tensorflow-cpu:
 	docker build -f dockerfiles/tensorflow/cpu/Dockerfile -t integration-test-tensorflow:cpu .
 
 stop-all:
-	docker stop $$(docker ps -a -q)
+	docker stop $$(docker ps -a -q) && docker container prune --force

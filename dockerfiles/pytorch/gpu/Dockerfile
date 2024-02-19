@@ -1,9 +1,10 @@
-FROM nvidia/cuda:12.3.1-devel-ubuntu22.04 as builder
+FROM nvidia/cuda:12.1.0-devel-ubuntu22.04 as builder
 SHELL ["/bin/bash", "-c"]
 
 LABEL maintainer="Hugging Face"
 
 ENV DEBIAN_FRONTEND=noninteractive
+ENV TORCH_USE_CUDA_DSA=1
 
 WORKDIR /app
 
@@ -44,10 +45,12 @@ RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
 
 ### Runner
 
-FROM nvidia/cuda:12.3.1-base-ubuntu22.04 as runner
+FROM nvidia/cuda:12.1.0-base-ubuntu22.04 as runner
 SHELL ["/bin/bash", "-c"]
 
 WORKDIR /app
+
+ENV TORCH_USE_CUDA_DSA=1
 
 RUN apt-get update -y && apt-get upgrade -y && \
     apt-get install -y \

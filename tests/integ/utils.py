@@ -1,11 +1,7 @@
 import logging
-import re
-import signal
 from contextlib import contextmanager
 from time import time
 
-
-LOGGER = logging.getLogger("timeout")
 
 
 def validate_classification(result=None, snapshot=None):
@@ -16,6 +12,8 @@ def validate_classification(result=None, snapshot=None):
 
 
 def validate_zero_shot_classification(result=None, snapshot=None):
+    logging.info(f"Result: {result}")
+    logging.info(f"Snapshot: {snapshot}")
     assert result.keys() == snapshot.keys()
     # assert result["labels"] == snapshot["labels"]
     # assert result["sequence"] == snapshot["sequence"]

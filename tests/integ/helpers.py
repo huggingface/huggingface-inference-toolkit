@@ -19,6 +19,7 @@ import tenacity
 from docker import DockerClient
 import logging
 import traceback
+import urllib3
 
 IS_GPU = _run_slow_tests
 DEVICE = "gpu" if IS_GPU else "cpu"
@@ -42,19 +43,17 @@ def make_sure_other_containers_are_stopped(client: DockerClient, container_name:
 def wait_for_container_to_be_ready(base_url):
     
     while True:
-        response = requests.get(f"{base_url}/health")
-        if response.status_code == 200:
-            logging.info("Container ready!")
-            return True
-        else:
-            logging.info("Container not ready; trying again...")
+        time.sleep(1)
+        try:
+            response = requests.get(f"{base_url}/health")
+            if response.status_code == 200:
+                logging.info("Container ready!")
+                return True
+            else:
+                logging.info("Container not ready; trying again...")
+        except:
+            logging.error(f"Container not ready; trying again...")
 
-@tenacity.retry(
-    wait = tenacity.wait_random(min = 1, max = 10),
-    retry = tenacity.retry_if_exception(requests.exceptions.ConnectionError),
-    stop = tenacity.stop_after_attempt(5),
-    reraise = True
-)
 def verify_task(
     #container: DockerClient,
     task: str,
@@ -68,7 +67,7 @@ def verify_task(
 
     try:
         # health check
-        #wait_for_container_to_be_ready(BASE_URL)
+        wait_for_container_to_be_ready(BASE_URL)
         if (
             task == "image-classification"
             or task == "object-detection"
@@ -86,6 +85,9 @@ def verify_task(
             prediction = requests.post(f"{BASE_URL}", json=input, headers={"accept": "image/png"}).content
         else:
             prediction = requests.post(f"{BASE_URL}", json=input).json()
+        
+        logging.info(f"Prediction: {prediction}")
+        logging.info(f"Snapshot: {task2output[task]}")
         assert task2validation[task](result=prediction, snapshot=task2output[task]) is True
     except Exception as exception:
         logging.error(f"Base URL: {BASE_URL}")

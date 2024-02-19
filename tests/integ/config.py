@@ -87,8 +87,10 @@ task2model = {
         "tensorflow": "hf-internal-testing/tiny-random-clip-zero-shot-image-classification",
     },
     "conversational": {
-        "pytorch": "hf-internal-testing/tiny-random-blenderbot",
-        "tensorflow": "hf-internal-testing/tiny-random-blenderbot",
+        "pytorch": "microsoft/DialoGPT-small",
+        "tensorflow": "microsoft/DialoGPT-small",
+        #"pytorch": "hf-internal-testing/tiny-random-blenderbot",
+        #"tensorflow": "hf-internal-testing/tiny-random-blenderbot",
     },
     "sentence-similarity": {
         "pytorch": "sentence-transformers/all-MiniLM-L6-v2",
