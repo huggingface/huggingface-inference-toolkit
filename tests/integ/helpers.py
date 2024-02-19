@@ -40,9 +40,10 @@ def make_sure_other_containers_are_stopped(client: DockerClient, container_name:
 #    stop = tenacity.stop_after_attempt(10),
 #    reraise = True
 #)
-def wait_for_container_to_be_ready(base_url):
+def wait_for_container_to_be_ready(base_url, max_retries = 100):
     
-    while True:
+    retries = 0
+    while retries < max_retries:
         time.sleep(1)
         try:
             response = requests.get(f"{base_url}/health")
@@ -50,9 +51,10 @@ def wait_for_container_to_be_ready(base_url):
                 logging.info("Container ready!")
                 return True
             else:
-                logging.info("Container not ready; trying again...")
+                raise ConnectionError()
         except:
-            logging.error(f"Container not ready; trying again...")
+            logging.warning(f"Container not ready; trying again...")
+        retries += 1
 
 def verify_task(
     #container: DockerClient,

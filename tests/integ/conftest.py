@@ -3,18 +3,24 @@ import pytest
 import random
 import logging
 from tests.integ.config import task2model
+import tenacity
+import time
 
-
+@tenacity.retry(
+    retry = tenacity.retry_if_exception(docker.errors.APIError),
+    stop = tenacity.stop_after_attempt(3)
+)
 @pytest.fixture(scope = "function")
 def start_container(
     device,
     task,
     framework
 ):
+    time.sleep(random.randint(1, 5))
     client = docker.DockerClient(base_url='unix://var/run/docker.sock')
     container_name = f"integration-test-{framework}-{task}-{device}"
     container_image = f"integration-test-{framework}:{device}"
-    port = random.randint(5000, 6000)
+    port = random.randint(5000, 7000)
     model = task2model[task][framework]
 
     logging.debug(f"Image: {container_image}")
