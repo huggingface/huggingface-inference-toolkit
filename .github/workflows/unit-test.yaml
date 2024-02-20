@@ -17,7 +17,9 @@ concurrency:
 
 jobs:
   pytorch-unit-test:
-    runs-on: ubuntu-latest
+    runs-on: [single-gpu, nvidia-gpu, t4, ci]
+    env:
+      AWS_REGION: us-east-1
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python 3.9.18
@@ -32,7 +34,9 @@ jobs:
     - name: Run unit tests for Pytorch
       run: 	tox -e unit-torch-slow -- -n 4
   tensorflow-unit-test:
-    runs-on: ubuntu-latest
+    runs-on: [single-gpu, nvidia-gpu, t4, ci]
+    env:
+      AWS_REGION: us-east-1
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python 3.9.18
