@@ -1,10 +1,10 @@
 name: Run Unit-Tests
 
 on:
-  #push:
-  #  branches:
-  #   - main
-  #pull_request:
+  push:
+    branches:
+     - main
+  pull_request:
   workflow_dispatch:
 
 concurrency:
@@ -16,43 +16,31 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: Set up Python 3.9
+    - name: Set up Python 3.9.18
       uses: actions/setup-python@v2
       with:
-        python-version: 3.9.12
-    - name: Install Python dependencies
-      run: pip install -e .[test,dev,torch,st]
-    - uses: FedericoCarboni/setup-ffmpeg@v2
-      id: setup-ffmpeg
-    - name: Run Unit test_const
-      run: 	python -m pytest -s -v ./tests/unit/test_const.py
-    - name: Run Unit test_handler
-      run: 	python -m pytest -s -v ./tests/unit/test_handler.py
-    - name: Run Unit test_sentence_transformers
-      run: 	python -m pytest -s -v ./tests/unit/test_sentence_transformers.py
-    - name: Run Unit test_serializer
-      run: 	python -m pytest -s -v ./tests/unit/test_serializer.py
-    - name: Run Unit test_utils
-      run: 	python -m pytest -s -v ./tests/unit/test_utils.py
+        python-version: 3.9.18
+    - name: Install Tox
+      run: pip install tox
+    - uses: Install FFMPEG
+      run: |
+        sudo apt-get update -y &&
+        sudo apt-get upgrade -y &&
+        sudo apt-get install -y ffmpeg
+    - name: Run unit tests for Pytorch
+      run: 	tox -e unit-torch-slow -- -n 4
   tensorflow-unit-test:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: Set up Python 3.9
+    - name: Set up Python 3.9.18
       uses: actions/setup-python@v2
       with:
-        python-version: 3.9.12
-    - name: Install Python dependencies
-      run: pip install -e .[test,dev,tensorflow]
-    - name: Run Unit test_const
-      run: 	python -m pytest -s -v ./tests/unit/test_const.py
-    - name: Run Unit test_handler
-      run: 	python -m pytest -s -v ./tests/unit/test_handler.py
-    - name: Run Unit test_sentence_transformers
-      run: 	python -m pytest -s -v ./tests/unit/test_sentence_transformers.py
-    - name: Run Unit test_serializer
-      run: 	python -m pytest -s -v ./tests/unit/test_serializer.py
-    - name: Run Unit test_utils
-      run: 	python -m pytest -s -v ./tests/unit/test_utils.py
+        python-version: 3.9.18
+    - name: Install Tox
+      run: pip install tox
+    - name: Run unit tests for Tensorflow
+      run: 	tox -e unit-tensorflow-slow -- -n 4
+
 
 

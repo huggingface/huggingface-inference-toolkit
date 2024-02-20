@@ -13,8 +13,17 @@ class HuggingFaceHandler:
     A Default Hugging Face Inference Handler which works with all transformers pipelines, Sentence Transformers and Optimum.
     """
 
-    def __init__(self, model_dir: Union[str, Path], task=None):
-        self.pipeline = get_pipeline(model_dir=model_dir, task=task)
+    def __init__(
+        self,
+        model_dir: Union[str, Path],
+        task=None,
+        framework="pt"
+    ):
+        self.pipeline = get_pipeline(
+            model_dir=model_dir,
+            task=task,
+            framework=framework
+        )
 
     def __call__(self, data):
         """

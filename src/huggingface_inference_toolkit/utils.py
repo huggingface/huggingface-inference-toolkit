@@ -112,6 +112,7 @@ def _get_framework():
     """
     extracts which DL framework is used for inference, if both are installed use pytorch
     """
+    
     if is_torch_available():
         return "pytorch"
     elif is_tf_available():
@@ -250,7 +251,12 @@ def get_pipeline(task: str, model_dir: Path, **kwargs) -> Pipeline:
 
     if is_optimum_available():
         logger.info("Optimum is not implement yet using default pipeline.")
-        hf_pipeline = pipeline(task=task, model=model_dir, device=device, **kwargs)
+        hf_pipeline = pipeline(
+            task=task,
+            model=model_dir,
+            device=device,
+            **kwargs
+        )
     elif is_sentence_transformers_available() and task in [
         "sentence-similarity",
         "sentence-embeddings",

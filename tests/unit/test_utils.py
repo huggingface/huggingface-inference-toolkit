@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 import tempfile
 
+
 from transformers import pipeline
 from transformers.file_utils import is_torch_available
 from transformers.testing_utils import require_tf, require_torch, slow
@@ -15,7 +16,6 @@ from huggingface_inference_toolkit.utils import (
     get_pipeline,
     wrap_conversation_pipeline,
 )
-
 
 MODEL = "lysandre/tiny-bert-random"
 TASK = "text-classification"

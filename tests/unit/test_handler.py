@@ -1,6 +1,10 @@
 import tempfile
 import torch
-from transformers.testing_utils import require_torch, slow, require_tf
+from transformers.testing_utils import (
+    require_tf,
+    require_torch,
+    slow
+)
 import pytest
 from huggingface_inference_toolkit.handler import (
     HuggingFaceHandler,
@@ -77,7 +81,11 @@ def test_tf_get_device():
 
     with tempfile.TemporaryDirectory() as tmpdirname:
         # https://github.com/huggingface/infinity/blob/test-ovh/test/integ/utils.py
-        storage_dir = _load_repository_from_hf(MODEL, tmpdirname, framework="tensorflow")
+        storage_dir = _load_repository_from_hf(
+            MODEL,
+            tmpdirname,
+            framework="tensorflow"
+        )
         h = HuggingFaceHandler(model_dir=str(storage_dir), task=TASK)
         if _is_gpu_available():
             assert h.pipeline.device == 0
@@ -96,7 +104,8 @@ def test_tf_predict_call():
         )
         handler = HuggingFaceHandler(
             model_dir=str(storage_dir),
-            task=TASK
+            task=TASK,
+            framework="tf"
         )
 
         prediction = handler(INPUT)
