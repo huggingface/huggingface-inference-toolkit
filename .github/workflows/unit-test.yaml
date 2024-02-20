@@ -41,6 +41,3 @@ jobs:
       run: pip install tox
     - name: Run unit tests for Tensorflow
       run: 	tox -e unit-tensorflow-slow -- -n 4
-
-
-
