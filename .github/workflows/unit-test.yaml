@@ -8,8 +8,8 @@ on:
   workflow_dispatch:
 
 env:
-  ACTIONS_RUNNER_DEBUG: True
-  ACTIONS_STEP_DEBUG: True
+  ACTIONS_RUNNER_DEBUG: true
+  ACTIONS_STEP_DEBUG: true
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
