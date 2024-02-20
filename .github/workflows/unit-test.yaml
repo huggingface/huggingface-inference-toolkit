@@ -23,7 +23,10 @@ jobs:
     steps:
     - name: Install CUDA
       run: |
-        sudo apt update -y && sudo apt install nvidia-cuda-toolkit -y
+        wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-keyring_1.1-1_all.deb
+        sudo dpkg -i cuda-keyring_1.1-1_all.deb
+        sudo apt-get update
+        sudo apt-get -y install cuda-toolkit-12-3
     - name: nvidia-smi
       run: nvidia-smi
     - uses: actions/checkout@v4.1.1
