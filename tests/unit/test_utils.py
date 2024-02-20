@@ -17,6 +17,8 @@ from huggingface_inference_toolkit.utils import (
     wrap_conversation_pipeline,
 )
 
+import logging
+
 MODEL = "lysandre/tiny-bert-random"
 TASK = "text-classification"
 TASK_MODEL = "sshleifer/tiny-dbmdz-bert-large-cased-finetuned-conll03-english"
@@ -112,7 +114,11 @@ def test_get_framework_tensorflow():
 def test_get_pipeline():
     with tempfile.TemporaryDirectory() as tmpdirname:
         storage_dir = _load_repository_from_hf(MODEL, tmpdirname, framework="pytorch")
-        pipe = get_pipeline(TASK, storage_dir.as_posix())
+        pipe = get_pipeline(
+            task = TASK,
+            model_dir = storage_dir.as_posix(),
+            framework = "pytorch"
+        )
         res = pipe("Life is good, Life is bad")
         assert "score" in res[0]
 
@@ -120,9 +126,27 @@ def test_get_pipeline():
 @require_torch
 def test_whisper_long_audio():
     with tempfile.TemporaryDirectory() as tmpdirname:
-        storage_dir = _load_repository_from_hf("openai/whisper-tiny", tmpdirname, framework="pytorch")
-        pipe = get_pipeline("automatic-speech-recognition", storage_dir.as_posix())
-        res = pipe(os.path.join(os.getcwd(), "tests/resources/audio", "long_sample.mp3"))
+        storage_dir = _load_repository_from_hf(
+            repository_id = "openai/whisper-tiny",
+            target_dir = tmpdirname,
+            framework = "pytorch",
+            revision = "be0ba7c2f24f0127b27863a23a08002af4c2c279"
+        )
+        logging.info(f"Temp dir: {tmpdirname}")
+        logging.info(f"POSIX Path: {storage_dir.as_posix()}")
+        logging.info(f"Contents: {os.listdir(tmpdirname)}")
+        pipe = get_pipeline(
+            task = "automatic-speech-recognition",
+            model_dir = storage_dir.as_posix(),
+            framework = "safetensors"
+        )
+        res = pipe(
+            os.path.join(
+                os.getcwd(),
+                "tests/resources/audio",
+                "long_sample.mp3"
+            )
+        )
 
         assert len(res["text"]) > 700
 
@@ -149,7 +173,7 @@ def test_wrap_conversation_pipeline():
 @require_torch
 def test_wrapped_pipeline():
     with tempfile.TemporaryDirectory() as tmpdirname:
-        storage_dir = _load_repository_from_hf("microsoft/DialoGPT-small", tmpdirname, framework="pytorch")
+        storage_dir = _load_repository_from_hf("hf-internal-testing/tiny-random-blenderbot", tmpdirname, framework="pytorch")
         conv_pipe = get_pipeline("conversational", storage_dir.as_posix())
         data = {
             "past_user_inputs": ["Which movie is the best ?"],

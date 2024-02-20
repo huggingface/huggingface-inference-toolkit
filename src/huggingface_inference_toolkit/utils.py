@@ -140,6 +140,7 @@ def _load_repository_from_hf(
 
     if framework is None:
         framework = _get_framework()
+    logging.info(f"Framework: {framework}")
 
     if isinstance(target_dir, str):
         target_dir = Path(target_dir)
@@ -149,22 +150,24 @@ def _load_repository_from_hf(
         target_dir.mkdir(parents=True)
 
     # check if safetensors weights are available
-    if framework == "pytorch":
-        files = HfApi().model_info(repository_id).siblings
-        if any(f.rfilename.endswith("safetensors") for f in files):
-            framework = "safetensors"
+    #if framework == "pytorch":
+        #files = HfApi().model_info(repository_id).siblings
+        #if any(f.rfilename.endswith("safetensors") for f in files):
+            #framework = "safetensors"
 
     # create regex to only include the framework specific weights
     ignore_regex = create_artifact_filter(framework)
+    logging.info(f"ignore_regex: {ignore_regex}")
+    logging.info(f"Framework after filtering: {framework}")
     logger.info(f"Ignore regex pattern for files, which are not downloaded: { ', '.join(ignore_regex) }")
 
     # Download the repository to the workdir and filter out non-framework specific weights
     snapshot_download(
-        repository_id,
-        revision=revision,
-        local_dir=str(target_dir),
-        local_dir_use_symlinks=False,
-        ignore_patterns=ignore_regex,
+        repo_id = repository_id,
+        revision = revision,
+        local_dir = str(target_dir),
+        local_dir_use_symlinks = False,
+        ignore_patterns = ignore_regex,
     )
 
     return target_dir
@@ -223,7 +226,12 @@ def get_device():
         return -1
 
 
-def get_pipeline(task: str, model_dir: Path, **kwargs) -> Pipeline:
+def get_pipeline(
+    task: str,
+    model_dir: Path,
+    framework = "pytorch",
+    **kwargs,
+) -> Pipeline:
     """
     create pipeline class for a specific task based on local saved model
     """
@@ -244,6 +252,12 @@ def get_pipeline(task: str, model_dir: Path, **kwargs) -> Pipeline:
         "zero-shot-image-classification",
     }:
         kwargs["feature_extractor"] = model_dir
+        hf_pipeline = pipeline(
+            task=task,
+            model=model_dir,
+            device=device,
+            **kwargs
+        )
     elif task in {"image-to-text"}:
         pass
     else:
@@ -265,12 +279,20 @@ def get_pipeline(task: str, model_dir: Path, **kwargs) -> Pipeline:
         logging.info(f"Model: {model_dir}")
         logging.info(f"Device: {device}")
         logging.info(f"Args: {kwargs}")
-        hf_pipeline = pipeline(task=task, model=model_dir, device=device, **kwargs)
+        hf_pipeline = pipeline(
+            task=task,
+            model=model_dir,
+            device=device,
+            **kwargs
+        )
 
     # wrapp specific pipeline to support better ux
     if task == "conversational":
         hf_pipeline = wrap_conversation_pipeline(hf_pipeline)
-    elif task == "automatic-speech-recognition" and isinstance(hf_pipeline.model, WhisperForConditionalGeneration):
+    elif task == "automatic-speech-recognition" and isinstance(
+        hf_pipeline.model,
+        WhisperForConditionalGeneration
+    ):
         # set chunk length to 30s for whisper to enable long audio files
         hf_pipeline._preprocess_params["chunk_length_s"] = 30
         hf_pipeline._preprocess_params["ignore_warning"] = True
