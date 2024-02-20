@@ -22,7 +22,7 @@ jobs:
         python-version: 3.9.18
     - name: Install Tox
       run: pip install tox
-    - uses: Install FFMPEG
+    - name: Install FFMPEG
       run: |
         sudo apt-get update -y &&
         sudo apt-get upgrade -y &&
