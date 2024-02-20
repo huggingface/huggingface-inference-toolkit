@@ -13,26 +13,25 @@ concurrency:
 
 
 jobs:
-  pytorch-integration-test:
+  pytorch-integration-test-local:
     runs-on: [single-gpu, nvidia-gpu, t4, ci]
     env:
       AWS_REGION: us-east-1
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-      - name: Set up Python 3.11
+      - name: Set up Python 3.9
         uses: actions/setup-python@v2
         with:
-          python-version: 3.11
+          python-version: 3.9
       - name: Install Python dependencies
         run: pip install -e .[test,dev,torch]
       - name: Build Docker
-        run: docker build -t starlette-transformers:gpu -f dockerfiles/pytorch/gpu/Dockerfile .
+        run: docker build -t integration-test-pytorch:gpu -f dockerfiles/pytorch/gpu/Dockerfile .
       - name: Run Integration Tests
-        run: RUN_SLOW=True make integ-test
-  tensorflow-integration-test:
-    needs:
-      - pytorch-integration-test
+        run: tox -e 
+  pytorch-integration-test-remote:
+  tensorflow-integration-test-local:
     runs-on: [single-gpu, nvidia-gpu, t4, ci]
     env:
       AWS_REGION: us-east-1
@@ -45,8 +44,9 @@ jobs:
           python-version: 3.9
       - name: Uninstall pytorch
         run: pip uninstall torch torchvision -y
-      - name: Install Python dependencies
-        run: pip install -e .[test,dev,tensorflow]
+      - name: Install Tox
+        run: pip install tox
+      - name: "Run tox: local
       - name: Build Docker
         run: docker build -t starlette-transformers:gpu -f dockerfiles/tensorflow/gpu/Dockerfile .
       - name: Run Integration Tests
