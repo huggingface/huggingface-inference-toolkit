@@ -1,0 +1,11 @@
+tox
+pytest
+pytest-xdist
+parameterized
+psutil
+datasets
+pytest-sugar
+mock==2.0.0
+docker
+requests
+tenacity

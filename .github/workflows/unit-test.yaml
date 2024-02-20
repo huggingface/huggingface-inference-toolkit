@@ -21,14 +21,16 @@ jobs:
     env:
       AWS_REGION: us-east-1
     steps:
-    - uses: actions/checkout@v2
+    - name: nvidia-smi
+      run: nvidia-smi
+    - uses: actions/checkout@v4.1.1
     - name: Set up Python 3.9.18
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: 3.9.18
-    - name: Install Tox & Dependencies
-      run: pip install tox ".[test]"
-    - name: Install FFMPEG
+    - name: Install test dependencies
+      run: pip install -U pip -r requirements-test.txt 
+    - name: Install ffmpeg
       run: |
         sudo apt-get update -y && sudo apt-get install -y ffmpeg
     - name: Run unit tests for Pytorch
