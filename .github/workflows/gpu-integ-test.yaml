@@ -28,9 +28,25 @@ jobs:
         run: pip install -e .[test,dev,torch]
       - name: Build Docker
         run: docker build -t integration-test-pytorch:gpu -f dockerfiles/pytorch/gpu/Dockerfile .
-      - name: Run Integration Tests
-        run: tox -e 
+      - name: "Run Integration Tests: Torch Local"
+        run: tox -e torch-integration-local -- -n 4
   pytorch-integration-test-remote:
+    runs-on: [single-gpu, nvidia-gpu, t4, ci]
+    env:
+      AWS_REGION: us-east-1
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - name: Install Python dependencies
+        run: pip install -e .[test,dev,torch]
+      - name: Build Docker
+        run: docker build -t integration-test-pytorch:gpu -f dockerfiles/pytorch/gpu/Dockerfile .
+      - name: "Run Integration Tests: Torch Remote"
+        run: tox -e torch-integration-remote -- -n 4
   tensorflow-integration-test-local:
     runs-on: [single-gpu, nvidia-gpu, t4, ci]
     env:
@@ -42,13 +58,27 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: 3.9
-      - name: Uninstall pytorch
-        run: pip uninstall torch torchvision -y
+      - name: Build Docker
+        run: docker build -f dockerfiles/tensorflow/gpu/Dockerfile -t integration-test-tensorflow:gpu .
       - name: Install Tox
         run: pip install tox
-      - name: "Run tox: local
+      - name: "Run Integration Tests: TF Local"
+        run: tox -e tensorflow-integration-local -- -n 4
+  tensorflow-integration-test-remote:
+    runs-on: [single-gpu, nvidia-gpu, t4, ci]
+    env:
+      AWS_REGION: us-east-1
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
       - name: Build Docker
-        run: docker build -t starlette-transformers:gpu -f dockerfiles/tensorflow/gpu/Dockerfile .
-      - name: Run Integration Tests
-        run: RUN_SLOW=True make integ-test
+        run: docker build -f dockerfiles/tensorflow/gpu/Dockerfile -t integration-test-tensorflow:gpu .
+      - name: Install Tox
+        run: pip install tox
+      - name: "Run Integration Tests: TF Remote"
+        run: tox -e tensorflow-integration-remote -- -n 4
   
