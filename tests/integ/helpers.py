@@ -45,20 +45,24 @@ def make_sure_other_containers_are_stopped(client: DockerClient, container_name:
 #    stop = tenacity.stop_after_attempt(10),
 #    reraise = True
 #)
-def wait_for_container_to_be_ready(base_url, max_retries = 100):
+def wait_for_container_to_be_ready(
+    base_url,
+    time_between_retries = 1,
+    max_retries = 30
+):
     
     retries = 0
     while retries < max_retries:
-        time.sleep(1)
+        time.sleep(time_between_retries)
         try:
             response = requests.get(f"{base_url}/health")
             if response.status_code == 200:
                 logging.info("Container ready!")
                 return True
             else:
-                raise ConnectionError()
-        except:
-            logging.warning(f"Container not ready; trying again...")
+                raise ConnectionError(f"Error: {response.status_code}")
+        except Exception as exception:
+            logging.warning(f"Container at {base_url} not ready, trying again...")
         retries += 1
 
 def verify_task(
@@ -102,7 +106,7 @@ def verify_task(
         logging.error(f"Input: {input}")
         logging.error(f"Error: {str(exception)}")
         logging.error(f"Stack: {traceback.format_exc()}")
-        assert False
+        raise exception
 
 
 @require_torch

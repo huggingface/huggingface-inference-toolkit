@@ -20,8 +20,7 @@ from huggingface_inference_toolkit.sentence_transformers_utils import (
 )
 
 logger = logging.getLogger(__name__)
-#logging.basicConfig(format="%(asctime)s | %(levelname)s | %(message)s", level=logging.INFO)
-
+logging.basicConfig(format="%(asctime)s | %(levelname)s | %(message)s", level=logging.INFO)
 
 if is_tf_available():
     import tensorflow as tf
@@ -271,7 +270,16 @@ def get_pipeline(task: str, model_dir: Path, **kwargs) -> Pipeline:
             **kwargs
         )
     else:
-        hf_pipeline = pipeline(task=task, model=model_dir, device=device, **kwargs)
+        logging.info(f"Task: {task}")
+        logging.info(f"Model: {model_dir}")
+        logging.info(f"Device: {device}")
+        logging.info(f"Args: {kwargs}")
+        hf_pipeline = pipeline(
+            task=task,
+            model=model_dir,
+            device=device,
+            **kwargs
+        )
 
     # wrapp specific pipeline to support better ux
     if task == "conversational":

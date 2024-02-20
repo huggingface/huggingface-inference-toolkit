@@ -11,9 +11,7 @@ from huggingface_inference_toolkit.utils import (
     _load_repository_from_hf
 )
 from transformers.testing_utils import (
-    require_torch,
     slow,
-    require_tf,
     _run_slow_tests
 )
 import uuid
@@ -87,35 +85,51 @@ def local_container(
     else:
         model = repository_id
 
-    client = docker.DockerClient(base_url='unix://var/run/docker.sock')
-    container_name = f"integration-test-{framework}-{id}-{device}"
-    container_image = f"integration-test-{framework}:{device}"
+    logging.info(f"Starting container with model: {model}")
 
-    port = random.randint(5000, 7000)
+    if not model:
+        logging.info(f"No model supported for {framework}")
+        yield None
+    else:
+        try:
+            logging.info(f"Starting container with Model = {model}")
+            client = docker.DockerClient(base_url='unix://var/run/docker.sock')
+            container_name = f"integration-test-{framework}-{id}-{device}"
+            container_image = f"integration-test-{framework}:{device}"
 
-    logging.debug(f"Image: {container_image}")
-    logging.debug(f"Port: {port}")
+            port = random.randint(5000, 7000)
 
-    device_request = [
-        docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])
-    ] if IS_GPU else []
+            logging.debug(f"Image: {container_image}")
+            logging.debug(f"Port: {port}")
 
-    with tempfile.TemporaryDirectory() as tmpdirname:
-        # https://github.com/huggingface/infinity/blob/test-ovh/test/integ/utils.py
-        storage_dir = _load_repository_from_hf(model, tmpdirname, framework=framework)
-        yield client.containers.run(
-            container_image,
-            name=container_name,
-            ports={"5000": port},
-            environment={"HF_MODEL_DIR": "/opt/huggingface/model", "HF_TASK": task},
-            volumes={tmpdirname: {"bind": "/opt/huggingface/model", "mode": "ro"}},
-            detach=True,
-            # GPU
-            device_requests=device_request,
-        ), port
+            device_request = [
+                docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])
+            ] if IS_GPU else []
 
-        #Teardown
-        previous = client.containers.get(container_name)
-        previous.stop()
-        previous.remove()
+            with tempfile.TemporaryDirectory() as tmpdirname:
+                # https://github.com/huggingface/infinity/blob/test-ovh/test/integ/utils.py
+                storage_dir = _load_repository_from_hf(
+                    repository_id = model,
+                    target_dir = tmpdirname,
+                    framework = framework
+                )
+                logging.info(f"Temp dir name: {tmpdirname}")
+                yield client.containers.run(
+                    container_image,
+                    name=container_name,
+                    ports={"5000": port},
+                    environment={"HF_MODEL_DIR": "/opt/huggingface/model", "HF_TASK": task},
+                    volumes={tmpdirname: {"bind": "/opt/huggingface/model", "mode": "ro"}},
+                    detach=True,
+                    # GPU
+                    device_requests=device_request,
+                ), port
+
+                #Teardown
+                previous = client.containers.get(container_name)
+                previous.stop()
+                previous.remove()
+        except Exception as exception:
+            logging.error(f"Error starting container: {str(exception)}")
+            raise exception
 

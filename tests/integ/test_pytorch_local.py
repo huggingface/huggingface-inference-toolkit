@@ -14,7 +14,7 @@ from transformers.testing_utils import (
 import pytest
 
 
-class TestPytorchInference:
+class TestPytorchLocal:
 
     @require_torch
     @pytest.mark.parametrize(
