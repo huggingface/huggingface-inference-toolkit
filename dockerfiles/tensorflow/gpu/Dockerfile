@@ -1,16 +1,13 @@
-FROM nvidia/cuda:12.3.1-devel-ubuntu22.04 as builder
-SHELL ["/bin/bash", "-c"]
+FROM nvidia/cuda:11.2.2-base-ubuntu20.04
 
 LABEL maintainer="Hugging Face"
 
 ENV DEBIAN_FRONTEND=noninteractive
-
-WORKDIR /app
+ENV CONDA_OVERRIDE_CUDA="11.2"
 
 RUN apt-get update \
     && apt-get -y upgrade --only-upgrade systemd openssl cryptsetup \
     && apt-get install -y \
-    build-essential \
     bzip2 \
     curl \
     git \
@@ -19,51 +16,33 @@ RUN apt-get update \
     gcc \
     g++ \
     cmake \
-    libprotobuf-dev \
-    protobuf-compiler \
-    python3 \
-    python3-pip \
-    python3.10-venv \
     # audio
     libsndfile1-dev \
     ffmpeg \
     && apt-get clean autoremove --yes \
     && rm -rf /var/lib/{apt,dpkg,cache,log}
 
-# install dependencies
-COPY dockerfiles/tensorflow/gpu/requirements.txt requirements-docker.txt
-COPY requirements.txt requirements-toolkit.txt
+# install micromamba
+ENV MAMBA_ROOT_PREFIX=/opt/conda
+ENV PATH=/opt/conda/bin:$PATH
+ENV LD_LIBRARY_PATH="/opt/conda/lib:${LD_LIBRARY_PATH}"
 
-# install wheel and setuptools
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
-    source $HOME/.cargo/env && \
-    uv venv && \
-    source .venv/bin/activate && \
-    uv pip install --no-cache-dir -r requirements-docker.txt && \
-    uv pip install --no-cache-dir -r requirements-toolkit.txt
-
-### Runner
-
-FROM nvidia/cuda:12.3.1-base-ubuntu22.04 as runner
-SHELL ["/bin/bash", "-c"]
+RUN curl -L https://micro.mamba.pm/api/micromamba/linux-64/latest | tar -xj "bin/micromamba" \
+    && touch /root/.bashrc \
+    && ./bin/micromamba shell init -s bash -p /opt/conda  \
+    && grep -v '[ -z "\$PS1" ] && return' /root/.bashrc  > /opt/conda/bashrc
 
 WORKDIR /app
 
-RUN apt-get update -y && apt-get upgrade -y && \
-    apt-get install -y \
-    python3 \
-    python3-pip \
-    python3.10-venv \
-    curl \
-    ffmpeg
+# install base python dependencies
+COPY dockerfiles/tensorflow/gpu/environment.yaml /app/environment.yaml
+RUN micromamba install -y -n base -f environment.yaml \
+    && rm environment.yaml \
+    && micromamba clean --all --yes
 
-# install dependencies
-COPY --from=builder /app .
-
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
-    source $HOME/.cargo/env && \
-    source .venv/bin/activate && \
-    ls -all
+# install huggingface inference toolkit
+COPY requirements.txt /tmp/requirements.txt
+RUN pip install  --no-cache-dir -r /tmp/requirements.txt && rm /tmp/requirements.txt
 
 # copy application
 COPY src/huggingface_inference_toolkit huggingface_inference_toolkit
@@ -73,4 +52,5 @@ COPY src/huggingface_inference_toolkit/webservice_starlette.py webservice_starle
 COPY scripts/entrypoint.sh entrypoint.sh
 RUN chmod +x entrypoint.sh
 
-ENTRYPOINT ["bash", "-c", "source .venv/bin/activate && ./entrypoint.sh"]
+# run app
+ENTRYPOINT ["/bin/bash", "entrypoint.sh"]

@@ -14,7 +14,12 @@ from tests.integ.config import (
     task2output,
     task2validation
 )
-from transformers.testing_utils import require_torch, slow, require_tf, _run_slow_tests
+from transformers.testing_utils import (
+    require_torch,
+    slow,
+    require_tf,
+    _run_slow_tests
+)
 import tenacity
 from docker import DockerClient
 import logging

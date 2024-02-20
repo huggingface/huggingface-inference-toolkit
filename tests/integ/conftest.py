@@ -5,13 +5,27 @@ import logging
 from tests.integ.config import task2model
 import tenacity
 import time
+import tempfile
+from huggingface_inference_toolkit.utils import (
+    _is_gpu_available,
+    _load_repository_from_hf
+)
+from transformers.testing_utils import (
+    require_torch,
+    slow,
+    require_tf,
+    _run_slow_tests
+)
+
+IS_GPU = _run_slow_tests
+DEVICE = "gpu" if IS_GPU else "cpu"
 
 @tenacity.retry(
     retry = tenacity.retry_if_exception(docker.errors.APIError),
     stop = tenacity.stop_after_attempt(3)
 )
 @pytest.fixture(scope = "function")
-def start_container(
+def remote_container(
     device,
     task,
     framework
@@ -50,4 +64,50 @@ def start_container(
     previous = client.containers.get(container_name)
     previous.stop()
     previous.remove()
+
+
+@tenacity.retry(
+    retry = tenacity.retry_if_exception(docker.errors.APIError),
+    stop = tenacity.stop_after_attempt(3)
+)
+@pytest.fixture(scope = "function")
+def local_container(
+    device,
+    task,
+    framework
+):
+    time.sleep(random.randint(1, 5))
+    client = docker.DockerClient(base_url='unix://var/run/docker.sock')
+    container_name = f"integration-test-{framework}-{task}-{device}"
+    container_image = f"integration-test-{framework}:{device}"
+
+
+    port = random.randint(5000, 7000)
+    model = task2model[task][framework]
+
+    logging.debug(f"Image: {container_image}")
+    logging.debug(f"Port: {port}")
+
+    device_request = [
+        docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])
+    ] if IS_GPU else []
+
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        # https://github.com/huggingface/infinity/blob/test-ovh/test/integ/utils.py
+        storage_dir = _load_repository_from_hf(model, tmpdirname, framework="pytorch")
+        yield client.containers.run(
+            container_image,
+            name=container_name,
+            ports={"5000": port},
+            environment={"HF_MODEL_DIR": "/opt/huggingface/model", "HF_TASK": task},
+            volumes={tmpdirname: {"bind": "/opt/huggingface/model", "mode": "ro"}},
+            detach=True,
+            # GPU
+            device_requests=device_request,
+        ), port
+
+        #Teardown
+        previous = client.containers.get(container_name)
+        previous.stop()
+        previous.remove()
 
