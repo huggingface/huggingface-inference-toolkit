@@ -1,5 +1,4 @@
 import tempfile
-import torch
 from transformers.testing_utils import (
     require_tf,
     require_torch,
@@ -24,7 +23,7 @@ INPUT = {"inputs": "My name is Wolfgang and I live in Berlin"}
 
 @require_torch
 def test_pt_get_device():
-
+    import torch
     with tempfile.TemporaryDirectory() as tmpdirname:
         # https://github.com/huggingface/infinity/blob/test-ovh/test/integ/utils.py
         storage_dir = _load_repository_from_hf(MODEL, tmpdirname, framework="pytorch")
