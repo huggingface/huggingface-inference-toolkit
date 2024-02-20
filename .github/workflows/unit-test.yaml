@@ -24,8 +24,8 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: 3.9.18
-    - name: Install Tox
-      run: pip install tox
+    - name: Install Tox & Dependencies
+      run: pip install tox ".[test]"
     - name: Install FFMPEG
       run: |
         sudo apt-get update -y && sudo apt-get install -y ffmpeg
@@ -39,7 +39,7 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: 3.9.18
-    - name: Install Tox
-      run: pip install tox
+    - name: Install Tox & Dependencies
+      run: pip install tox ".[test]"
     - name: Run unit tests for Tensorflow
       run: 	tox -e unit-tensorflow-slow -- -n 4
