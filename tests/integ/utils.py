@@ -82,3 +82,8 @@ def validate_object_detection(result=None, snapshot=None):
 def validate_text_to_image(result=None, snapshot=None):
     assert isinstance(result, snapshot)
     return True
+
+def validate_custom(result=None, snapshot=None):
+    logging.info(f"Validate custom task - result: {result}, snapshot: {snapshot}")
+    assert result == snapshot
+    return True

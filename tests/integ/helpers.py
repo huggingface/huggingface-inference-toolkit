@@ -95,7 +95,7 @@ def verify_task(
         
         logging.info(f"Prediction: {prediction}")
         logging.info(f"Snapshot: {task2output[task]}")
-        assert task2validation[task](result=prediction, snapshot=task2output[task]) is True
+        assert task2validation[task](result=prediction, snapshot=task2output[task])
     except Exception as exception:
         logging.error(f"Base URL: {BASE_URL}")
         logging.error(f"Task: {task}")

@@ -14,6 +14,7 @@ from tests.integ.utils import (
     validate_text_to_image,
     validate_translation,
     validate_zero_shot_classification,
+    validate_custom
 )
 
 
@@ -164,6 +165,7 @@ task2input = {
     "sentence-embeddings": {"inputs": "Lets create an embedding"},
     "sentence-ranking": {"inputs": ["Lets create an embedding", "Lets create an embedding"]},
     "text-to-image": {"inputs": "a man on a horse jumps over a broken down airplane."},
+    "custom": {"inputs": "this is a test"}
 }
 
 task2output = {
@@ -213,6 +215,7 @@ task2output = {
     "sentence-embeddings": {"embeddings": ""},
     "sentence-ranking": {"scores": ""},
     "text-to-image": bytes,
+    "custom": {"inputs": "this is a test"}
 }
 
 
@@ -239,4 +242,5 @@ task2validation = {
     "sentence-embeddings": validate_zero_shot_classification,
     "sentence-ranking": validate_zero_shot_classification,
     "text-to-image": validate_text_to_image,
+    "custom": validate_custom
 }

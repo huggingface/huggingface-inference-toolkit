@@ -16,6 +16,7 @@ from transformers.testing_utils import (
     require_tf,
     _run_slow_tests
 )
+import uuid
 
 IS_GPU = _run_slow_tests
 DEVICE = "gpu" if IS_GPU else "cpu"
@@ -74,16 +75,23 @@ def remote_container(
 def local_container(
     device,
     task,
+    repository_id,
     framework
 ):
     time.sleep(random.randint(1, 5))
+
+    id = uuid.uuid4()
+    if not (task == "custom"):
+        model = task2model[task][framework]
+        id = task
+    else:
+        model = repository_id
+
     client = docker.DockerClient(base_url='unix://var/run/docker.sock')
-    container_name = f"integration-test-{framework}-{task}-{device}"
+    container_name = f"integration-test-{framework}-{id}-{device}"
     container_image = f"integration-test-{framework}:{device}"
 
-
     port = random.randint(5000, 7000)
-    model = task2model[task][framework]
 
     logging.debug(f"Image: {container_image}")
     logging.debug(f"Port: {port}")
@@ -94,7 +102,7 @@ def local_container(
 
     with tempfile.TemporaryDirectory() as tmpdirname:
         # https://github.com/huggingface/infinity/blob/test-ovh/test/integ/utils.py
-        storage_dir = _load_repository_from_hf(model, tmpdirname, framework="pytorch")
+        storage_dir = _load_repository_from_hf(model, tmpdirname, framework=framework)
         yield client.containers.run(
             container_image,
             name=container_name,
