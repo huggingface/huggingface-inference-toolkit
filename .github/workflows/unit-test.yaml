@@ -24,7 +24,7 @@ jobs:
       run: pip install tox
     - name: Install FFMPEG
       run: |
-        sudo apt-get install -y ffmpeg
+        sudo apt-get update -y && sudo apt-get install -y ffmpeg
     - name: Run unit tests for Pytorch
       run: 	tox -e unit-torch-slow -- -n 4
   tensorflow-unit-test:
