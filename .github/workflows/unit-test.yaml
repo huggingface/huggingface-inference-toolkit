@@ -32,7 +32,7 @@ jobs:
       run: |
         sudo apt-get update -y && sudo apt-get install -y ffmpeg
     - name: Run unit tests for Pytorch
-      run: 	tox -e unit-torch-slow -- -n 4
+      run: 	tox -e unit-torch -- -n 4
   tensorflow-unit-test:
     runs-on: [single-gpu, nvidia-gpu, t4, ci]
     env:
@@ -46,4 +46,4 @@ jobs:
     - name: Install Tox & Dependencies
       run: pip install tox ".[test]"
     - name: Run unit tests for Tensorflow
-      run: 	tox -e unit-tensorflow-slow -- -n 4
+      run: 	tox -e unit-tensorflow -- -n 4
