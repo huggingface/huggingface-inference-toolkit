@@ -21,6 +21,8 @@ jobs:
     env:
       AWS_REGION: us-east-1
     steps:
+    - name: cuda-toolkit
+      uses: Jimver/cuda-toolkit@v0.2.14
     - name: nvidia-smi
       run: nvidia-smi
     - uses: actions/checkout@v4.1.1
