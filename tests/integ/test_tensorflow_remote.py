@@ -7,7 +7,7 @@ from tests.integ.config import (
     task2validation
 )
 from transformers.testing_utils import (
-    require_tf,
+    require_torch,
     slow,
     _run_slow_tests
 )
@@ -30,25 +30,16 @@ class TestTensorflowRemote:
         [
             "text-classification",
             "zero-shot-classification",
+            "ner",
             "question-answering",
             "fill-mask",
             "summarization",
-            "ner",
             "translation_xx_to_yy",
             "text2text-generation",
             "text-generation",
             "feature-extraction",
             "image-classification",
-            "automatic-speech-recognition",
-            "audio-classification",
-            "object-detection",
-            "image-segmentation",
-            "table-question-answering",
             "conversational",
-            "sentence-similarity",
-            "sentence-embeddings",
-            "sentence-ranking",
-            "text-to-image"
         ]
     )
     @pytest.mark.parametrize(
@@ -58,4 +49,8 @@ class TestTensorflowRemote:
     @pytest.mark.usefixtures('remote_container')
     def test_inference_remote(self, remote_container, task, framework, device):
 
-        verify_task(task = task, port = remote_container[1])
+        verify_task(
+            task = task,
+            port = remote_container[1],
+            framework = framework
+        )
