@@ -28,8 +28,9 @@ jobs:
       uses: docker/build-push-action@v5
       with:
         push: false
-        context: dockerfiles/pytorch/gpu
+        context: .
         tags: integration-test-pytorch:gpu
+        file: dockerfiles/pytorch/gpu/Dockerfile
     - name: Install tox
       run: pip install tox
     - name: Run unit tests
