@@ -30,7 +30,7 @@ jobs:
       run: docker images
     - name: Dry run
       run: |
-        docker run -it \
+        docker run \
           --gpus all \
           --entrypoint /bin/sh \
           integration-test-pytorch:gpu \
