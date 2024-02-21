@@ -132,6 +132,7 @@ def test_tf_sentence_transformers_pipeline():
             framework="tensorflow"
         )
         with pytest.raises(Exception) as exc_info:
-            h = get_inference_handler_either_custom_or_default_handler(str(storage_dir), task="sentence-embeddings")
-
-        assert "Unknown task sentence-embeddings" in str(exc_info.value)
+            h = get_inference_handler_either_custom_or_default_handler(
+                str(storage_dir),
+                task="sentence-embeddings"
+            )

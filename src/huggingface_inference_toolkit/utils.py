@@ -3,6 +3,7 @@ import logging
 import sys
 from pathlib import Path
 from typing import Optional, Union
+import re
 
 from huggingface_hub import HfApi, login, snapshot_download
 from transformers import WhisperForConditionalGeneration, pipeline
@@ -130,11 +131,13 @@ def _load_repository_from_hf(
     """
     Load a model from huggingface hub.
     """
+
     if hf_hub_token is not None:
         login(token=hf_hub_token)
 
     if framework is None:
         framework = _get_framework()
+    
     logging.info(f"Framework: {framework}")
 
     if isinstance(target_dir, str):
@@ -143,12 +146,6 @@ def _load_repository_from_hf(
     # create workdir
     if not target_dir.exists():
         target_dir.mkdir(parents=True)
-
-    # check if safetensors weights are available
-    #if framework == "pytorch":
-        #files = HfApi().model_info(repository_id).siblings
-        #if any(f.rfilename.endswith("safetensors") for f in files):
-            #framework = "safetensors"
 
     # create regex to only include the framework specific weights
     ignore_regex = create_artifact_filter(framework)
@@ -266,9 +263,19 @@ def get_pipeline(
         "sentence-embeddings",
         "sentence-ranking",
     ]:
-        hf_pipeline = get_sentence_transformers_pipeline(task=task, model_dir=model_dir, device=device, **kwargs)
+        hf_pipeline = get_sentence_transformers_pipeline(
+            task=task,
+            model_dir=model_dir,
+            device=device,
+            **kwargs
+        )
     elif is_diffusers_available() and task == "text-to-image":
-        hf_pipeline = get_diffusers_pipeline(task=task, model_dir=model_dir, device=device, **kwargs)
+        hf_pipeline = get_diffusers_pipeline(
+            task=task,
+            model_dir=model_dir,
+            device=device,
+            **kwargs
+        )
     else:
         logging.info(f"Task: {task}")
         logging.info(f"Model: {model_dir}")
@@ -297,12 +304,6 @@ def get_pipeline(
             language="english",
             task="transcribe"
         )
-        """"
-        hf_pipeline.tokenizer.language = "english"
-        hf_pipeline.tokenizer.task = "transcribe"
-        hf_pipeline.model.config.forced_decoder_ids = [
-            (rank + 1, token) for rank, token in enumerate(hf_pipeline.tokenizer.prefix_tokens[1:])
-        ]"""
 
     return hf_pipeline
 

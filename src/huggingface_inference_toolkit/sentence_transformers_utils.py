@@ -1,4 +1,5 @@
 import importlib.util
+import logging
 
 _sentence_transformers = importlib.util.find_spec("sentence_transformers") is not None
 
@@ -47,7 +48,18 @@ SENTENCE_TRANSFORMERS_TASKS = {
 }
 
 
-def get_sentence_transformers_pipeline(task=None, model_dir=None, device=-1, **kwargs):
-    device = "cuda" if device == 0 else "cpu"
-    pipeline = SENTENCE_TRANSFORMERS_TASKS[task](model_dir=model_dir, device=device)
-    return pipeline
+def get_sentence_transformers_pipeline(
+    task=None,
+    model_dir=None,
+    device=-1,
+    **kwargs 
+):
+    try:
+        device = "cuda" if device == 0 else "cpu"
+        pipeline = SENTENCE_TRANSFORMERS_TASKS[task](model_dir=model_dir, device=device)
+        return pipeline
+    except KeyError:
+        framework = kwargs['framework']
+        message = f"Task {task} is not supported for framework {framework}"
+        logging.error(framework)
+        raise ValueError(message)

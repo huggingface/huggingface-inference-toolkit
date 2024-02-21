@@ -39,7 +39,10 @@ class HuggingFaceHandler:
         return prediction
 
 
-def get_inference_handler_either_custom_or_default_handler(model_dir: Path, task: Optional[str] = None):
+def get_inference_handler_either_custom_or_default_handler(
+    model_dir: Path, 
+    task: Optional[str] = None
+):
     """
     get inference handler either custom or default Handler
     """
