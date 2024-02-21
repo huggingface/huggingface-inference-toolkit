@@ -5,7 +5,7 @@ from setuptools import find_packages, setup
 # We don't declare our dependency on transformers here because we build with
 # different packages for different variants
 
-VERSION = "0.2.0"
+VERSION = "0.3.0"
 
 
 # Ubuntu packages
@@ -15,14 +15,10 @@ VERSION = "0.2.0"
 
 install_requires = [
     # transformers
-    "transformers[sklearn,sentencepiece]==4.27.0",
+    "transformers[sklearn,sentencepiece]==4.37.2",
     "huggingface_hub>=0.20.3",
-    # api stuff
     "orjson",
-    # "robyn",
-    # vision
     "Pillow",
-    # speech + torchaudio
     "librosa",
     "pyctcdecode>=0.3.0",
     "phonemizer",
@@ -34,9 +30,9 @@ extras = {}
 extras["st"] = ["sentence_transformers==2.2.1"]
 extras["diffusers"] = ["diffusers==0.26.3", "accelerate==0.27.2"]
 extras["torch"] = ["torch==2.2.0", "torchaudio"]
-extras["tensorflow"] = ["tensorflow==2.9.3"]
+extras["tensorflow"] = ["tensorflow"]
 extras["test"] = [
-    "pytest",
+    "pytest==7.2.1",
     "pytest-xdist",
     "parameterized",
     "psutil",

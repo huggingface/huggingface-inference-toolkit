@@ -74,19 +74,14 @@ def wrap_conversation_pipeline(pipeline):
     """
 
     def wrapped_pipeline(inputs, *args, **kwargs):
-        converted_input = Conversation(
-            inputs["text"],
-            past_user_inputs=inputs.get("past_user_inputs", []),
-            generated_responses=inputs.get("generated_responses", []),
-        )
+        logging.info(f"Inputs: {inputs}")
+        logging.info(f"Args: {args}")
+        logging.info(f"KWArgs: {kwargs}")
+        converted_input = Conversation(messages = inputs)
         prediction = pipeline(converted_input, *args, **kwargs)
-        return {
-            "generated_text": prediction.generated_responses[-1],
-            "conversation": {
-                "past_user_inputs": prediction.past_user_inputs,
-                "generated_responses": prediction.generated_responses,
-            },
-        }
+        logging.info(f"Prediction: {prediction}")
+        return prediction
+        
 
     return wrapped_pipeline
 
@@ -295,11 +290,12 @@ def get_pipeline(
     ):
         # set chunk length to 30s for whisper to enable long audio files
         hf_pipeline._preprocess_params["chunk_length_s"] = 30
-        hf_pipeline._preprocess_params["ignore_warning"] = True
+        #hf_pipeline._preprocess_params["ignore_warning"] = True
         # set decoder to english by default
         # TODO: replace when transformers 4.26.0 is release with
         hf_pipeline.model.config.forced_decoder_ids = hf_pipeline.tokenizer.get_decoder_prompt_ids(
-            language="english", task="transcribe"
+            language="english",
+            task="transcribe"
         )
         """"
         hf_pipeline.tokenizer.language = "english"

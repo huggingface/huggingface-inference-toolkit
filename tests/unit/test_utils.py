@@ -160,29 +160,49 @@ def test_wrap_conversation_pipeline():
         framework="pt",
     )
     conv_pipe = wrap_conversation_pipeline(init_pipeline)
-    data = {
-        "past_user_inputs": ["Which movie is the best ?"],
-        "generated_responses": ["It's Die Hard for sure."],
-        "text": "Can you explain why?",
-    }
+    data = [
+        {
+            "role": "user",
+            "content": "Which movie is the best ?"
+        },
+        {
+            "role": "assistant",
+            "content": "It's Die Hard for sure."
+        },
+        {
+            "role": "user",
+            "content": "Can you explain why?"
+        }
+    ]
     res = conv_pipe(data)
-    assert "conversation" in res
-    assert "generated_text" in res
+    assert "content" in res.messages[-1]
 
 
 @require_torch
 def test_wrapped_pipeline():
     with tempfile.TemporaryDirectory() as tmpdirname:
-        storage_dir = _load_repository_from_hf("hf-internal-testing/tiny-random-blenderbot", tmpdirname, framework="pytorch")
+        storage_dir = _load_repository_from_hf(
+            repository_id = "microsoft/DialoGPT-small",
+            target_dir = tmpdirname,
+            framework="pytorch"
+        )
         conv_pipe = get_pipeline("conversational", storage_dir.as_posix())
-        data = {
-            "past_user_inputs": ["Which movie is the best ?"],
-            "generated_responses": ["It's Die Hard for sure."],
-            "text": "Can you explain why?",
-        }
+        data = [
+            {
+                "role": "user",
+                "content": "Which movie is the best ?"
+            },
+            {
+                "role": "assistant",
+                "content": "It's Die Hard for sure."
+            },
+            {
+                "role": "user",
+                "content": "Can you explain why?"
+            }
+        ]
         res = conv_pipe(data)
-        assert "conversation" in res
-        assert "generated_text" in res
+        assert "content" in res.messages[-1]
 
 
 def test_local_custom_pipeline():
