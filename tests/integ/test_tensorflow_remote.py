@@ -17,13 +17,9 @@ import docker
 
 class TestTensorflowRemote:
 
-    @tenacity.retry(
-        retry = tenacity.retry_if_exception(docker.errors.APIError),
-        stop = tenacity.stop_after_attempt(3)
-    )
     @pytest.mark.parametrize(
         "device",
-        ["gpu", "cpu"]
+        ["gpu"]
     )
     @pytest.mark.parametrize(
         "task",

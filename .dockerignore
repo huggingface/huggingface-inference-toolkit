@@ -1,0 +1,7 @@
+.github
+.pytest_cache
+.ruff_cache
+.tox
+.venv
+.gitignore
+makefile

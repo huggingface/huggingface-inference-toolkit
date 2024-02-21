@@ -73,6 +73,9 @@ RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
 COPY src/huggingface_inference_toolkit huggingface_inference_toolkit
 COPY src/huggingface_inference_toolkit/webservice_starlette.py webservice_starlette.py
 
+#unit tests
+COPY . /tmp/hf-inference-test
+
 # copy entrypoint and change permissions
 COPY scripts/entrypoint.sh entrypoint.sh
 RUN chmod +x entrypoint.sh
