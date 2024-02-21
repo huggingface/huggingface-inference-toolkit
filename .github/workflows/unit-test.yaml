@@ -18,36 +18,20 @@ concurrency:
 jobs:
   pytorch-unit-test:
     runs-on: [single-gpu, nvidia-gpu, t4, ci]
-    services:
-      registry:
-        image: registry:2
-        ports:
-          - 1234:1234
     env:
       AWS_REGION: us-east-1
     steps:
     - uses: actions/checkout@v4.1.1
-    - name: Set up QEMU
-      uses: docker/setup-qemu-action@v3
     - name: Docker Setup Buildx
       uses: docker/setup-buildx-action@v3.0.0
-      with:
-        driver-opts: network=host
     - name: Docker Build
-      uses: docker/build-push-action@v5
-      with:
-        push: true
-        context: .
-        tags: localhost:1234/integration-test-pytorch:gpu
-        file: dockerfiles/pytorch/gpu/Dockerfile
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
+      run: make inference-pytorch-gpu
+    - name: List images
+      run: docker images
     - name: Set up Python 3.11
       uses: actions/setup-python@v2
       with:
         python-version: 3.11
-    - name: List images
-      run: docker images
     - name: Install tox & uv
       run: pip install uv tox
     - name: Run unit tests
