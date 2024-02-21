@@ -27,7 +27,7 @@ jobs:
     - name: Docker Build
       uses: docker/build-push-action@v5
       with:
-        push: true
+        push: false
         context: .
         tags: integration-test-pytorch:gpu
         file: dockerfiles/pytorch/gpu/Dockerfile
