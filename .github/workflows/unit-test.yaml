@@ -31,7 +31,11 @@ jobs:
         context: .
         tags: integration-test-pytorch:gpu
         file: dockerfiles/pytorch/gpu/Dockerfile
-    - name: Install tox
-      run: pip install tox
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.11
+    - name: Install tox & uv
+      run: pip install uv tox
     - name: Run unit tests
       run: tox -e unit-torch-docker
