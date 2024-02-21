@@ -21,47 +21,16 @@ jobs:
     env:
       AWS_REGION: us-east-1
     steps:
-    - name: Use Apt lists cache
-      uses: actions/cache@v4.0.0
-      with:
-        path: /var/lib/apt/lists
-        key: ${{ runner.os }}-apt-lists
-    - name: Use Apt packages cache
-      uses: actions/cache@v4.0.0
-      with:
-        path: /var/cache/apt
-        key: ${{ runner.os }}-apt-packages
-    - name: Install CUDA
-      run: |
-        wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-keyring_1.1-1_all.deb
-        sudo dpkg -i cuda-keyring_1.1-1_all.deb
-        sudo apt-get update
-        sudo apt-get -y install cuda-toolkit-12-3 cuda-drivers
-    - name: nvidia-smi
-      run: nvidia-smi
     - uses: actions/checkout@v4.1.1
-    - name: Set up Python 3.9.18
-      uses: actions/setup-python@v5
+    - name: Docker Setup Buildx
+      uses: docker/setup-buildx-action@v3.0.0
+    - name: Docker Build
+      uses: docker/build-push-action@v5
       with:
-        python-version: 3.9.18
-    - name: Install test dependencies
-      run: pip install -U pip -r requirements-test.txt 
-    - name: Install ffmpeg
-      run: |
-        sudo apt-get update -y && sudo apt-get install -y ffmpeg
-    - name: Run unit tests for Pytorch
-      run: 	tox -e unit-torch -- -n 4
-  tensorflow-unit-test:
-    runs-on: [single-gpu, nvidia-gpu, t4, ci]
-    env:
-      AWS_REGION: us-east-1
-    steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python 3.9.18
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.9.18
-    - name: Install Tox & Dependencies
-      run: pip install tox ".[test]"
-    - name: Run unit tests for Tensorflow
-      run: 	tox -e unit-tensorflow -- -n 4
+        push: false
+        context: dockerfiles/pytorch/gpu
+        tags: integration-test-pytorch:gpu
+    - name: Install tox
+      run: pip install tox
+    - name: Run unit tests
+      run: tox -e unit-torch-docker
