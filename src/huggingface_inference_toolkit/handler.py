@@ -14,7 +14,11 @@ class HuggingFaceHandler:
     """
 
     def __init__(self, model_dir: Union[str, Path], task=None, framework="pt"):
-        self.pipeline = get_pipeline(model_dir=model_dir, task=task, framework=framework)
+        self.pipeline = get_pipeline(
+            model_dir=model_dir,
+            task=task,
+            framework=framework
+        )
 
     def __call__(self, data):
         """

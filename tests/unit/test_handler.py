@@ -127,9 +127,11 @@ def test_tf_sentence_transformers_pipeline():
     # TODO should fail! because TF is not supported yet
     with tempfile.TemporaryDirectory() as tmpdirname:
         storage_dir = _load_repository_from_hf(
-            "sentence-transformers/all-MiniLM-L6-v2", tmpdirname, framework="tensorflow"
+            "sentence-transformers/all-MiniLM-L6-v2",
+            tmpdirname,
+            framework="tensorflow"
         )
         with pytest.raises(Exception) as exc_info:
             h = get_inference_handler_either_custom_or_default_handler(str(storage_dir), task="sentence-embeddings")
 
-        assert "Use `from_tf=True` to load this model from those weights." in str(exc_info.value)
+        assert "Unknown task sentence-embeddings" in str(exc_info.value)

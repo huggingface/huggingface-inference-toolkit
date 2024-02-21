@@ -8,26 +8,27 @@ ENV TORCH_USE_CUDA_DSA=1
 
 WORKDIR /app
 
-RUN apt-get update \
-    && apt-get -y upgrade --only-upgrade systemd openssl cryptsetup \
-    && apt-get install -y \
-    build-essential \
-    bzip2 \
-    curl \
-    git \
-    git-lfs \
-    tar \
-    gcc \
-    g++ \
-    cmake \
-    libprotobuf-dev \
-    protobuf-compiler \
-    python3 \
-    python3-pip \
-    python3.10-venv \
-    # audio
-    libsndfile1-dev \
-    ffmpeg \
+RUN apt-get update && \
+    apt-get install software-properties-common -y && \
+    add-apt-repository ppa:deadsnakes/ppa && \
+    apt-get -y upgrade --only-upgrade systemd openssl cryptsetup && \
+    apt-get install -y \
+        build-essential \
+        bzip2 \
+        curl \
+        git \
+        git-lfs \
+        tar \
+        gcc \
+        g++ \
+        cmake \
+        libprotobuf-dev \
+        protobuf-compiler \
+        python3.11 \
+        python3-pip \
+        python3.11-venv \
+        libsndfile1-dev \
+        ffmpeg \
     && apt-get clean autoremove --yes \
     && rm -rf /var/lib/{apt,dpkg,cache,log}
 
