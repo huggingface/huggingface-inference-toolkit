@@ -28,6 +28,13 @@ jobs:
       run: make inference-pytorch-gpu
     - name: List images
       run: docker images
+    - name: Dry run
+      run: |
+        docker run -it \
+          --gpus all \
+          --entrypoint /bin/sh \
+          integration-test-pytorch:gpu \
+          -c "Hello World!"
     - name: Set up Python 3.11
       uses: actions/setup-python@v2
       with:
