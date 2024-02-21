@@ -27,10 +27,12 @@ jobs:
     - name: Docker Build
       uses: docker/build-push-action@v5
       with:
-        push: false
+        push: true
         context: .
         tags: integration-test-pytorch:gpu
         file: dockerfiles/pytorch/gpu/Dockerfile
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
     - name: Set up Python 3.11
       uses: actions/setup-python@v2
       with:
