@@ -1,84 +1,54 @@
-name: GPU - Run Integration Tests
+name: Run Unit-Tests
 
 on:
-  #push:
-  #  branches:
-  #    - main
-  #pull_request:
+  push:
+    branches:
+     - main
+  pull_request:
   workflow_dispatch:
+
+env:
+  ACTIONS_RUNNER_DEBUG: true
+  ACTIONS_STEP_DEBUG: true
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
-
 jobs:
-  pytorch-integration-test-local:
+  pytorch-integration-local:
     runs-on: [single-gpu, nvidia-gpu, t4, ci]
     env:
       AWS_REGION: us-east-1
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Set up Python 3.9
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.9
-      - name: Install Python dependencies
-        run: pip install -e .[test,dev,torch]
-      - name: Build Docker
-        run: docker build -t integration-test-pytorch:gpu -f dockerfiles/pytorch/gpu/Dockerfile .
-      - name: "Run Integration Tests: Torch Local"
-        run: tox -e torch-integration-local -- -n 4
-  pytorch-integration-test-remote:
+    - uses: actions/checkout@v4.1.1
+    - name: Docker Setup Buildx
+      uses: docker/setup-buildx-action@v3.0.0
+    - name: Docker Build
+      run: make inference-pytorch-gpu
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.11
+    - name: Install tox & uv
+      run: pip install uv tox
+    - name: Run unit tests
+      run: tox -e torch-integration-local -- -n 4
+  pytorch-integration-remote:
     runs-on: [single-gpu, nvidia-gpu, t4, ci]
     env:
       AWS_REGION: us-east-1
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Set up Python 3.9
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.9
-      - name: Install Python dependencies
-        run: pip install -e .[test,dev,torch]
-      - name: Build Docker
-        run: docker build -t integration-test-pytorch:gpu -f dockerfiles/pytorch/gpu/Dockerfile .
-      - name: "Run Integration Tests: Torch Remote"
-        run: tox -e torch-integration-remote -- -n 4
-  tensorflow-integration-test-local:
-    runs-on: [single-gpu, nvidia-gpu, t4, ci]
-    env:
-      AWS_REGION: us-east-1
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Set up Python 3.9
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.9
-      - name: Build Docker
-        run: docker build -f dockerfiles/tensorflow/gpu/Dockerfile -t integration-test-tensorflow:gpu .
-      - name: Install Tox
-        run: pip install tox
-      - name: "Run Integration Tests: TF Local"
-        run: tox -e tensorflow-integration-local -- -n 4
-  tensorflow-integration-test-remote:
-    runs-on: [single-gpu, nvidia-gpu, t4, ci]
-    env:
-      AWS_REGION: us-east-1
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Set up Python 3.9
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.9
-      - name: Build Docker
-        run: docker build -f dockerfiles/tensorflow/gpu/Dockerfile -t integration-test-tensorflow:gpu .
-      - name: Install Tox
-        run: pip install tox
-      - name: "Run Integration Tests: TF Remote"
-        run: tox -e tensorflow-integration-remote -- -n 4
-  
+    - uses: actions/checkout@v4.1.1
+    - name: Docker Setup Buildx
+      uses: docker/setup-buildx-action@v3.0.0
+    - name: Docker Build
+      run: make inference-pytorch-gpu
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.11
+    - name: Install tox & uv
+      run: pip install uv tox
+    - name: Run unit tests
+      run: tox -e torch-integration-remote -- -n 4
