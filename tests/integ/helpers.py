@@ -52,6 +52,8 @@ def wait_for_container_to_be_ready(
 ):
     
     retries = 0
+    error = None
+
     while retries < max_retries:
         time.sleep(time_between_retries)
         try:
@@ -62,8 +64,12 @@ def wait_for_container_to_be_ready(
             else:
                 raise ConnectionError(f"Error: {response.status_code}")
         except Exception as exception:
+            error = exception
             logging.warning(f"Container at {base_url} not ready, trying again...")
         retries += 1
+    
+    logging.error(f"Unable to start container: {str(error)}")
+    raise error
 
 def verify_task(
     #container: DockerClient,
