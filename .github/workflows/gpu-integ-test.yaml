@@ -45,6 +45,10 @@ jobs:
       run: make inference-pytorch-gpu
     - name: List images
       run: docker images
+    - name: Container dry run
+      run: docker run -e HF_MODEL_ID="distilbert/distilbert-base-uncased" -e HF_TASK="text-classification" -d integration-test-pytorch:gpu
+    - name: Stop container
+      run: make stop-all
     - name: Set up Python 3.11
       uses: actions/setup-python@v2
       with:
