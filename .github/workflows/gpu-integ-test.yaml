@@ -48,7 +48,9 @@ jobs:
     - name: Install hub
       run: pip install -U "huggingface_hub[cli]"
     - name: Download dummy model
-      run: huggingface-cli download hf-internal-testing/tiny-random-distilbert --local-dir /tmp/distilbert
+      run: |
+        huggingface-cli download hf-internal-testing/tiny-random-distilbert --local-dir /tmp/distilbert && \
+        ls /tmp/distilbert
     - name: Test model path
       run: |
         docker run \
@@ -61,10 +63,10 @@ jobs:
       run: make stop-all
     - name: Container dry run
       run: |
-        docker run --gpus all
-          -v /tmp/distilbert:/opt/huggingface/model
-          -e HF_MODEL_DIR=/opt/huggingface/model
-          -e HF_TASK=text-classification
+        docker run --gpus all \
+          -v /tmp/distilbert:/opt/huggingface/model \
+          -e HF_MODEL_DIR=/opt/huggingface/model \
+          -e HF_TASK=text-classification \
           integration-test-pytorch:gpu
     - name: Stop container
       run: make stop-all
