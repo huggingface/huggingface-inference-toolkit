@@ -48,14 +48,14 @@ jobs:
     - name: Install hub
       run: pip install -U "huggingface_hub[cli]"
     - name: Download dummy model
-      run: huggingface-cli download distilbert/distilbert-base-uncased --local-dir /tmp/distilbert
+      run: huggingface-cli download hf-internal-testing/tiny-random-distilbert --local-dir /tmp/distilbert
     - name: Container dry run
       run: |
-        docker run
-          -v /tmp/distilbert:/tmp/distilbert
-          -e HF_MODEL_DIR="tmp/distilbert"
-          -e HF_TASK="text-classification"
-          -d integration-test-pytorch:gpu
+        docker run --gpus all \
+          -v /tmp/distilbert:/opt/huggingface/model \
+          -e HF_MODEL_DIR=/opt/huggingface/model \
+          -e HF_TASK=text-classification \
+          integration-test-pytorch:gpu
     - name: Stop container
       run: make stop-all
     - name: Set up Python 3.11
