@@ -84,66 +84,66 @@ def local_container(
     repository_id,
     framework
 ):
-    time.sleep(random.randint(1, 5))
+    try:
+        time.sleep(random.randint(1, 5))
+        id = uuid.uuid4()
+        if not (task == "custom"):
+            model = task2model[task][framework]
+            id = task
+        else:
+            model = repository_id
 
-    id = uuid.uuid4()
-    if not (task == "custom"):
-        model = task2model[task][framework]
-        id = task
-    else:
-        model = repository_id
+        logging.info(f"Starting container with model: {model}")
 
-    logging.info(f"Starting container with model: {model}")
+        if not model:
+            message = f"No model supported for {framework}"
+            logging.error(message)
+            raise ValueError(message)
+        
+        logging.info(f"Starting container with Model = {model}")
+        client = docker.from_env()
+        container_name = f"integration-test-{framework}-{id}-{device}"
+        container_image = f"integration-test-{framework}:{device}"
 
-    if not model:
-        logging.info(f"No model supported for {framework}")
-        yield None
-    else:
-        try:
-            logging.info(f"Starting container with Model = {model}")
-            client = docker.from_env()
-            container_name = f"integration-test-{framework}-{id}-{device}"
-            container_image = f"integration-test-{framework}:{device}"
+        port = random.randint(5000, 7000)
 
-            port = random.randint(5000, 7000)
+        #check if port is already open
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        while sock.connect_ex(("localhost", port)) == 0:
+            logging.debug(f"Port {port} is already being used; getting a new one...")
+            port = random.randint(5000, 9000)
 
-            #check if port is already open
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            while sock.connect_ex(("localhost", port)) == 0:
-                logging.debug(f"Port {port} is already being used; getting a new one...")
-                port = random.randint(5000, 9000)
+        logging.debug(f"Image: {container_image}")
+        logging.debug(f"Port: {port}")
 
-            logging.debug(f"Image: {container_image}")
-            logging.debug(f"Port: {port}")
+        device_request = [
+            docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])
+        ] if device == "gpu" else []
 
-            device_request = [
-                docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])
-            ] if device == "gpu" else []
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            # https://github.com/huggingface/infinity/blob/test-ovh/test/integ/utils.py
+            storage_dir = _load_repository_from_hf(
+                repository_id = model,
+                target_dir = tmpdirname,
+                framework = framework
+            )
+            logging.info(f"Temp dir name: {tmpdirname}")
+            yield client.containers.run(
+                container_image,
+                name=container_name,
+                ports={"5000": port},
+                environment={"HF_MODEL_DIR": "/opt/huggingface/model", "HF_TASK": task},
+                volumes={tmpdirname: {"bind": "/opt/huggingface/model", "mode": "ro"}},
+                detach=True,
+                # GPU
+                device_requests=device_request,
+            ), port
 
-            with tempfile.TemporaryDirectory() as tmpdirname:
-                # https://github.com/huggingface/infinity/blob/test-ovh/test/integ/utils.py
-                storage_dir = _load_repository_from_hf(
-                    repository_id = model,
-                    target_dir = tmpdirname,
-                    framework = framework
-                )
-                logging.info(f"Temp dir name: {tmpdirname}")
-                yield client.containers.run(
-                    container_image,
-                    name=container_name,
-                    ports={"5000": port},
-                    environment={"HF_MODEL_DIR": "/opt/huggingface/model", "HF_TASK": task},
-                    volumes={tmpdirname: {"bind": "/opt/huggingface/model", "mode": "ro"}},
-                    detach=True,
-                    # GPU
-                    device_requests=device_request,
-                ), port
-
-                #Teardown
-                previous = client.containers.get(container_name)
-                previous.stop()
-                previous.remove()
-        except Exception as exception:
-            logging.error(f"Error starting container: {str(exception)}")
-            raise exception
+            #Teardown
+            previous = client.containers.get(container_name)
+            previous.stop()
+            previous.remove()
+    except Exception as exception:
+        logging.error(f"Error starting container: {str(exception)}")
+        raise exception
 
