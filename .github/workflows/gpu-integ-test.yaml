@@ -51,12 +51,12 @@ jobs:
       run: huggingface-cli download hf-internal-testing/tiny-random-distilbert --local-dir /tmp/distilbert
     - name: Test model path
       run: |
-        docker run
-          --gpus all
-          -v /tmp/distilbert:/opt/huggingface/model
-          --entrypoint /bin/sh
-        integration-test-pytorch:gpu
-        -c "ls /opt/huggingface/model"
+        docker run \
+          --gpus all \
+          -v /tmp/distilbert:/opt/huggingface/model \
+          --entrypoint /bin/sh \
+          integration-test-pytorch:gpu \
+          -c "ls /opt/huggingface/model"
     - name: Stop container
       run: make stop-all
     - name: Container dry run
