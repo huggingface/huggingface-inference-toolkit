@@ -94,12 +94,22 @@ def verify_task(
             ).json()
         elif task == "text-to-image":
             prediction = requests.post(f"{BASE_URL}", json=input, headers={"accept": "image/png"}).content
+
         else:
             prediction = requests.post(f"{BASE_URL}", json=input).json()
         
+        logging.info(f"Input: {input}")
         logging.info(f"Prediction: {prediction}")
         logging.info(f"Snapshot: {task2output[task]}")
-        assert task2validation[task](result=prediction, snapshot=task2output[task])
+
+        if task == "conversational":
+            for message in prediction:
+                assert "error" not in message["content"].lower()
+        else:
+            assert task2validation[task](
+                result=prediction,
+                snapshot=task2output[task]
+            )
     except Exception as exception:
         logging.error(f"Base URL: {BASE_URL}")
         logging.error(f"Task: {task}")

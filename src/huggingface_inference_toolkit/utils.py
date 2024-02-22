@@ -21,7 +21,7 @@ from huggingface_inference_toolkit.sentence_transformers_utils import (
 )
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(format="%(asctime)s | %(levelname)s | %(message)s", level=logging.INFO)
+#logging.basicConfig(format="%(asctime)s | %(levelname)s | %(message)s", level=logging.INFO)
 
 if is_tf_available():
     import tensorflow as tf
@@ -78,10 +78,9 @@ def wrap_conversation_pipeline(pipeline):
         logging.info(f"Inputs: {inputs}")
         logging.info(f"Args: {args}")
         logging.info(f"KWArgs: {kwargs}")
-        converted_input = Conversation(messages = inputs)
-        prediction = pipeline(converted_input, *args, **kwargs)
+        prediction = pipeline(inputs, *args, **kwargs)
         logging.info(f"Prediction: {prediction}")
-        return prediction
+        return list(prediction)
         
 
     return wrapped_pipeline

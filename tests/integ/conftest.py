@@ -21,7 +21,7 @@ DEVICE = "gpu" if IS_GPU else "cpu"
 
 @tenacity.retry(
     retry = tenacity.retry_if_exception(docker.errors.APIError),
-    stop = tenacity.stop_after_attempt(3)
+    stop = tenacity.stop_after_attempt(10)
 )
 @pytest.fixture(scope = "function")
 def remote_container(
@@ -30,7 +30,8 @@ def remote_container(
     framework
 ):
     time.sleep(random.randint(1, 5))
-    client = docker.DockerClient(base_url='unix://var/run/docker.sock')
+    #client = docker.DockerClient(base_url='unix://var/run/docker.sock')
+    client = docker.from_env()
     container_name = f"integration-test-{framework}-{task}-{device}"
     container_image = f"integration-test-{framework}:{device}"
     port = random.randint(5000, 7000)

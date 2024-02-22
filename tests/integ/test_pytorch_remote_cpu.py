@@ -19,11 +19,12 @@ class TestPytorchRemote:
 
     @tenacity.retry(
         retry = tenacity.retry_if_exception(docker.errors.APIError),
-        stop = tenacity.stop_after_attempt(3)
+        stop = tenacity.stop_after_attempt(5),
+        reraise = True
     )
     @pytest.mark.parametrize(
         "device",
-        ["gpu", "cpu"]
+        ["cpu"]
     )
     @pytest.mark.parametrize(
         "task",

@@ -7,8 +7,10 @@ from time import time
 def validate_classification(result=None, snapshot=None):
     for idx, _ in enumerate(result):
         assert result[idx].keys() == snapshot[idx].keys()
-        # assert result[idx]["score"] >= snapshot[idx]["score"]
     return True
+
+def validate_conversational(result=None, snapshot=None):
+    assert len(result) >= len(snapshot)
 
 
 def validate_zero_shot_classification(result=None, snapshot=None):

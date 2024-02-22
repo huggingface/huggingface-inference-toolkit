@@ -14,7 +14,8 @@ from tests.integ.utils import (
     validate_text_to_image,
     validate_translation,
     validate_zero_shot_classification,
-    validate_custom
+    validate_custom,
+    validate_conversational
 )
 
 
@@ -152,13 +153,20 @@ task2input = {
             },
         }
     },
-    "conversational": {
-        "inputs": {
-            "past_user_inputs": ["Which movie is the best ?"],
-            "generated_responses": ["It's Die Hard for sure."],
-            "text": "Can you explain why?",
+    "conversational": {"inputs": [
+        {
+            "role": "user",
+            "content": "Which movie is the best ?"
+        },
+        {
+            "role": "assistant",
+            "content": "It's Die Hard for sure."
+        },
+        {
+            "role": "user",
+            "content": "Can you explain why?"
         }
-    },
+    ]},
     "sentence-similarity": {
         "inputs": {"source_sentence": "Lets create an embedding", "sentences": ["Lets create an embedding"]}
     },
@@ -210,7 +218,12 @@ task2output = {
     "object-detection": [{"score": 0.9143241047859192, "label": "cat", "box": {}}],
     "image-segmentation": [{"score": 0.9143241047859192, "label": "cat", "mask": {}}],
     "table-question-answering": {"answer": "36542"},
-    "conversational": {"generated_text": "", "conversation": {}},
+    "conversational": [
+        {'role': 'user', 'content': 'Which movie is the best ?'},
+        {'role': 'assistant', 'content': "It's Die Hard for sure."},
+        {'role': 'user', 'content': 'Can you explain why?'},
+        {'role': 'assistant', 'content': "It's a great movie."},
+    ],
     "sentence-similarity": {"similarities": ""},
     "sentence-embeddings": {"embeddings": ""},
     "sentence-ranking": {"scores": ""},
@@ -237,7 +250,7 @@ task2validation = {
     "object-detection": validate_object_detection,
     "image-segmentation": validate_object_detection,
     "table-question-answering": validate_zero_shot_classification,
-    "conversational": validate_zero_shot_classification,
+    "conversational": validate_conversational,
     "sentence-similarity": validate_zero_shot_classification,
     "sentence-embeddings": validate_zero_shot_classification,
     "sentence-ranking": validate_zero_shot_classification,

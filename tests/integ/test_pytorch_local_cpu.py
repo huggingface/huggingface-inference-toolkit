@@ -45,7 +45,7 @@ class TestPytorchLocal:
     )
     @pytest.mark.parametrize(
         "device",
-        ["gpu", "cpu"]
+        ["cpu"]
     )
     @pytest.mark.parametrize(
         "framework",

@@ -175,7 +175,9 @@ def test_wrap_conversation_pipeline():
         }
     ]
     res = conv_pipe(data)
-    assert "content" in res.messages[-1]
+    logging.info(f"Response: {res}")
+    assert res[-1]["role"] == "assistant"
+    assert "error" not in res[-1]["content"]
 
 
 @require_torch
@@ -202,7 +204,8 @@ def test_wrapped_pipeline():
             }
         ]
         res = conv_pipe(data)
-        assert "content" in res.messages[-1]
+        assert res[-1]["role"] == "assistant"
+        assert "error" not in res[-1]["content"]
 
 
 def test_local_custom_pipeline():
