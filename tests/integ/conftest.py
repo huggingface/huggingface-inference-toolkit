@@ -15,6 +15,7 @@ from transformers.testing_utils import (
     _run_slow_tests
 )
 import uuid
+import socket
 
 IS_GPU = _run_slow_tests
 DEVICE = "gpu" if IS_GPU else "cpu"
@@ -36,6 +37,12 @@ def remote_container(
     container_image = f"integration-test-{framework}:{device}"
     port = random.randint(5000, 7000)
     model = task2model[task][framework]
+
+    #check if port is already open
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    while sock.connect_ex(("localhost", port)) == 0:
+        logging.debug(f"Port {port} is already being used; getting a new one...")
+        port = random.randint(5000, 9000)
 
     logging.debug(f"Image: {container_image}")
     logging.debug(f"Port: {port}")
@@ -67,7 +74,6 @@ def remote_container(
 
 
 @tenacity.retry(
-    retry = tenacity.retry_if_exception(docker.errors.APIError),
     stop = tenacity.stop_after_attempt(10),
     reraise = True
 )
@@ -100,6 +106,12 @@ def local_container(
             container_image = f"integration-test-{framework}:{device}"
 
             port = random.randint(5000, 7000)
+
+            #check if port is already open
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            while sock.connect_ex(("localhost", port)) == 0:
+                logging.debug(f"Port {port} is already being used; getting a new one...")
+                port = random.randint(5000, 9000)
 
             logging.debug(f"Image: {container_image}")
             logging.debug(f"Port: {port}")
