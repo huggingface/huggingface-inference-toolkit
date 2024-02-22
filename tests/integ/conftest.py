@@ -105,7 +105,7 @@ def local_container(
 
             device_request = [
                 docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])
-            ] if IS_GPU else []
+            ] if device == "gpu" else []
 
             with tempfile.TemporaryDirectory() as tmpdirname:
                 # https://github.com/huggingface/infinity/blob/test-ovh/test/integ/utils.py
