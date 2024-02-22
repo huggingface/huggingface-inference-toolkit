@@ -93,7 +93,10 @@ class TestPytorchLocal:
         repository_id
     ) -> None:
         
-        verify_task(task = task, port = local_container[1])
+        verify_task(
+            task = task,
+            port = local_container[1],
+        )
 
 
     @require_torch

@@ -68,7 +68,8 @@ def remote_container(
 
 @tenacity.retry(
     retry = tenacity.retry_if_exception(docker.errors.APIError),
-    stop = tenacity.stop_after_attempt(3)
+    stop = tenacity.stop_after_attempt(10),
+    reraise = True
 )
 @pytest.fixture(scope = "function")
 def local_container(
@@ -94,7 +95,7 @@ def local_container(
     else:
         try:
             logging.info(f"Starting container with Model = {model}")
-            client = docker.DockerClient(base_url='unix://var/run/docker.sock')
+            client = docker.from_env()
             container_name = f"integration-test-{framework}-{id}-{device}"
             container_image = f"integration-test-{framework}:{device}"
 
