@@ -53,8 +53,8 @@ jobs:
       run: |
         docker run --gpus all \
           -v /tmp/distilbert:/opt/huggingface/model \
-          -e HF_MODEL_DIR=/opt/huggingface/model \
-          -e HF_TASK=text-classification \
+          -e HF_MODEL_DIR="/opt/huggingface/model" \
+          -e HF_TASK="text-classification" \
           integration-test-pytorch:gpu
     - name: Stop container
       run: make stop-all
