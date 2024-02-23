@@ -27,6 +27,7 @@ jobs:
       run: |
         docker run \
           --entrypoint /bin/sh \
+          -v /mnt/hf_cache:/mnt/hf_cache \
           busybox \
           -c "ls /mnt && ls /mnt/hf_cache"
     - name: Set up Python 3.11
