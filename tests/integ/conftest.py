@@ -121,19 +121,22 @@ def local_container(
         ] if device == "gpu" else []
 
         with tempfile.TemporaryDirectory() as tmpdirname:
-            # https://github.com/huggingface/infinity/blob/test-ovh/test/integ/utils.py
+
             storage_dir = _load_repository_from_hf(
                 repository_id = model,
                 target_dir = tmpdirname,
                 framework = framework
             )
+
             logging.info(f"Temp dir name: {tmpdirname}")
             yield client.containers.run(
                 container_image,
                 name=container_name,
                 ports={"5000": port},
-                environment={"HF_MODEL_DIR": "/opt/huggingface/model", "HF_TASK": task},
-                volumes={tmpdirname: {"bind": "/opt/huggingface/model", "mode": "ro"}},
+                environment={
+                    "HF_MODEL_DIR": storage_dir,
+                    "HF_TASK": task
+                },
                 detach=True,
                 # GPU
                 device_requests=device_request,

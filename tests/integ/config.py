@@ -65,11 +65,11 @@ task2model = {
         "tensorflow": "hf-internal-testing/tiny-random-vit",
     },
     "automatic-speech-recognition": {
-        "pytorch": "hf-internal-testing/tiny-random-wav2vec2",
+        "pytorch": "hf-internal-testing/tiny-random-Wav2Vec2Model",
         "tensorflow": None,
     },
     "audio-classification": {
-        "pytorch": "hf-internal-testing/tiny-random-wavlm",
+        "pytorch": "hf-internal-testing/tiny-random-WavLMModel",
         "tensorflow": None,
     },
     "object-detection": {
@@ -77,11 +77,11 @@ task2model = {
         "tensorflow": None,
     },
     "image-segmentation": {
-        "pytorch": "hf-internal-testing/tiny-random-beit-pipeline",
+        "pytorch": "hf-internal-testing/tiny-random-BeitForSemanticSegmentation",
         "tensorflow": None,
     },
     "table-question-answering": {
-        "pytorch": "philschmid/tapex-tiny",
+        "pytorch": "microsoft/tapex-large-finetuned-tabfact",
         "tensorflow": None,
     },
     "zero-shot-image-classification": {
@@ -91,8 +91,6 @@ task2model = {
     "conversational": {
         "pytorch": "microsoft/DialoGPT-small",
         "tensorflow": "microsoft/DialoGPT-small",
-        #"pytorch": "hf-internal-testing/tiny-random-blenderbot",
-        #"tensorflow": "hf-internal-testing/tiny-random-blenderbot",
     },
     "sentence-similarity": {
         "pytorch": "sentence-transformers/all-MiniLM-L6-v2",

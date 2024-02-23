@@ -13,7 +13,6 @@ from transformers.testing_utils import (
 )
 import pytest
 
-
 class TestPytorchLocal:
 
     @require_torch
