@@ -120,32 +120,38 @@ def local_container(
             docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])
         ] if device == "gpu" else []
 
-        with tempfile.TemporaryDirectory() as tmpdirname:
+        object_id = model.replace("/", "--")
+        model_dir = f"/mnt/hf_cache/hub/{object_id}"
 
-            storage_dir = _load_repository_from_hf(
-                repository_id = model,
-                target_dir = tmpdirname,
-                framework = framework
-            )
+        storage_dir = _load_repository_from_hf(
+            repository_id = model,
+            target_dir = model_dir,
+            framework = framework
+        )
 
-            logging.info(f"Temp dir name: {tmpdirname}")
-            yield client.containers.run(
-                container_image,
-                name=container_name,
-                ports={"5000": port},
-                environment={
-                    "HF_MODEL_DIR": storage_dir,
-                    "HF_TASK": task
-                },
-                detach=True,
-                # GPU
-                device_requests=device_request,
-            ), port
+        yield client.containers.run(
+            container_image,
+            name=container_name,
+            ports={"5000": port},
+            environment={
+                "HF_MODEL_DIR": storage_dir,
+                "HF_TASK": task
+            },
+            volumes = {
+                model_dir: {
+                    "bind": "/opt/huggingface/model",
+                    "mode": "ro"
+                }
+            },
+            detach=True,
+            # GPU
+            device_requests=device_request,
+        ), port
 
-            #Teardown
-            previous = client.containers.get(container_name)
-            previous.stop()
-            previous.remove()
+        #Teardown
+        previous = client.containers.get(container_name)
+        previous.stop()
+        previous.remove()
     except Exception as exception:
         logging.error(f"Error starting container: {str(exception)}")
         raise exception
