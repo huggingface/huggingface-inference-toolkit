@@ -43,7 +43,7 @@ jobs:
     - name: Download dummy model
       run: |
         huggingface-cli download hf-internal-testing/tiny-random-distilbert --local-dir /mnt/hf_cache/distilbert && \
-        ls /mnt/hf_cache
+        ls /mnt/hf_cache/distilbert
     - name: Test model path
       run: |
         docker run \
