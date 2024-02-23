@@ -23,17 +23,22 @@ jobs:
       HF_HOME: /mnt/hf_cache/
       HF_HUB_CACHE: /mnt/hf_cache/hub
     steps:
-    - name: Cache dry run
-      run: |
-        docker run \
-          --entrypoint /bin/sh \
-          -v /mnt/hf_cache:/mnt/hf_cache \
-          busybox \
-          -c "ls /mnt && ls /mnt/hf_cache"
     - name: Set up Python 3.11
       uses: actions/setup-python@v2
       with:
         python-version: 3.11
+    - name: Download sample artifact
+      run: |
+        huggingface-cli download \
+          distilbert/distilbert-base-uncased \
+          --local-dir /mnt/hf_cache/hub/model--distilbert--distilbert-base-uncased
+    - name: Cache dry run
+      run: |
+        docker run \
+          --entrypoint /bin/sh \
+          -v /mnt/hf_cache/hub/model--distilbert--distilbert-base-uncased:/opt/huggingface/model \
+          busybox \
+          -c "ls /opt/huggingface/model"
     - uses: actions/checkout@v4.1.1
     - name: Docker Setup Buildx
       uses: docker/setup-buildx-action@v3.0.0
