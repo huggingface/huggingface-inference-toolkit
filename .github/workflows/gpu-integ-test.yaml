@@ -27,6 +27,8 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: 3.11
+    - name: Install Hub CLI
+      run: pip install huggingface-hub[cli]
     - name: Download sample artifact
       run: |
         huggingface-cli download \
