@@ -134,7 +134,7 @@ def local_container(
             name=container_name,
             ports={"5000": port},
             environment={
-                "HF_MODEL_DIR": storage_dir,
+                "HF_MODEL_DIR": "/opt/huggingface/model",
                 "HF_TASK": task
             },
             volumes = {
