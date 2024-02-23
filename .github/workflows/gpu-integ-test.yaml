@@ -23,6 +23,12 @@ jobs:
       HF_HOME: /mnt/hf_cache/
       HF_HUB_CACHE: /mnt/hf_cache/hub
     steps:
+    - name: Cache dry run
+      run: |
+        docker run \
+          --entrypoint /bin/sh \
+          busybox \
+          -c "ls /mnt && ls /mnt/hf_cache"
     - name: Set up Python 3.11
       uses: actions/setup-python@v2
       with:
