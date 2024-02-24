@@ -77,11 +77,9 @@ task2model = {
         "tensorflow": None,
     },
     "image-segmentation": {
-        "pytorch": "hf-internal-testing/tiny-random-BeitForSemanticSegmentation",
         "tensorflow": None,
     },
     "table-question-answering": {
-        "pytorch": "microsoft/tapex-large-finetuned-tabfact",
         "tensorflow": None,
     },
     "zero-shot-image-classification": {
@@ -106,6 +104,14 @@ task2model = {
     },
     "text-to-image": {
         "pytorch": "hf-internal-testing/tiny-stable-diffusion-torch",
+        "tensorflow": None,
+    },
+    "table-question-answering": {
+        "pytorch": "philschmid/tapex-tiny",
+        "tensorflow": None,
+    },
+    "image-segmentation": {
+        "pytorch": "hf-internal-testing/tiny-random-beit-pipeline",
         "tensorflow": None,
     },
 }
