@@ -27,20 +27,6 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: 3.11
-    - name: Install Hub CLI
-      run: pip install huggingface-hub[cli]
-    - name: Download sample artifact
-      run: |
-        huggingface-cli download \
-          distilbert/distilbert-base-uncased \
-          --local-dir /mnt/hf_cache/hub/model--distilbert--distilbert-base-uncased
-    - name: Cache dry run
-      run: |
-        docker run \
-          --entrypoint /bin/sh \
-          -v /mnt/hf_cache/hub/model--distilbert--distilbert-base-uncased:/opt/huggingface/model \
-          busybox \
-          -c "ls /opt/huggingface/model"
     - uses: actions/checkout@v4.1.1
     - name: Docker Setup Buildx
       uses: docker/setup-buildx-action@v3.0.0
@@ -55,7 +41,7 @@ jobs:
     - name: Install tox & uv
       run: pip install uv tox
     - name: Run local integration tests
-      run: tox -e torch-integration-local-gpu
+      run: tox -e torch-integration-local-gpu -- -n 10
   pytorch-integration-remote:
     runs-on: [single-gpu, nvidia-gpu, t4, ci]
     env:
@@ -75,4 +61,4 @@ jobs:
     - name: Install tox & uv
       run: pip install uv tox
     - name: Run remote integration tests
-      run: tox -e torch-integration-remote-gpu -- -n 4
+      run: tox -e torch-integration-remote-gpu -- -n 10

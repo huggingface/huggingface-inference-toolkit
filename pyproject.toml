@@ -13,7 +13,6 @@ lint.select = [
   "B", # flake8-bugbear
 ]
 lint.ignore = [
-  "E501", # line too long, handled by black
   "B008", # do not perform function calls in argument defaults
   "C901", # too complex
 ]
@@ -23,8 +22,8 @@ line-length = 119
 # Allow unused variables when underscore-prefixed.
 lint.dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 
-# Assume Python 3.9.
-target-version = "py39"
+# Assume Python 3.11.
+target-version = "py311"
 
 lint.per-file-ignores = {"__init__.py" = ["F401"]}
 

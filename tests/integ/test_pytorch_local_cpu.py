@@ -13,7 +13,6 @@ from transformers.testing_utils import (
 )
 import pytest
 
-
 class TestPytorchLocal:
 
     @require_torch
@@ -64,7 +63,7 @@ class TestPytorchLocal:
         device
     ) -> None:
 
-            verify_task(task = task, port = local_container[1])
+        verify_task(task = task, port = local_container[1])
 
 
     @require_torch
@@ -74,7 +73,7 @@ class TestPytorchLocal:
     )
     @pytest.mark.parametrize(
         "device",
-        ["gpu", "cpu"]
+        ["cpu"]
     )
     @pytest.mark.parametrize(
         "framework",
@@ -93,7 +92,10 @@ class TestPytorchLocal:
         repository_id
     ) -> None:
         
-        verify_task(task = task, port = local_container[1])
+        verify_task(
+            task = task,
+            port = local_container[1],
+        )
 
 
     @require_torch
@@ -103,7 +105,7 @@ class TestPytorchLocal:
     )
     @pytest.mark.parametrize(
         "device",
-        ["gpu", "cpu"]
+        ["cpu"]
     )
     @pytest.mark.parametrize(
         "framework",
