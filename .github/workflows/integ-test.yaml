@@ -35,10 +35,11 @@ jobs:
     - name: List images
       run: docker images
     - name: Dry run
-      run: docker run \
-        --entrypoint /bin/sh \
-        integration-test-pytorch:cpu \
-        -c "echo Hello world!"
+      run: |
+        docker run \
+          --entrypoint /bin/sh \
+          integration-test-pytorch:cpu \
+          -c "echo Hello world!"
     - name: Set up Python 3.11
       uses: actions/setup-python@v2
       with:
