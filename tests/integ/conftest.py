@@ -105,7 +105,7 @@ def local_container(
         container_name = f"integration-test-{framework}-{id}-{device}"
         container_image = f"integration-test-{framework}:{device}"
 
-        port = random.randint(5000, 7000)
+        port = random.randint(5000, 9000)
 
         #check if port is already open
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
