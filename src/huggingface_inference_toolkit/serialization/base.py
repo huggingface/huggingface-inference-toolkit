@@ -42,15 +42,21 @@ class ContentType:
         if content_type in content_type_mapping:
             return content_type_mapping[content_type]
         else:
-            raise Exception(
-                f'Content type "{content_type}" not supported. Supported content types are: {", ".join(list(content_type_mapping.keys()))}'
-            )
+            message = f"""
+                Content type "{content_type}" not supported.
+                Supported content types are:
+                {", ".join(list(content_type_mapping.keys()))}
+            """
+            raise Exception(message)
 
     @staticmethod
     def get_serializer(accept):
         if accept in content_type_mapping:
             return content_type_mapping[accept]
         else:
-            raise Exception(
-                f'Accept type "{accept}" not supported. Supported accept types are: {", ".join(list(content_type_mapping.keys()))}'
-            )
+            message = f"""
+                Accept type "{accept}" not supported.
+                Supported accept types are:
+                {", ".join(list(content_type_mapping.keys()))}
+            """
+            raise Exception(message)

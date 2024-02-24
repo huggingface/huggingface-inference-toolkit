@@ -35,7 +35,7 @@ def remote_container(
     client = docker.from_env()
     container_name = f"integration-test-{framework}-{task}-{device}"
     container_image = f"integration-test-{framework}:{device}"
-    port = random.randint(5000, 7000)
+    port = random.randint(5000, 9000)
     model = task2model[task][framework]
 
     #check if port is already open

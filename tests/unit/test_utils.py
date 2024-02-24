@@ -204,6 +204,7 @@ def test_wrapped_pipeline():
             }
         ]
         res = conv_pipe(data)
+        logging.info(f"Response: {res}")
         assert res[-1]["role"] == "assistant"
         assert "error" not in res[-1]["content"]
 

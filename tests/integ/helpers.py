@@ -110,7 +110,7 @@ def verify_task(
 
         if task == "conversational":
             for message in prediction:
-                assert "error" not in message["content"].lower()
+                assert "error" not in message.keys()
         else:
             assert task2validation[task](
                 result=prediction,

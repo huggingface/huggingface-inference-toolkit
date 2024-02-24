@@ -10,7 +10,8 @@ logging.basicConfig(format="%(asctime)s | %(levelname)s | %(message)s", level=lo
 
 class HuggingFaceHandler:
     """
-    A Default Hugging Face Inference Handler which works with all transformers pipelines, Sentence Transformers and Optimum.
+    A Default Hugging Face Inference Handler which works with all
+    transformers pipelines, Sentence Transformers and Optimum.
     """
 
     def __init__(self, model_dir: Union[str, Path], task=None, framework="pt"):
@@ -40,7 +41,7 @@ class HuggingFaceHandler:
 
 
 def get_inference_handler_either_custom_or_default_handler(
-    model_dir: Path, 
+    model_dir: Path,
     task: Optional[str] = None
 ):
     """

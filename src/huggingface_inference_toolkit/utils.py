@@ -3,12 +3,11 @@ import logging
 import sys
 from pathlib import Path
 from typing import Optional, Union
-import re
 
-from huggingface_hub import HfApi, login, snapshot_download
+from huggingface_hub import login, snapshot_download
 from transformers import WhisperForConditionalGeneration, pipeline
 from transformers.file_utils import is_tf_available, is_torch_available
-from transformers.pipelines import Conversation, Pipeline
+from transformers.pipelines import Pipeline
 
 from huggingface_inference_toolkit.const import HF_DEFAULT_PIPELINE_NAME, HF_MODULE_NAME
 from huggingface_inference_toolkit.diffusers_utils import (
@@ -20,8 +19,10 @@ from huggingface_inference_toolkit.sentence_transformers_utils import (
     is_sentence_transformers_available,
 )
 
-logger = logging.getLogger(__name__)
-#logging.basicConfig(format="%(asctime)s | %(levelname)s | %(message)s", level=logging.INFO)
+logging.basicConfig(
+    format="%(asctime)s | %(levelname)s | %(message)s",
+    level=logging.INFO
+)
 
 if is_tf_available():
     import tensorflow as tf
@@ -81,7 +82,7 @@ def wrap_conversation_pipeline(pipeline):
         prediction = pipeline(inputs, *args, **kwargs)
         logging.info(f"Prediction: {prediction}")
         return list(prediction)
-        
+
 
     return wrapped_pipeline
 
@@ -93,7 +94,7 @@ def _is_gpu_available():
     if is_tf_available():
         return True if len(tf.config.list_physical_devices("GPU")) > 0 else False
     elif is_torch_available():
-        logger.info(f"CUDA: {torch.cuda.is_available()}")
+        logging.info(f"CUDA: {torch.cuda.is_available()}")
         return torch.cuda.is_available()
     else:
         raise RuntimeError(
@@ -136,7 +137,7 @@ def _load_repository_from_hf(
 
     if framework is None:
         framework = _get_framework()
-    
+
     logging.info(f"Framework: {framework}")
 
     if isinstance(target_dir, str):
@@ -150,7 +151,7 @@ def _load_repository_from_hf(
     ignore_regex = create_artifact_filter(framework)
     logging.info(f"ignore_regex: {ignore_regex}")
     logging.info(f"Framework after filtering: {framework}")
-    logger.info(f"Ignore regex pattern for files, which are not downloaded: { ', '.join(ignore_regex) }")
+    logging.info(f"Ignore regex pattern for files, which are not downloaded: { ', '.join(ignore_regex) }")
 
     # Download the repository to the workdir and filter out non-framework specific weights
     snapshot_download(
@@ -172,7 +173,7 @@ def check_and_register_custom_pipeline_from_directory(model_dir):
     custom_module = Path(model_dir).joinpath(HF_DEFAULT_PIPELINE_NAME)
     legacy_module = Path(model_dir).joinpath("pipeline.py")
     if custom_module.is_file():
-        logger.info(f"Found custom pipeline at {custom_module}")
+        logging.info(f"Found custom pipeline at {custom_module}")
         spec = importlib.util.spec_from_file_location(HF_MODULE_NAME, custom_module)
         if spec:
             # add the whole directory to path for submodlues
@@ -185,8 +186,10 @@ def check_and_register_custom_pipeline_from_directory(model_dir):
             custom_pipeline = handler.EndpointHandler(model_dir)
 
     elif legacy_module.is_file():
-        logger.warning(
-            "You are using a legacy custom pipeline. Please update to the new format. See documentation for more information."
+        logging.warning(
+            """You are using a legacy custom pipeline.
+            Please update to the new format.
+            See documentation for more information."""
         )
         spec = importlib.util.spec_from_file_location("pipeline.PreTrainedPipeline", legacy_module)
         if spec:
@@ -199,7 +202,7 @@ def check_and_register_custom_pipeline_from_directory(model_dir):
             # init custom handler with model_dir
             custom_pipeline = pipeline.PreTrainedPipeline(model_dir)
     else:
-        logger.info(f"No custom pipeline found at {custom_module}")
+        logging.info(f"No custom pipeline found at {custom_module}")
         custom_pipeline = None
     return custom_pipeline
 
@@ -209,7 +212,7 @@ def get_device():
     The get device function will return the device for the DL Framework.
     """
     gpu = _is_gpu_available()
-    logger.info(f"GPU Available: {gpu}")
+    logging.info(f"GPU Available: {gpu}")
 
     if gpu:
         return 0
@@ -227,7 +230,7 @@ def get_pipeline(
     create pipeline class for a specific task based on local saved model
     """
     device = get_device()
-    logger.info(f"Using device { 'GPU' if device == 0 else 'CPU'}")
+    logging.info(f"Using device { 'GPU' if device == 0 else 'CPU'}")
 
     if task is None:
         raise EnvironmentError(
@@ -255,7 +258,7 @@ def get_pipeline(
         kwargs["tokenizer"] = model_dir
 
     if is_optimum_available():
-        logger.info("Optimum is not implement yet using default pipeline.")
+        logging.info("Optimum is not implemented yet using default pipeline.")
         hf_pipeline = pipeline(task=task, model=model_dir, device=device, **kwargs)
     elif is_sentence_transformers_available() and task in [
         "sentence-similarity",
@@ -287,7 +290,7 @@ def get_pipeline(
             **kwargs
         )
 
-    # wrapp specific pipeline to support better ux
+    # wrap specific pipeline to support better ux
     if task == "conversational":
         hf_pipeline = wrap_conversation_pipeline(hf_pipeline)
     elif task == "automatic-speech-recognition" and isinstance(
