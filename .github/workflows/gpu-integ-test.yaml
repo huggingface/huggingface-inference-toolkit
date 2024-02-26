@@ -41,7 +41,7 @@ jobs:
     - name: Install tox & uv
       run: pip install uv tox
     - name: Run local integration tests
-      run: tox -e torch-integration-local-gpu -- -n 10
+      run: tox -e torch-integration-local-gpu -- -n 4
   pytorch-integration-remote:
     runs-on: [single-gpu, nvidia-gpu, t4, ci]
     env:
@@ -61,4 +61,4 @@ jobs:
     - name: Install tox & uv
       run: pip install uv tox
     - name: Run remote integration tests
-      run: tox -e torch-integration-remote-gpu -- -n 10
+      run: tox -e torch-integration-remote-gpu -- -n 4
