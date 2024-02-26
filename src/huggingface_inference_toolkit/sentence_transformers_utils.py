@@ -54,11 +54,6 @@ def get_sentence_transformers_pipeline(
     device=-1,
     **kwargs
 ):
-    try:
-        device = "cuda" if device == 0 else "cpu"
-        pipeline = SENTENCE_TRANSFORMERS_TASKS[task](model_dir=model_dir, device=device)
-        return pipeline
-    except KeyError:
-        framework = kwargs['framework']
-        message = f"Task {task} is not supported for framework {framework}"
-        logging.error(message)
+    device = "cuda" if device == 0 else "cpu"
+    pipeline = SENTENCE_TRANSFORMERS_TASKS[task](model_dir=model_dir, device=device)
+    return pipeline

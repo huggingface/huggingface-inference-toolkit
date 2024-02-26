@@ -1,10 +1,11 @@
-FROM ubuntu:22.04
+ARG BASE_IMAGE=nvidia/cuda:12.1.0-devel-ubuntu22.04
+
+FROM $BASE_IMAGE
 SHELL ["/bin/bash", "-c"]
 
 LABEL maintainer="Hugging Face"
 
 ENV DEBIAN_FRONTEND=noninteractive
-ENV TORCH_USE_CUDA_DSA=1
 
 WORKDIR /app
 
@@ -32,22 +33,18 @@ RUN apt-get update && \
     && apt-get clean autoremove --yes \
     && rm -rf /var/lib/{apt,dpkg,cache,log}
 
-# install dependencies
-COPY dockerfiles/pytorch/gpu/requirements.txt requirements-docker.txt
-COPY requirements.txt requirements-toolkit.txt
+COPY . .
 
 # install wheel and setuptools
 RUN python3 -m venv .venv && \
     source .venv/bin/activate && \
-    pip install wheel && \
-    pip install --no-cache-dir -r requirements-docker.txt && \
-    pip install --no-cache-dir -r requirements-toolkit.txt
+    pip install --no-cache-dir -e ".[torch, st, diffusers]"
 
 # copy application
 COPY src/huggingface_inference_toolkit huggingface_inference_toolkit
 COPY src/huggingface_inference_toolkit/webservice_starlette.py webservice_starlette.py
 
-#unit tests
+#unit tests - tmp dir gets removed in entrypoint.sh
 COPY . /tmp/hf-inference-test
 
 # copy entrypoint and change permissions

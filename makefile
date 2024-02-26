@@ -21,10 +21,10 @@ style:
 	ruff $(check_dirs) --fix
 
 inference-pytorch-gpu:
-	docker build -f dockerfiles/pytorch/gpu/Dockerfile -t integration-test-pytorch:gpu .
+	docker build -f dockerfiles/pytorch/Dockerfile -t integration-test-pytorch:gpu .
 
 inference-pytorch-cpu:
-	docker build -f dockerfiles/pytorch/cpu/Dockerfile -t integration-test-pytorch:cpu .
+	docker build --build-arg="BASE_IMAGE=ubuntu:22.04" -f dockerfiles/pytorch/Dockerfile -t integration-test-pytorch:cpu .
 
 stop-all:
 	docker stop $$(docker ps -a -q) && docker container prune --force

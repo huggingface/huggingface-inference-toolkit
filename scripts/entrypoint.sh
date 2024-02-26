@@ -1,7 +1,7 @@
 # /bin/bash
 
 #cleanup tempdir
-rm -rf /tmp/hf-inference-test
+rm -rf /tmp/hf-inference-test && rm -rf /app/tests
 
 # check if HF_MODEL_DIR is set and if not skip installing custom dependencies
 if [[ ! -z "${HF_MODEL_DIR}" ]]; then

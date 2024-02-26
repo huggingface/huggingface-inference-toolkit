@@ -5,3 +5,4 @@
 .venv
 .gitignore
 makefile
+__pycache__
