@@ -55,9 +55,9 @@ ENV TORCH_USE_CUDA_DSA=1
 
 RUN apt-get update -y && apt-get upgrade -y && \
     apt-get install -y \
-    python3 \
+    python3.11 \
     python3-pip \
-    python3.10-venv \
+    python3.11-venv \
     curl \
     ffmpeg \
     && apt-get clean autoremove --yes \
