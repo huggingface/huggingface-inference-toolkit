@@ -62,11 +62,9 @@ RUN apt-get update -y && apt-get upgrade -y && \
     ffmpeg \
     && apt-get clean autoremove --yes \
     && rm -rf /var/lib/{apt,dpkg,cache,log}
-    
+
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
-    source $HOME/.cargo/env && \
-    source .venv/bin/activate && \
-    ls -all
+    source $HOME/.cargo/env
 
 # install dependencies
 COPY --from=builder /app .
