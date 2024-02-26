@@ -76,19 +76,13 @@ task2model = {
         "pytorch": "hustvl/yolos-tiny",
         "tensorflow": None,
     },
-    "image-segmentation": {
-        "tensorflow": None,
-    },
-    "table-question-answering": {
-        "tensorflow": None,
-    },
     "zero-shot-image-classification": {
         "pytorch": "hf-internal-testing/tiny-random-clip-zero-shot-image-classification",
         "tensorflow": "hf-internal-testing/tiny-random-clip-zero-shot-image-classification",
     },
     "conversational": {
-        "pytorch": "microsoft/DialoGPT-small",
-        "tensorflow": "microsoft/DialoGPT-small",
+        "pytorch": "hf-internal-testing/tiny-random-blenderbot-small",
+        "tensorflow": None,
     },
     "sentence-similarity": {
         "pytorch": "sentence-transformers/all-MiniLM-L6-v2",
