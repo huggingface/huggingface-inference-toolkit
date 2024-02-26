@@ -59,15 +59,17 @@ RUN apt-get update -y && apt-get upgrade -y && \
     python3-pip \
     python3.10-venv \
     curl \
-    ffmpeg
-
-# install dependencies
-COPY --from=builder /app .
-
+    ffmpeg \
+    && apt-get clean autoremove --yes \
+    && rm -rf /var/lib/{apt,dpkg,cache,log}
+    
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
     source $HOME/.cargo/env && \
     source .venv/bin/activate && \
     ls -all
+
+# install dependencies
+COPY --from=builder /app .
 
 # copy application
 COPY src/huggingface_inference_toolkit huggingface_inference_toolkit
