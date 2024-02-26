@@ -2,6 +2,8 @@ name: Run CPU Integration Tests
 
 on:
   push:
+    paths-ignore:
+      - 'README.md'
     branches:
      - main
   pull_request:
