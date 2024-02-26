@@ -1,5 +1,4 @@
 import importlib.util
-import logging
 
 _sentence_transformers = importlib.util.find_spec("sentence_transformers") is not None
 
