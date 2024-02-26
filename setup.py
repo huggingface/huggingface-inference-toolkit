@@ -15,7 +15,7 @@ VERSION = "0.3.0"
 
 install_requires = [
     # transformers
-    "transformers[sklearn,sentencepiece]==4.37.2",
+    "transformers[sklearn,sentencepiece]==4.38.1",
     "huggingface_hub>=0.20.3",
     "orjson",
     "Pillow",

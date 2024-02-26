@@ -24,25 +24,7 @@ inference-pytorch-gpu:
 	docker build --no-cache -f dockerfiles/pytorch/gpu/Dockerfile -t integration-test-pytorch:gpu .
 
 inference-pytorch-cpu:
-	docker build -f dockerfiles/pytorch/cpu/Dockerfile -t integration-test-pytorch:cpu .
-
-inference-tensorflow-gpu:
-	docker build --no-cache -f dockerfiles/tensorflow/gpu/Dockerfile -t integration-test-tensorflow:gpu .
-
-inference-tensorflow-cpu:
-	docker build -f dockerfiles/tensorflow/cpu/Dockerfile -t integration-test-tensorflow:cpu .
+	docker build --no-cache -f dockerfiles/pytorch/cpu/Dockerfile -t integration-test-pytorch:cpu .
 
 stop-all:
 	docker stop $$(docker ps -a -q) && docker container prune --force
-
-run-tensorflow-remote-gpu:
-	docker run -e HF_TASK=text-classification -e HF_MODEL_ID=distilbert/distilbert-base-uncased integration-test-tensorflow:gpu
-
-run-tensorflow-local-gpu:
-	rm -rf /tmp/distilbert && \
-	huggingface-cli download hf-internal-testing/tiny-random-distilbert --local-dir /tmp/distilbert && \
-	docker run --gpus all \
-		-v /tmp/distilbert:/opt/huggingface/model \
-		-e HF_MODEL_DIR=/opt/huggingface/model \
-		-e HF_TASK=text-classification \
-		integration-test-tensorflow:gpu
