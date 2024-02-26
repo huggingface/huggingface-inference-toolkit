@@ -14,7 +14,9 @@ VERSION = "0.3.0"
 # libavcodec-extra : libavcodec-extra  inculdes additional codecs for ffmpeg
 
 install_requires = [
-    # transformers
+    "wheel==0.42.0",
+    "setuptools==69.1.0",
+    "cmake==3.28.3",
     "transformers[sklearn,sentencepiece]==4.38.1",
     "huggingface_hub>=0.20.3",
     "orjson",
@@ -22,14 +24,17 @@ install_requires = [
     "librosa",
     "pyctcdecode>=0.3.0",
     "phonemizer",
-    "ffmpeg"
+    "ffmpeg",
+    "starlette",
+    "uvicorn",
+    "pandas"
 ]
 
 extras = {}
 
-extras["st"] = ["sentence_transformers==2.2.1"]
+extras["st"] = ["sentence_transformers==2.3.1"]
 extras["diffusers"] = ["diffusers==0.26.3", "accelerate==0.27.2"]
-extras["torch"] = ["torch==2.2.0", "torchaudio"]
+extras["torch"] = ["torch==2.2.0", "torchvision", "torchaudio"]
 extras["tensorflow"] = ["tensorflow"]
 extras["test"] = [
     "pytest==7.2.1",
