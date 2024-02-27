@@ -9,10 +9,6 @@ on:
   pull_request:
   workflow_dispatch:
 
-env:
-  ACTIONS_RUNNER_DEBUG: true
-  ACTIONS_STEP_DEBUG: true
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
@@ -20,45 +16,9 @@ concurrency:
 jobs:
   pytorch-integration-local:
     runs-on: [single-gpu, nvidia-gpu, t4, ci]
-    env:
-      AWS_REGION: us-east-1
-      HF_HOME: /mnt/hf_cache/
-      HF_HUB_CACHE: /mnt/hf_cache/hub
     steps:
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v1
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ env.AWS_REGION }}
-    - uses: actions/checkout@v4.1.1
-    - name: Docker Setup Buildx
-      uses: docker/setup-buildx-action@v3.0.0
-    - name: Docker Build
-      run: make inference-pytorch-gpu
-    - name: Set up Python 3.11
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.11
-    - name: Install tox & uv
-      run: pip install uv tox
-    - name: Run local integration tests
-      run: tox -e torch-integration-local-gpu -- -n 4
-  pytorch-integration-remote:
-    runs-on: [single-gpu, nvidia-gpu, t4, ci]
-    env:
-      AWS_REGION: us-east-1
-    steps:
-    - uses: actions/checkout@v4.1.1
-    - name: Docker Setup Buildx
-      uses: docker/setup-buildx-action@v3.0.0
-    - name: Docker Build
-      run: make inference-pytorch-gpu
-    - name: Set up Python 3.11
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.11
-    - name: Install tox & uv
-      run: pip install uv tox
-    - name: Run remote integration tests
-      run: tox -e torch-integration-remote-gpu -- -n 4
+      - name: Integration Tests - GPU Local
+        uses: ./.github/workflows/templates/integration_test.yaml
+        with:
+          test_path: "tests/integ/test_pytorch_local_gpu.py"
+          build_img_cmd: "make inference-pytorch-gpu"
