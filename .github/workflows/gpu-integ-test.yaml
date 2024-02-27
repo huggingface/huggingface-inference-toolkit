@@ -29,13 +29,11 @@ jobs:
     - name: Docker Setup Buildx
       uses: docker/setup-buildx-action@v3.0.0
     - name: Docker Build
-      run: |
-        
+      run: make inference-pytorch-gpu
     - name: Set up Python 3.11
       uses: actions/setup-python@v2
       with:
         python-version: 3.11
-        cache: 'pip'
     - name: Install tox & uv
       run: pip install uv tox
     - name: Run local integration tests
