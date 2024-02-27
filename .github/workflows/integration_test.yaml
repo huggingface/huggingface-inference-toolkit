@@ -29,10 +29,6 @@ on:
         required: false
         default: "make inference-pytorch-gpu"
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
-  cancel-in-progress: true
-
 jobs:
   pytorch-integration-local:
     runs-on: [single-gpu, nvidia-gpu, t4, ci]
