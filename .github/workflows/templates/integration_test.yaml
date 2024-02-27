@@ -8,7 +8,7 @@ on:
       hf_home:
         required: false
         type: string
-        default: "/mnt/hf_cache/""
+        default: "/mnt/hf_cache/"
       hf_hub_cache:
         required: false
         type: string
@@ -35,6 +35,7 @@ concurrency:
 
 jobs:
   pytorch-integration-local:
+    runs-on: [single-gpu, nvidia-gpu, t4, ci]
     env:
       AWS_REGION: ${{ inputs.region }}
       HF_HOME: ${{ inputs.hf_home }}
