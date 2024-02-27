@@ -38,7 +38,7 @@ COPY . .
 # install wheel and setuptools
 RUN python3 -m venv .venv && \
     source .venv/bin/activate && \
-    pip install --no-cache-dir -e ".[torch, st, diffusers]"
+    pip install --no-cache-dir -U pip -e ".[torch, st, diffusers]"
 
 # copy application
 COPY src/huggingface_inference_toolkit huggingface_inference_toolkit
