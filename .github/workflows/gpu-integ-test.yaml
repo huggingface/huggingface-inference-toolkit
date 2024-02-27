@@ -8,14 +8,14 @@ on:
      - main
   pull_request:
   workflow_dispatch:
-    
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
 jobs:
   pytorch-integration-local:
-    uses: ./.github/workflows/templates/integration_test.yaml
+    uses: ./.github/workflows/integration_test.yaml
     with:
       test_path: "tests/integ/test_pytorch_local_gpu.py"
       build_img_cmd: "make inference-pytorch-gpu"
