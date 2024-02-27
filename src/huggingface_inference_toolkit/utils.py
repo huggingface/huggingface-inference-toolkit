@@ -19,10 +19,9 @@ from huggingface_inference_toolkit.sentence_transformers_utils import (
     is_sentence_transformers_available,
 )
 
-logging.basicConfig(
-    format="%(asctime)s | %(levelname)s | %(message)s",
-    level=logging.INFO
-)
+logger = logging.getLogger(__name__)
+logging.basicConfig(format="%(asctime)s | %(levelname)s | %(message)s", level=logging.INFO)
+
 
 if is_tf_available():
     import tensorflow as tf
