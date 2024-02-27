@@ -186,7 +186,16 @@ Below you ll find a list of supported and tested transformers and sentence trans
 
 * Recommended Python version: 3.11
 * We recommend `pyenv` for easily switching between different Python versions
-* `hf-inference-toolkit` relies on `tox` for unit and integration testing
+* There are two options for unit and integration tests:
+	* `Make` - see `makefile`
+	* `tox` - see `tox.ini`
+
+#### Testing with Make
+
+* Unit Testing: `make unit-test`
+* Integration testing: `make integ-test`
+
+#### Testing with Tox
 
 #### Unit Testing
 
