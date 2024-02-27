@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 from typing import Optional, Union
 
-from huggingface_hub import login, snapshot_download, HfApi
+from huggingface_hub import HfApi, login, snapshot_download
 from transformers import WhisperForConditionalGeneration, pipeline
 from transformers.file_utils import is_tf_available, is_torch_available
 from transformers.pipelines import Pipeline
@@ -153,7 +153,7 @@ def _load_repository_from_hf(
     ignore_regex = create_artifact_filter(framework)
     logging.info(f"Ignore regex pattern for files, which are not downloaded: { ', '.join(ignore_regex) }")
 
-    # Download the repository to the workdir and filter out non-framework 
+    # Download the repository to the workdir and filter out non-framework
     # specific weights
     snapshot_download(
         repo_id = repository_id,
