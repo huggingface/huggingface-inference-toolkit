@@ -5,7 +5,6 @@ import logging
 from tests.integ.config import task2model
 import tenacity
 import time
-import tempfile
 from huggingface_inference_toolkit.utils import (
     _is_gpu_available,
     _load_repository_from_hf
@@ -16,7 +15,9 @@ from transformers.testing_utils import (
 )
 import uuid
 import socket
+import os
 
+HF_HUB_CACHE = os.environ.get("HF_HUB_CACHE", "/home/ubuntu/.cache/huggingface/hub")
 IS_GPU = _run_slow_tests
 DEVICE = "gpu" if IS_GPU else "cpu"
 
@@ -121,7 +122,7 @@ def local_container(
         ] if device == "gpu" else []
 
         object_id = model.replace("/", "--")
-        model_dir = f"/mnt/hf_cache/hub/{object_id}"
+        model_dir = f"{HF_HUB_CACHE}/{object_id}"
 
         storage_dir = _load_repository_from_hf(
             repository_id = model,
