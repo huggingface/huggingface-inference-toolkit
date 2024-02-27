@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 from typing import Optional, Union
 
-from huggingface_hub import login, snapshot_download
+from huggingface_hub import login, snapshot_download, HfApi
 from transformers import WhisperForConditionalGeneration, pipeline
 from transformers.file_utils import is_tf_available, is_torch_available
 from transformers.pipelines import Pipeline
@@ -93,7 +93,6 @@ def _is_gpu_available():
     if is_tf_available():
         return True if len(tf.config.list_physical_devices("GPU")) > 0 else False
     elif is_torch_available():
-        logging.info(f"CUDA: {torch.cuda.is_available()}")
         return torch.cuda.is_available()
     else:
         raise RuntimeError(
@@ -137,8 +136,6 @@ def _load_repository_from_hf(
     if framework is None:
         framework = _get_framework()
 
-    logging.info(f"Framework: {framework}")
-
     if isinstance(target_dir, str):
         target_dir = Path(target_dir)
 
@@ -146,13 +143,18 @@ def _load_repository_from_hf(
     if not target_dir.exists():
         target_dir.mkdir(parents=True)
 
+    # check if safetensors weights are available
+    if framework == "pytorch":
+        files = HfApi().model_info(repository_id).siblings
+        if any(f.rfilename.endswith("safetensors") for f in files):
+            framework = "safetensors"
+
     # create regex to only include the framework specific weights
     ignore_regex = create_artifact_filter(framework)
-    logging.info(f"ignore_regex: {ignore_regex}")
-    logging.info(f"Framework after filtering: {framework}")
     logging.info(f"Ignore regex pattern for files, which are not downloaded: { ', '.join(ignore_regex) }")
 
-    # Download the repository to the workdir and filter out non-framework specific weights
+    # Download the repository to the workdir and filter out non-framework 
+    # specific weights
     snapshot_download(
         repo_id = repository_id,
         revision = revision,
@@ -235,7 +237,8 @@ def get_pipeline(
         raise EnvironmentError(
             "The task for this model is not set: Please set one: https://huggingface.co/docs#how-is-a-models-type-of-inference-api-and-widget-determined"
         )
-    # define tokenizer or feature extractor as kwargs to load it the pipeline correctly
+    # define tokenizer or feature extractor as kwargs to load it the pipeline
+    # correctly
     if task in {
         "automatic-speech-recognition",
         "image-segmentation",
@@ -245,12 +248,6 @@ def get_pipeline(
         "zero-shot-image-classification",
     }:
         kwargs["feature_extractor"] = model_dir
-        hf_pipeline = pipeline(
-            task=task,
-            model=model_dir,
-            device=device,
-            **kwargs
-        )
     elif task in {"image-to-text"}:
         pass
     else:
@@ -278,10 +275,6 @@ def get_pipeline(
             **kwargs
         )
     else:
-        logging.info(f"Task: {task}")
-        logging.info(f"Model: {model_dir}")
-        logging.info(f"Device: {device}")
-        logging.info(f"Args: {kwargs}")
         hf_pipeline = pipeline(
             task=task,
             model=model_dir,
@@ -298,9 +291,6 @@ def get_pipeline(
     ):
         # set chunk length to 30s for whisper to enable long audio files
         hf_pipeline._preprocess_params["chunk_length_s"] = 30
-        #hf_pipeline._preprocess_params["ignore_warning"] = True
-        # set decoder to english by default
-        # TODO: replace when transformers 4.26.0 is release with
         hf_pipeline.model.config.forced_decoder_ids = hf_pipeline.tokenizer.get_decoder_prompt_ids(
             language="english",
             task="transcribe"

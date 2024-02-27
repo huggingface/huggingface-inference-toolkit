@@ -9,6 +9,8 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 WORKDIR /app
 
+COPY . .
+
 RUN apt-get update && \
     apt-get install software-properties-common -y && \
     add-apt-repository ppa:deadsnakes/ppa && \
@@ -32,8 +34,6 @@ RUN apt-get update && \
         ffmpeg \
     && apt-get clean autoremove --yes \
     && rm -rf /var/lib/{apt,dpkg,cache,log}
-
-COPY . .
 
 # install wheel and setuptools
 RUN python3 -m venv .venv && \
