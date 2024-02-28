@@ -36,9 +36,11 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Tailscale
-        uses: huggingface/tailscale-action@main
+        uses: tailscale/github-action@7a0b30ed3517c2244d1330e39467b95f067a33bd
         with:
           authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
+          tailscaled-args: "--tun=userspace-networking --socks5-server=localhost:1055 --outbound-http-proxy-listen=localhost:1055"
+          version: ${{ vars.TAILSCALE_CLIENT_VERSION }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2.0.0
