@@ -1,12 +1,11 @@
 from __future__ import absolute_import
-import os
 from datetime import date
 from setuptools import find_packages, setup
 
 # We don't declare our dependency on transformers here because we build with
 # different packages for different variants
 
-VERSION = "0.1.0"
+VERSION = "0.3.0"
 
 
 # Ubuntu packages
@@ -15,33 +14,33 @@ VERSION = "0.1.0"
 # libavcodec-extra : libavcodec-extra  inculdes additional codecs for ffmpeg
 
 install_requires = [
-    # transformers
-    "transformers[sklearn,sentencepiece]>=4.25.1",
-    "huggingface_hub>=0.13.3",
-    # api stuff
+    "wheel==0.42.0",
+    "setuptools==69.1.0",
+    "cmake==3.28.3",
+    "transformers[sklearn,sentencepiece, audio, vision]==4.38.1",
+    "huggingface_hub==0.20.3",
     "orjson",
-    # "robyn",
     # vision
     "Pillow",
-    # speech + torchaudio
     "librosa",
+    # speech + torchaudio
     "pyctcdecode>=0.3.0",
     "phonemizer",
+    "ffmpeg",
+    # web api
+    "starlette",
+    "uvicorn",
+    "pandas"
 ]
 
 extras = {}
 
-extras["st"] = ["sentence_transformers"]
-extras["diffusers"] = ["diffusers==0.8.1", "accelerate==0.14.0"]
-
-
-# Hugging Face specific dependencies
-# framework specific dependencies
-extras["torch"] = ["torch>=1.8.0", "torchaudio"]
-extras["tensorflow"] = ["tensorflow==2.9.0"]
-# test and quality
+extras["st"] = ["sentence_transformers==2.4.0"]
+extras["diffusers"] = ["diffusers==0.26.3", "accelerate==0.27.2"]
+extras["torch"] = ["torch==2.2.0", "torchvision", "torchaudio"]
+extras["tensorflow"] = ["tensorflow"]
 extras["test"] = [
-    "pytest",
+    "pytest==7.2.1",
     "pytest-xdist",
     "parameterized",
     "psutil",
@@ -50,12 +49,11 @@ extras["test"] = [
     "mock==2.0.0",
     "docker",
     "requests",
+    "tenacity"
 ]
 extras["quality"] = [
-    "black",
     "isort",
-    "flake8",
-    "ruff",
+    "ruff"
 ]
 
 setup(
@@ -63,9 +61,6 @@ setup(
     version=VERSION,
     author="HuggingFace",
     description=".",
-    # long_description=open("README.md", "r", encoding="utf-8").read(),
-    # long_description_content_type="text/markdown",
-    # keywords="NLP deep-learning transformer pytorch tensorflow BERT GPT GPT-2 AWS Amazon SageMaker Cloud",
     url="",
     package_dir={"": "src"},
     packages=find_packages(where="src"),
@@ -82,7 +77,7 @@ setup(
         "License :: OSI Approved :: Apache Software License",
         "Operating System :: OS Independent",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.11",
         "Topic :: Scientific/Engineering :: Artificial Intelligence",
     ],
 )

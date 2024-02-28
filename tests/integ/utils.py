@@ -1,21 +1,21 @@
 import logging
-import re
-import signal
 from contextlib import contextmanager
 from time import time
 
-
-LOGGER = logging.getLogger("timeout")
 
 
 def validate_classification(result=None, snapshot=None):
     for idx, _ in enumerate(result):
         assert result[idx].keys() == snapshot[idx].keys()
-        # assert result[idx]["score"] >= snapshot[idx]["score"]
     return True
+
+def validate_conversational(result=None, snapshot=None):
+    assert len(result) >= len(snapshot)
 
 
 def validate_zero_shot_classification(result=None, snapshot=None):
+    logging.info(f"Result: {result}")
+    logging.info(f"Snapshot: {snapshot}")
     assert result.keys() == snapshot.keys()
     # assert result["labels"] == snapshot["labels"]
     # assert result["sequence"] == snapshot["sequence"]
@@ -83,4 +83,9 @@ def validate_object_detection(result=None, snapshot=None):
 
 def validate_text_to_image(result=None, snapshot=None):
     assert isinstance(result, snapshot)
+    return True
+
+def validate_custom(result=None, snapshot=None):
+    logging.info(f"Validate custom task - result: {result}, snapshot: {snapshot}")
+    assert result == snapshot
     return True

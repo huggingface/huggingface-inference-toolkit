@@ -49,7 +49,10 @@ async def some_startup_task():
             )
         else:
             raise ValueError(
-                f"Can't initialize model. Please set env HF_MODEL_DIR or provider a HF_MODEL_ID. Provided values are HF_MODEL_DIR:{HF_MODEL_DIR} and HF_MODEL_ID:{HF_MODEL_ID}"
+                f"""Can't initialize model.
+                Please set env HF_MODEL_DIR or provider a HF_MODEL_ID.
+                Provided values are:
+                HF_MODEL_DIR: {HF_MODEL_DIR} and HF_MODEL_ID:{HF_MODEL_ID}"""
             )
 
     logger.info(f"Initializing model from directory:{HF_MODEL_DIR}")

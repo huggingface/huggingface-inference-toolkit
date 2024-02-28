@@ -19,7 +19,8 @@ jobs:
     uses: ./.github/workflows/docker-build-action.yaml
     with:
       image: inference-pytorch-cpu
-      dockerfile: dockerfiles/pytorch/cpu/Dockerfile
+      dockerfile: dockerfiles/pytorch/Dockerfile
+      build_args: "BASE_IMAGE=ubuntu:22.04"
     secrets:
       TAILSCALE_AUTHKEY: ${{ secrets.TAILSCALE_AUTHKEY }}
       REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
@@ -28,7 +29,7 @@ jobs:
     uses: ./.github/workflows/docker-build-action.yaml
     with:
       image: inference-pytorch-gpu
-      dockerfile: dockerfiles/pytorch/gpu/Dockerfile
+      dockerfile: dockerfiles/pytorch/Dockerfile
     secrets:
       TAILSCALE_AUTHKEY: ${{ secrets.TAILSCALE_AUTHKEY }}
       REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}

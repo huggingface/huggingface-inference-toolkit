@@ -21,7 +21,10 @@ HF_TASK = os.environ.get("HF_TASK", None)
 
 # if empty_directory_or_not_hf_remote_id is None or task is None:
 #     raise ValueError(
-#         f"Can't initialize model. Please set correct model id and task. provided values are model_id:{model_id_or_path} and task:{task}"
+#         f"""Can't initialize model.
+#             Please set correct model id and task.
+#             Provided values are model_id:
+#             {model_id_or_path} and task:{task}"""
 #     )
 
 # logger.info(f"Initializing model with model_id:{model_id_or_path} and task:{task}")

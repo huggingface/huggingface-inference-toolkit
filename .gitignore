@@ -1,7 +1,15 @@
 # Docker project generated files to ignore
 #  if you want to ignore files created by your editor/tools,
 #  please consider a global .gitignore https://help.github.com/articles/ignoring-files
+.gitignore
+.egg-info
+.ruff_cache
 .vagrant*
+.hcl
+.terraform.lock.hcl
+.terraform
+pip-unpack-*
+__pycache__
 bin
 docker/docker
 .*.swp
@@ -27,6 +35,9 @@ Vagrantfile
 __pycache__/
 *.py[cod]
 *$py.class
+.vscode
+.make
+tox.ini
 
 # C extensions
 *.so
@@ -167,3 +178,5 @@ cython_debug/
 model
 tests/tmp
 tmp/
+act.sh
+.act

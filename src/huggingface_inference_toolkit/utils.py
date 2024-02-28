@@ -7,7 +7,7 @@ from typing import Optional, Union
 from huggingface_hub import HfApi, login, snapshot_download
 from transformers import WhisperForConditionalGeneration, pipeline
 from transformers.file_utils import is_tf_available, is_torch_available
-from transformers.pipelines import Conversation, Pipeline
+from transformers.pipelines import Pipeline
 
 from huggingface_inference_toolkit.const import HF_DEFAULT_PIPELINE_NAME, HF_MODULE_NAME
 from huggingface_inference_toolkit.diffusers_utils import (
@@ -75,19 +75,12 @@ def wrap_conversation_pipeline(pipeline):
     """
 
     def wrapped_pipeline(inputs, *args, **kwargs):
-        converted_input = Conversation(
-            inputs["text"],
-            past_user_inputs=inputs.get("past_user_inputs", []),
-            generated_responses=inputs.get("generated_responses", []),
-        )
-        prediction = pipeline(converted_input, *args, **kwargs)
-        return {
-            "generated_text": prediction.generated_responses[-1],
-            "conversation": {
-                "past_user_inputs": prediction.past_user_inputs,
-                "generated_responses": prediction.generated_responses,
-            },
-        }
+        logger.info(f"Inputs: {inputs}")
+        logger.info(f"Args: {args}")
+        logger.info(f"KWArgs: {kwargs}")
+        prediction = pipeline(inputs, *args, **kwargs)
+        logger.info(f"Prediction: {prediction}")
+        return list(prediction)
 
     return wrapped_pipeline
 
@@ -112,6 +105,7 @@ def _get_framework():
     """
     extracts which DL framework is used for inference, if both are installed use pytorch
     """
+
     if is_torch_available():
         return "pytorch"
     elif is_tf_available():
@@ -134,6 +128,7 @@ def _load_repository_from_hf(
     """
     Load a model from huggingface hub.
     """
+
     if hf_hub_token is not None:
         login(token=hf_hub_token)
 
@@ -157,13 +152,14 @@ def _load_repository_from_hf(
     ignore_regex = create_artifact_filter(framework)
     logger.info(f"Ignore regex pattern for files, which are not downloaded: { ', '.join(ignore_regex) }")
 
-    # Download the repository to the workdir and filter out non-framework specific weights
+    # Download the repository to the workdir and filter out non-framework
+    # specific weights
     snapshot_download(
-        repository_id,
-        revision=revision,
-        local_dir=str(target_dir),
-        local_dir_use_symlinks=False,
-        ignore_patterns=ignore_regex,
+        repo_id = repository_id,
+        revision = revision,
+        local_dir = str(target_dir),
+        local_dir_use_symlinks = False,
+        ignore_patterns = ignore_regex,
     )
 
     return target_dir
@@ -188,9 +184,12 @@ def check_and_register_custom_pipeline_from_directory(model_dir):
             spec.loader.exec_module(handler)
             # init custom handler with model_dir
             custom_pipeline = handler.EndpointHandler(model_dir)
+
     elif legacy_module.is_file():
         logger.warning(
-            "You are using a legacy custom pipeline with. Please update to the new format. See documentation for more information."
+            """You are using a legacy custom pipeline.
+            Please update to the new format.
+            See documentation for more information."""
         )
         spec = importlib.util.spec_from_file_location("pipeline.PreTrainedPipeline", legacy_module)
         if spec:
@@ -212,13 +211,20 @@ def get_device():
     """
     The get device function will return the device for the DL Framework.
     """
-    if _is_gpu_available():
+    gpu = _is_gpu_available()
+
+    if gpu:
         return 0
     else:
         return -1
 
 
-def get_pipeline(task: str, model_dir: Path, **kwargs) -> Pipeline:
+def get_pipeline(
+    task: str,
+    model_dir: Path,
+    framework = "pytorch",
+    **kwargs,
+) -> Pipeline:
     """
     create pipeline class for a specific task based on local saved model
     """
@@ -229,7 +235,8 @@ def get_pipeline(task: str, model_dir: Path, **kwargs) -> Pipeline:
         raise EnvironmentError(
             "The task for this model is not set: Please set one: https://huggingface.co/docs#how-is-a-models-type-of-inference-api-and-widget-determined"
         )
-    # define tokenizer or feature extractor as kwargs to load it the pipeline correctly
+    # define tokenizer or feature extractor as kwargs to load it the pipeline
+    # correctly
     if task in {
         "automatic-speech-recognition",
         "image-segmentation",
@@ -244,37 +251,50 @@ def get_pipeline(task: str, model_dir: Path, **kwargs) -> Pipeline:
     else:
         kwargs["tokenizer"] = model_dir
 
-    # add check for optimum accelerated pipeline
     if is_optimum_available():
-        # TODO: add check for optimum accelerated pipeline
-        logger.info("Optimum is not implement yet using default pipeline.")
+        logger.info("Optimum is not implemented yet using default pipeline.")
         hf_pipeline = pipeline(task=task, model=model_dir, device=device, **kwargs)
     elif is_sentence_transformers_available() and task in [
         "sentence-similarity",
         "sentence-embeddings",
         "sentence-ranking",
     ]:
-        hf_pipeline = get_sentence_transformers_pipeline(task=task, model_dir=model_dir, device=device, **kwargs)
+        hf_pipeline = get_sentence_transformers_pipeline(
+            task=task,
+            model_dir=model_dir,
+            device=device,
+            **kwargs
+        )
     elif is_diffusers_available() and task == "text-to-image":
-        hf_pipeline = get_diffusers_pipeline(task=task, model_dir=model_dir, device=device, **kwargs)
+        hf_pipeline = get_diffusers_pipeline(
+            task=task,
+            model_dir=model_dir,
+            device=device,
+            **kwargs
+        )
     else:
-        hf_pipeline = pipeline(task=task, model=model_dir, device=device, **kwargs)
+        hf_pipeline = pipeline(
+            task=task,
+            model=model_dir,
+            device=device,
+            **kwargs
+        )
 
-    # wrapp specific pipeline to support better ux
+    # wrap specific pipeline to support better ux
     if task == "conversational":
         hf_pipeline = wrap_conversation_pipeline(hf_pipeline)
-    elif task == "automatic-speech-recognition" and isinstance(hf_pipeline.model, WhisperForConditionalGeneration):
+
+    elif task == "automatic-speech-recognition" and isinstance(
+        hf_pipeline.model,
+        WhisperForConditionalGeneration
+    ):
         # set chunk length to 30s for whisper to enable long audio files
         hf_pipeline._preprocess_params["chunk_length_s"] = 30
-        hf_pipeline._preprocess_params["ignore_warning"] = True
-        # set decoder to english by default
-        # TODO: replace when transformers 4.26.0 is release with
-        # hf_pipeline.model.config.forced_decoder_ids = pipe.tokenizer.get_decoder_prompt_ids(language=lang, task="transcribe")
-        hf_pipeline.tokenizer.language = "english"
-        hf_pipeline.tokenizer.task = "transcribe"
-        hf_pipeline.model.config.forced_decoder_ids = [
-            (rank + 1, token) for rank, token in enumerate(hf_pipeline.tokenizer.prefix_tokens[1:])
-        ]
+        hf_pipeline.model.config.forced_decoder_ids = hf_pipeline.tokenizer.get_decoder_prompt_ids(
+            language="english",
+            task="transcribe"
+        )
+
     return hf_pipeline
 
 

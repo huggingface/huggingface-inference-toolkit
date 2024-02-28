@@ -15,6 +15,7 @@ RUN apt-get update \
     tar \
     gcc \
     g++ \
+    cmake \
     # audio
     libsndfile1-dev \
     ffmpeg \
@@ -33,6 +34,11 @@ RUN curl -L https://micro.mamba.pm/api/micromamba/linux-64/latest | tar -xj "bin
 
 WORKDIR /app
 
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
+    source $HOME/.cargo/env && \
+    source .venv/bin/activate && \
+    ls -all
+
 # install base python dependencies
 COPY dockerfiles/tensorflow/gpu/environment.yaml /app/environment.yaml
 RUN micromamba install -y -n base -f environment.yaml \
@@ -42,6 +48,9 @@ RUN micromamba install -y -n base -f environment.yaml \
 # install huggingface inference toolkit
 COPY requirements.txt /tmp/requirements.txt
 RUN pip install  --no-cache-dir -r /tmp/requirements.txt && rm /tmp/requirements.txt
+
+# copy tests
+COPY . /tmp/hf-inference-test
 
 # copy application
 COPY src/huggingface_inference_toolkit huggingface_inference_toolkit

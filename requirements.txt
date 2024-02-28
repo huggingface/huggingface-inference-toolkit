@@ -1,5 +1,0 @@
-orjson
-starlette
-uvicorn
-pandas
-huggingface_hub>=0.13.2

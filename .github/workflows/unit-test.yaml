@@ -2,10 +2,16 @@ name: Run Unit-Tests
 
 on:
   push:
+    paths-ignore:
+      - 'README.md'
     branches:
-      - main
+     - main
   pull_request:
   workflow_dispatch:
+
+env:
+  ACTIONS_RUNNER_DEBUG: true
+  ACTIONS_STEP_DEBUG: true
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
@@ -13,46 +19,30 @@ concurrency:
 
 jobs:
   pytorch-unit-test:
-    runs-on: ubuntu-latest
+    runs-on: [single-gpu, nvidia-gpu, t4, ci]
+    env:
+      AWS_REGION: us-east-1
+      CACHE_TEST_DIR: /mnt/hf_cache/hf-inference-toolkit-tests
+      RUN_SLOW: True
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python 3.9
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.9.12
-    - name: Install Python dependencies
-      run: pip install -e .[test,dev,torch,st]
-    - uses: FedericoCarboni/setup-ffmpeg@v2
-      id: setup-ffmpeg
-    - name: Run Unit test_const
-      run: 	python -m pytest -s -v ./tests/unit/test_const.py
-    - name: Run Unit test_handler
-      run: 	python -m pytest -s -v ./tests/unit/test_handler.py
-    - name: Run Unit test_sentence_transformers
-      run: 	python -m pytest -s -v ./tests/unit/test_sentence_transformers.py
-    - name: Run Unit test_serializer
-      run: 	python -m pytest -s -v ./tests/unit/test_serializer.py
-    - name: Run Unit test_utils
-      run: 	python -m pytest -s -v ./tests/unit/test_utils.py
-  tensorflow-unit-test:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python 3.9
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.9.12
-    - name: Install Python dependencies
-      run: pip install -e .[test,dev,tensorflow]
-    - name: Run Unit test_const
-      run: 	python -m pytest -s -v ./tests/unit/test_const.py
-    - name: Run Unit test_handler
-      run: 	python -m pytest -s -v ./tests/unit/test_handler.py
-    - name: Run Unit test_sentence_transformers
-      run: 	python -m pytest -s -v ./tests/unit/test_sentence_transformers.py
-    - name: Run Unit test_serializer
-      run: 	python -m pytest -s -v ./tests/unit/test_serializer.py
-    - name: Run Unit test_utils
-      run: 	python -m pytest -s -v ./tests/unit/test_utils.py
-
-
+    - uses: actions/checkout@v4.1.1
+    - name: Copy unit tests to cache mount
+      run: |
+        rm -rf ${{ env.CACHE_TEST_DIR }} && \
+        mkdir ${{ env.CACHE_TEST_DIR }} && \
+        cp -r tests ${{ env.CACHE_TEST_DIR }}
+    - name: Docker Setup Buildx
+      uses: docker/setup-buildx-action@v3.0.0
+    - name: Docker Build
+      run: make inference-pytorch-gpu
+    - name: Run unit tests
+      run: |
+        docker run \
+          -e RUN_SLOW='${{ env.RUN_SLOW }}' \
+          --gpus all \
+          -e CACHE_TEST_DIR='${{ env.CACHE_TEST_DIR }}' \
+          -v ./tests:${{ env.CACHE_TEST_DIR }} \
+          --entrypoint /bin/bash \
+          integration-test-pytorch:gpu \
+          -c "pip install '.[test, st, diffusers]' && pytest ${{ env.CACHE_TEST_DIR }}/unit"
+        

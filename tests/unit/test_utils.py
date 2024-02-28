@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 import tempfile
 
+
 from transformers import pipeline
 from transformers.file_utils import is_torch_available
 from transformers.testing_utils import require_tf, require_torch, slow
@@ -16,6 +17,7 @@ from huggingface_inference_toolkit.utils import (
     wrap_conversation_pipeline,
 )
 
+import logging
 
 MODEL = "lysandre/tiny-bert-random"
 TASK = "text-classification"
@@ -112,17 +114,33 @@ def test_get_framework_tensorflow():
 def test_get_pipeline():
     with tempfile.TemporaryDirectory() as tmpdirname:
         storage_dir = _load_repository_from_hf(MODEL, tmpdirname, framework="pytorch")
-        pipe = get_pipeline(TASK, storage_dir.as_posix())
+        pipe = get_pipeline(
+            task = TASK,
+            model_dir = storage_dir.as_posix(),
+            framework = "pytorch"
+        )
         res = pipe("Life is good, Life is bad")
         assert "score" in res[0]
 
 
 @require_torch
-def test_whisper_long_audio():
+def test_whisper_long_audio(cache_test_dir):
     with tempfile.TemporaryDirectory() as tmpdirname:
-        storage_dir = _load_repository_from_hf("openai/whisper-tiny", tmpdirname, framework="pytorch")
-        pipe = get_pipeline("automatic-speech-recognition", storage_dir.as_posix())
-        res = pipe(os.path.join(os.getcwd(), "tests/resources/audio", "long_sample.mp3"))
+        storage_dir = _load_repository_from_hf(
+            repository_id = "openai/whisper-tiny",
+            target_dir = tmpdirname,
+            framework = "pytorch",
+            revision = "be0ba7c2f24f0127b27863a23a08002af4c2c279"
+        )
+        logging.info(f"Temp dir: {tmpdirname}")
+        logging.info(f"POSIX Path: {storage_dir.as_posix()}")
+        logging.info(f"Contents: {os.listdir(tmpdirname)}")
+        pipe = get_pipeline(
+            task = "automatic-speech-recognition",
+            model_dir = storage_dir.as_posix(),
+            framework = "safetensors"
+        )
+        res = pipe(f"{cache_test_dir}/resources/audio/long_sample.mp3")
 
         assert len(res["text"]) > 700
 
@@ -136,33 +154,57 @@ def test_wrap_conversation_pipeline():
         framework="pt",
     )
     conv_pipe = wrap_conversation_pipeline(init_pipeline)
-    data = {
-        "past_user_inputs": ["Which movie is the best ?"],
-        "generated_responses": ["It's Die Hard for sure."],
-        "text": "Can you explain why?",
-    }
+    data = [
+        {
+            "role": "user",
+            "content": "Which movie is the best ?"
+        },
+        {
+            "role": "assistant",
+            "content": "It's Die Hard for sure."
+        },
+        {
+            "role": "user",
+            "content": "Can you explain why?"
+        }
+    ]
     res = conv_pipe(data)
-    assert "conversation" in res
-    assert "generated_text" in res
+    logging.info(f"Response: {res}")
+    assert res[-1]["role"] == "assistant"
+    assert "error" not in res[-1]["content"]
 
 
 @require_torch
 def test_wrapped_pipeline():
     with tempfile.TemporaryDirectory() as tmpdirname:
-        storage_dir = _load_repository_from_hf("microsoft/DialoGPT-small", tmpdirname, framework="pytorch")
+        storage_dir = _load_repository_from_hf(
+            repository_id = "microsoft/DialoGPT-small",
+            target_dir = tmpdirname,
+            framework="pytorch"
+        )
         conv_pipe = get_pipeline("conversational", storage_dir.as_posix())
-        data = {
-            "past_user_inputs": ["Which movie is the best ?"],
-            "generated_responses": ["It's Die Hard for sure."],
-            "text": "Can you explain why?",
-        }
-        res = conv_pipe(data)
-        assert "conversation" in res
-        assert "generated_text" in res
+        data = [
+            {
+                "role": "user",
+                "content": "Which movie is the best ?"
+            },
+            {
+                "role": "assistant",
+                "content": "It's Die Hard for sure."
+            },
+            {
+                "role": "user",
+                "content": "Can you explain why?"
+            }
+        ]
+        res = conv_pipe(data, max_new_tokens = 100)
+        logging.info(f"Response: {res}")
+        assert res[-1]["role"] == "assistant"
+        assert "error" not in res[-1]["content"]
 
 
-def test_local_custom_pipeline():
-    model_dir = os.path.join(os.getcwd(), "tests/resources/custom_handler")
+def test_local_custom_pipeline(cache_test_dir):
+    model_dir = f"{cache_test_dir}/resources/custom_handler"
     pipeline = check_and_register_custom_pipeline_from_directory(model_dir)
     payload = "test"
     assert pipeline.path == model_dir
@@ -172,7 +214,9 @@ def test_local_custom_pipeline():
 def test_remote_custom_pipeline():
     with tempfile.TemporaryDirectory() as tmpdirname:
         storage_dir = _load_repository_from_hf(
-            "philschmid/custom-pipeline-text-classification", tmpdirname, framework="pytorch"
+            "philschmid/custom-pipeline-text-classification",
+            tmpdirname,
+            framework="pytorch"
         )
         pipeline = check_and_register_custom_pipeline_from_directory(str(storage_dir))
         payload = "test"
@@ -183,7 +227,9 @@ def test_remote_custom_pipeline():
 def test_get_inference_handler_either_custom_or_default_pipeline():
     with tempfile.TemporaryDirectory() as tmpdirname:
         storage_dir = _load_repository_from_hf(
-            "philschmid/custom-pipeline-text-classification", tmpdirname, framework="pytorch"
+            "philschmid/custom-pipeline-text-classification",
+            tmpdirname,
+            framework="pytorch"
         )
         pipeline = get_inference_handler_either_custom_or_default_handler(str(storage_dir))
         payload = "test"

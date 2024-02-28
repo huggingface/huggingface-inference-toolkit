@@ -1,20 +1,35 @@
 import random
 import tempfile
 import time
-
 import docker
 import pytest
 import requests
-from docker.client import DockerClient
-from huggingface_inference_toolkit.utils import _is_gpu_available, _load_repository_from_hf
-from integ.config import task2input, task2model, task2output, task2validation
-from transformers.testing_utils import require_torch, slow, require_tf, _run_slow_tests
+from huggingface_inference_toolkit.utils import (
+    _is_gpu_available,
+    _load_repository_from_hf
+)
+from tests.integ.config import (
+    task2input,
+    task2model,
+    task2output,
+    task2validation
+)
+from transformers.testing_utils import (
+    require_torch,
+    slow,
+    require_tf,
+    _run_slow_tests
+)
+import tenacity
+from docker import DockerClient
+import logging
+import traceback
+import urllib3
 
 IS_GPU = _run_slow_tests
 DEVICE = "gpu" if IS_GPU else "cpu"
 
-client = docker.from_env()
-
+client = docker.DockerClient(base_url='unix://var/run/docker.sock')
 
 def make_sure_other_containers_are_stopped(client: DockerClient, container_name: str):
     try:
@@ -25,44 +40,89 @@ def make_sure_other_containers_are_stopped(client: DockerClient, container_name:
         return None
 
 
-def wait_for_container_to_be_ready(base_url):
-    t = 0
-    while t < 10:
+#@tenacity.retry(
+#    retry = tenacity.retry_if_exception(ValueError),
+#    stop = tenacity.stop_after_attempt(10),
+#    reraise = True
+#)
+def wait_for_container_to_be_ready(
+    base_url,
+    time_between_retries = 1,
+    max_retries = 30
+):
+    
+    retries = 0
+    error = None
+
+    while retries < max_retries:
+        time.sleep(time_between_retries)
         try:
             response = requests.get(f"{base_url}/health")
             if response.status_code == 200:
-                break
-        except Exception:
-            pass
-        finally:
-            t += 1
-            time.sleep(2)
-    return True
+                logging.info("Container ready!")
+                return True
+            else:
+                raise ConnectionError(f"Error: {response.status_code}")
+        except Exception as exception:
+            error = exception
+            logging.warning(f"Container at {base_url} not ready, trying again...")
+        retries += 1
+    
+    logging.error(f"Unable to start container: {str(error)}")
+    raise error
 
-
-def verify_task(container: DockerClient, task: str, port: int = 5000, framework: str = "pytorch"):
+def verify_task(
+    #container: DockerClient,
+    task: str,
+    port: int = 5000,
+    framework: str = "pytorch"
+):
     BASE_URL = f"http://localhost:{port}"
+    logging.info(f"Base URL: {BASE_URL}")
+    logging.info(f"Port: {port}")
     input = task2input[task]
-    # health check
-    wait_for_container_to_be_ready(BASE_URL)
-    if (
-        task == "image-classification"
-        or task == "object-detection"
-        or task == "image-segmentation"
-        or task == "zero-shot-image-classification"
-    ):
-        prediction = requests.post(
-            f"{BASE_URL}", data=task2input[task], headers={"content-type": "image/x-image"}
-        ).json()
-    elif task == "automatic-speech-recognition" or task == "audio-classification":
-        prediction = requests.post(
-            f"{BASE_URL}", data=task2input[task], headers={"content-type": "audio/x-audio"}
-        ).json()
-    elif task == "text-to-image":
-        prediction = requests.post(f"{BASE_URL}", json=input, headers={"accept": "image/png"}).content
-    else:
-        prediction = requests.post(f"{BASE_URL}", json=input).json()
-    assert task2validation[task](result=prediction, snapshot=task2output[task]) is True
+
+    try:
+        # health check
+        wait_for_container_to_be_ready(BASE_URL)
+        if (
+            task == "image-classification"
+            or task == "object-detection"
+            or task == "image-segmentation"
+            or task == "zero-shot-image-classification"
+        ):
+            prediction = requests.post(
+                f"{BASE_URL}", data=task2input[task], headers={"content-type": "image/x-image"}
+            ).json()
+        elif task == "automatic-speech-recognition" or task == "audio-classification":
+            prediction = requests.post(
+                f"{BASE_URL}", data=task2input[task], headers={"content-type": "audio/x-audio"}
+            ).json()
+        elif task == "text-to-image":
+            prediction = requests.post(f"{BASE_URL}", json=input, headers={"accept": "image/png"}).content
+
+        else:
+            prediction = requests.post(f"{BASE_URL}", json=input).json()
+        
+        logging.info(f"Input: {input}")
+        logging.info(f"Prediction: {prediction}")
+        logging.info(f"Snapshot: {task2output[task]}")
+
+        if task == "conversational":
+            for message in prediction:
+                assert "error" not in message.keys()
+        else:
+            assert task2validation[task](
+                result=prediction,
+                snapshot=task2output[task]
+            )
+    except Exception as exception:
+        logging.error(f"Base URL: {BASE_URL}")
+        logging.error(f"Task: {task}")
+        logging.error(f"Input: {input}")
+        logging.error(f"Error: {str(exception)}")
+        logging.error(f"Stack: {traceback.format_exc()}")
+        raise exception
 
 
 @require_torch
@@ -114,9 +174,9 @@ def test_pt_container_remote_model(task) -> None:
         # GPU
         device_requests=device_request,
     )
-    # time.sleep(5)
+    time.sleep(5)
 
-    verify_task(container, task, port)
+    verify_task(task = task, port = port)
     container.stop()
     container.remove()
 

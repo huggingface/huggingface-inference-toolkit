@@ -1,0 +1,44 @@
+name: Run Integration Tests
+
+on:
+  push:
+    paths-ignore:
+      - 'README.md'
+      - '.github/workflows/unit-test.yaml'
+      - '.github/workflows/quality.yaml'
+    branches:
+     - main
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  pytorch-integration-local-gpu:
+    name: Local Integration Tests - GPU
+    uses: ./.github/workflows/integration-test-action.yaml
+    with:
+      test_path: "tests/integ/test_pytorch_local_gpu.py"
+      build_img_cmd: "make inference-pytorch-gpu"
+  pytorch-integration-remote-gpu:
+    name: Remote Integration Tests - GPU
+    uses: ./.github/workflows/integration-test-action.yaml
+    with:
+      test_path: "tests/integ/test_pytorch_remote_gpu.py"
+      build_img_cmd: "make inference-pytorch-gpu"
+  pytorch-integration-remote-cpu:
+    name: Remote Integration Tests - CPU
+    uses: ./.github/workflows/integration-test-action.yaml
+    with:
+      test_path: "tests/integ/test_pytorch_remote_cpu.py"
+      build_img_cmd: "make inference-pytorch-cpu"
+      runs_on: "['ci']"
+  pytorch-integration-local-cpu:
+    name: Local Integration Tests - CPU
+    uses: ./.github/workflows/integration-test-action.yaml
+    with:
+      test_path: "tests/integ/test_pytorch_local_cpu.py"
+      build_img_cmd: "make inference-pytorch-cpu"
+      runs_on: "['ci']"

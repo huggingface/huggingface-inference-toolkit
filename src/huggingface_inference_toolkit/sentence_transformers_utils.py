@@ -47,7 +47,12 @@ SENTENCE_TRANSFORMERS_TASKS = {
 }
 
 
-def get_sentence_transformers_pipeline(task=None, model_dir=None, device=-1, **kwargs):
+def get_sentence_transformers_pipeline(
+    task=None,
+    model_dir=None,
+    device=-1,
+    **kwargs
+):
     device = "cuda" if device == 0 else "cpu"
     pipeline = SENTENCE_TRANSFORMERS_TASKS[task](model_dir=model_dir, device=device)
     return pipeline

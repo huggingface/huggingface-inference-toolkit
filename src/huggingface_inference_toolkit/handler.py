@@ -10,11 +10,16 @@ logging.basicConfig(format="%(asctime)s | %(levelname)s | %(message)s", level=lo
 
 class HuggingFaceHandler:
     """
-    A Default Hugging Face Inference Handler which works with all transformers pipelines, Sentence Transformers and Optimum.
+    A Default Hugging Face Inference Handler which works with all
+    transformers pipelines, Sentence Transformers and Optimum.
     """
 
-    def __init__(self, model_dir: Union[str, Path], task=None):
-        self.pipeline = get_pipeline(model_dir=model_dir, task=task)
+    def __init__(self, model_dir: Union[str, Path], task=None, framework="pt"):
+        self.pipeline = get_pipeline(
+            model_dir=model_dir,
+            task=task,
+            framework=framework
+        )
 
     def __call__(self, data):
         """
@@ -25,6 +30,7 @@ class HuggingFaceHandler:
         """
         inputs = data.pop("inputs", data)
         parameters = data.pop("parameters", None)
+
         # pass inputs with all kwargs in data
         if parameters is not None:
             prediction = self.pipeline(inputs, **parameters)
@@ -34,7 +40,10 @@ class HuggingFaceHandler:
         return prediction
 
 
-def get_inference_handler_either_custom_or_default_handler(model_dir: Path, task: Optional[str] = None):
+def get_inference_handler_either_custom_or_default_handler(
+    model_dir: Path,
+    task: Optional[str] = None
+):
     """
     get inference handler either custom or default Handler
     """

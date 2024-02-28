@@ -14,6 +14,7 @@ RUN apt-get update \
     tar \
     gcc \
     g++ \
+    cmake \
     # audio
     libsndfile1-dev \
     ffmpeg \

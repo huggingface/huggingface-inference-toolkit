@@ -24,25 +24,23 @@ HF_MODEL_ID=hf-internal-testing/tiny-random-distilbert HF_MODEL_DIR=tmp2 HF_TASK
 
 _cpu images_
 ```bash
-docker build -t starlette-transformers:cpu -f dockerfiles/pytorch/cpu/Dockerfile .
-docker build -t starlette-transformers:cpu -f dockerfiles/tensorflow/cpu/Dockerfile .
+make inference-pytorch-cpu
 ```
 
 _gpu images_
 ```bash
-docker build -t starlette-transformers:gpu -f dockerfiles/pytorch/gpu/Dockerfile .
-docker build -t starlette-transformers:gpu -f dockerfiles/tensorflow/gpu/Dockerfile .
+make inference-pytorch-gpu
 ```
 
 2. Run the container and provide either environment variables to the HUB model you want to use or mount a volume to the container, where your model is stored.
 
 
 ```bash
-docker run -ti -p 5000:5000 -e HF_MODEL_ID=distilbert-base-uncased-distilled-squad -e HF_TASK=question-answering starlette-transformers:cpu
-docker run -ti -p 5000:5000 --gpus all -e HF_MODEL_ID=nlpconnect/vit-gpt2-image-captioning -e HF_TASK=image-to-text starlette-transformers:gpu
-docker run -ti -p 5000:5000 --gpus all -e HF_MODEL_ID=echarlaix/tiny-random-stable-diffusion-xl -e HF_TASK=text-to-image starlette-transformers:gpu
-docker run -ti -p 5000:5000 --gpus all -e HF_MODEL_ID=stabilityai/stable-diffusion-xl-base-1.0 -e HF_TASK=text-to-image starlette-transformers:gpu
-docker run -ti -p 5000:5000 -e HF_MODEL_DIR=/repository -v $(pwd)/distilbert-base-uncased-emotion:/repository starlette-transformers:cpu
+docker run -ti -p 5000:5000 -e HF_MODEL_ID=distilbert-base-uncased-distilled-squad -e HF_TASK=question-answering integration-test-pytorch:cpu
+docker run -ti -p 5000:5000 --gpus all -e HF_MODEL_ID=nlpconnect/vit-gpt2-image-captioning -e HF_TASK=image-to-text integration-test-pytorch:gpu
+docker run -ti -p 5000:5000 --gpus all -e HF_MODEL_ID=echarlaix/tiny-random-stable-diffusion-xl -e HF_TASK=text-to-image integration-test-pytorch:gpu
+docker run -ti -p 5000:5000 --gpus all -e HF_MODEL_ID=stabilityai/stable-diffusion-xl-base-1.0 -e HF_TASK=text-to-image integration-test-pytorch:gpu
+docker run -ti -p 5000:5000 -e HF_MODEL_DIR=/repository -v $(pwd)/distilbert-base-uncased-emotion:/repository integration-test-pytorch:cpu
 ```
 
 
@@ -184,7 +182,17 @@ Below you ll find a list of supported and tested transformers and sentence trans
 ---
 ## 🤝 Contributing
 
-TBD. 
+### Development
+
+* Recommended Python version: 3.11
+* We recommend `pyenv` for easily switching between different Python versions
+* There are two options for unit and integration tests:
+	* `Make` - see `makefile`
+
+#### Testing with Make
+
+* Unit Testing: `make unit-test`
+* Integration testing: `make integ-test`
 
 ---
 ## 📜  License

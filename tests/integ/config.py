@@ -1,6 +1,6 @@
 import os
 
-from integ.utils import (
+from tests.integ.utils import (
     validate_automatic_speech_recognition,
     validate_classification,
     validate_feature_extraction,
@@ -14,6 +14,8 @@ from integ.utils import (
     validate_text_to_image,
     validate_translation,
     validate_zero_shot_classification,
+    validate_custom,
+    validate_conversational
 )
 
 
@@ -63,23 +65,15 @@ task2model = {
         "tensorflow": "hf-internal-testing/tiny-random-vit",
     },
     "automatic-speech-recognition": {
-        "pytorch": "hf-internal-testing/tiny-random-wav2vec2",
+        "pytorch": "hf-internal-testing/tiny-random-Wav2Vec2Model",
         "tensorflow": None,
     },
     "audio-classification": {
-        "pytorch": "hf-internal-testing/tiny-random-wavlm",
+        "pytorch": "hf-internal-testing/tiny-random-WavLMModel",
         "tensorflow": None,
     },
     "object-detection": {
         "pytorch": "hustvl/yolos-tiny",
-        "tensorflow": None,
-    },
-    "image-segmentation": {
-        "pytorch": "hf-internal-testing/tiny-random-beit-pipeline",
-        "tensorflow": None,
-    },
-    "table-question-answering": {
-        "pytorch": "philschmid/tapex-tiny",
         "tensorflow": None,
     },
     "zero-shot-image-classification": {
@@ -87,8 +81,9 @@ task2model = {
         "tensorflow": "hf-internal-testing/tiny-random-clip-zero-shot-image-classification",
     },
     "conversational": {
-        "pytorch": "hf-internal-testing/tiny-random-blenderbot",
-        "tensorflow": "hf-internal-testing/tiny-random-blenderbot",
+        #"pytorch": "hf-internal-testing/tiny-random-blenderbot-small",
+        "pytorch": "microsoft/DialoGPT-small",
+        "tensorflow": None,
     },
     "sentence-similarity": {
         "pytorch": "sentence-transformers/all-MiniLM-L6-v2",
@@ -104,6 +99,14 @@ task2model = {
     },
     "text-to-image": {
         "pytorch": "hf-internal-testing/tiny-stable-diffusion-torch",
+        "tensorflow": None,
+    },
+    "table-question-answering": {
+        "pytorch": "philschmid/tapex-tiny",
+        "tensorflow": None,
+    },
+    "image-segmentation": {
+        "pytorch": "hf-internal-testing/tiny-random-beit-pipeline",
         "tensorflow": None,
     },
 }
@@ -149,19 +152,27 @@ task2input = {
             },
         }
     },
-    "conversational": {
-        "inputs": {
-            "past_user_inputs": ["Which movie is the best ?"],
-            "generated_responses": ["It's Die Hard for sure."],
-            "text": "Can you explain why?",
+    "conversational": {"inputs": [
+        {
+            "role": "user",
+            "content": "Which movie is the best ?"
+        },
+        {
+            "role": "assistant",
+            "content": "It's Die Hard for sure."
+        },
+        {
+            "role": "user",
+            "content": "Can you explain why?"
         }
-    },
+    ]},
     "sentence-similarity": {
         "inputs": {"source_sentence": "Lets create an embedding", "sentences": ["Lets create an embedding"]}
     },
     "sentence-embeddings": {"inputs": "Lets create an embedding"},
     "sentence-ranking": {"inputs": ["Lets create an embedding", "Lets create an embedding"]},
     "text-to-image": {"inputs": "a man on a horse jumps over a broken down airplane."},
+    "custom": {"inputs": "this is a test"}
 }
 
 task2output = {
@@ -206,11 +217,17 @@ task2output = {
     "object-detection": [{"score": 0.9143241047859192, "label": "cat", "box": {}}],
     "image-segmentation": [{"score": 0.9143241047859192, "label": "cat", "mask": {}}],
     "table-question-answering": {"answer": "36542"},
-    "conversational": {"generated_text": "", "conversation": {}},
+    "conversational": [
+        {'role': 'user', 'content': 'Which movie is the best ?'},
+        {'role': 'assistant', 'content': "It's Die Hard for sure."},
+        {'role': 'user', 'content': 'Can you explain why?'},
+        {'role': 'assistant', 'content': "It's a great movie."},
+    ],
     "sentence-similarity": {"similarities": ""},
     "sentence-embeddings": {"embeddings": ""},
     "sentence-ranking": {"scores": ""},
     "text-to-image": bytes,
+    "custom": {"inputs": "this is a test"}
 }
 
 
@@ -232,9 +249,10 @@ task2validation = {
     "object-detection": validate_object_detection,
     "image-segmentation": validate_object_detection,
     "table-question-answering": validate_zero_shot_classification,
-    "conversational": validate_zero_shot_classification,
+    "conversational": validate_conversational,
     "sentence-similarity": validate_zero_shot_classification,
     "sentence-embeddings": validate_zero_shot_classification,
     "sentence-ranking": validate_zero_shot_classification,
     "text-to-image": validate_text_to_image,
+    "custom": validate_custom
 }
