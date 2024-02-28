@@ -82,7 +82,6 @@ def wrap_conversation_pipeline(pipeline):
         logger.info(f"Prediction: {prediction}")
         return list(prediction)
 
-
     return wrapped_pipeline
 
 
@@ -285,6 +284,7 @@ def get_pipeline(
     # wrap specific pipeline to support better ux
     if task == "conversational":
         hf_pipeline = wrap_conversation_pipeline(hf_pipeline)
+
     elif task == "automatic-speech-recognition" and isinstance(
         hf_pipeline.model,
         WhisperForConditionalGeneration

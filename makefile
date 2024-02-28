@@ -7,7 +7,7 @@ check_dirs := src
 unit-test:
 	python3 -m pytest -s -v tests/unit -n 10 --log-cli-level='DEBUG'
 
-integ-test: d
+integ-test:
 	python3 -m pytest -s -v tests/integ/
 
 # Check that source code meets quality standards

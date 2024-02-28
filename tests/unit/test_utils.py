@@ -197,7 +197,7 @@ def test_wrapped_pipeline():
                 "content": "Can you explain why?"
             }
         ]
-        res = conv_pipe(data)
+        res = conv_pipe(data, max_new_tokens = 100)
         logging.info(f"Response: {res}")
         assert res[-1]["role"] == "assistant"
         assert "error" not in res[-1]["content"]
