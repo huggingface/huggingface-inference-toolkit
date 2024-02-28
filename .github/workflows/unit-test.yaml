@@ -39,6 +39,7 @@ jobs:
       run: |
         docker run \
           -e RUN_SLOW='${{ env.RUN_SLOW }}' \
+          --gpus all \
           -e CACHE_TEST_DIR='${{ env.CACHE_TEST_DIR }}' \
           -v ./tests:${{ env.CACHE_TEST_DIR }} \
           --entrypoint /bin/bash \

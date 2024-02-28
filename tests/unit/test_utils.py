@@ -124,7 +124,7 @@ def test_get_pipeline():
 
 
 @require_torch
-def test_whisper_long_audio():
+def test_whisper_long_audio(cache_test_dir):
     with tempfile.TemporaryDirectory() as tmpdirname:
         storage_dir = _load_repository_from_hf(
             repository_id = "openai/whisper-tiny",
@@ -140,13 +140,7 @@ def test_whisper_long_audio():
             model_dir = storage_dir.as_posix(),
             framework = "safetensors"
         )
-        res = pipe(
-            os.path.join(
-                os.getcwd(),
-                "tests/resources/audio",
-                "long_sample.mp3"
-            )
-        )
+        res = pipe(f"{cache_test_dir}/resources/audio/long_sample.mp3")
 
         assert len(res["text"]) > 700
 
