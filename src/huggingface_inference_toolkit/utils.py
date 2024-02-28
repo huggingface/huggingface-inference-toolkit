@@ -75,11 +75,7 @@ def wrap_conversation_pipeline(pipeline):
     """
 
     def wrapped_pipeline(inputs, *args, **kwargs):
-        logger.info(f"Inputs: {inputs}")
-        logger.info(f"Args: {args}")
-        logger.info(f"KWArgs: {kwargs}")
         prediction = pipeline(inputs, *args, **kwargs)
-        logger.info(f"Prediction: {prediction}")
         return list(prediction)
 
     return wrapped_pipeline
@@ -219,12 +215,7 @@ def get_device():
         return -1
 
 
-def get_pipeline(
-    task: str,
-    model_dir: Path,
-    framework = "pytorch",
-    **kwargs,
-) -> Pipeline:
+def get_pipeline(task: str, model_dir: Path, framework = "pytorch", **kwargs) -> Pipeline:
     """
     create pipeline class for a specific task based on local saved model
     """
