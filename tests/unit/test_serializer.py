@@ -3,9 +3,13 @@ import json
 import numpy as np
 import pytest
 import os
-from huggingface_inference_toolkit.serialization import Jsoner, Audioer, Imager
+from huggingface_inference_toolkit.serialization import (
+    Jsoner,
+    Audioer,
+    Imager
+)
 from PIL import Image
-
+import logging
 
 def test_json_serialization():
     t = {"res": np.array([2.0]), "text": "I like you.", "float": 1.2}
@@ -30,9 +34,10 @@ def test_json_deserialization():
     raw_content = b'{\n\t"inputs": "i like you"\n}'
     assert {"inputs": "i like you"} == Jsoner.deserialize(raw_content)
 
+@pytest.mark.usefixtures('cache_test_dir')
+def test_image_deserialization(cache_test_dir):
 
-def test_image_deserialization():
-    image_files_path = os.path.join(os.getcwd(), "tests/resources/image")
+    image_files_path = f"{cache_test_dir}/resources/image"
 
     for image_file in os.listdir(image_files_path):
         image_bytes = open(os.path.join(image_files_path, image_file), "rb").read()
@@ -41,9 +46,10 @@ def test_image_deserialization():
         assert isinstance(decoded_data, dict)
         assert isinstance(decoded_data["inputs"], Image.Image)
 
+@pytest.mark.usefixtures('cache_test_dir')
+def test_audio_deserialization(cache_test_dir):
 
-def test_audio_deserialization():
-    audio_files_path = os.path.join(os.getcwd(), "tests/resources/audio")
+    audio_files_path = f"{cache_test_dir}/resources/audio"
 
     for audio_file in os.listdir(audio_files_path):
         audio_bytes = open(os.path.join(audio_files_path, audio_file), "rb").read()
