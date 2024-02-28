@@ -32,7 +32,7 @@ RUN apt-get update && \
         ffmpeg \
     && apt-get clean autoremove --yes \
     && rm -rf /var/lib/{apt,dpkg,cache,log}
-
+# Copying only necessary files as filtered by .dockerignore
 COPY . .
 
 # install wheel and setuptools
