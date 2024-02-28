@@ -195,55 +195,6 @@ Below you ll find a list of supported and tested transformers and sentence trans
 * Unit Testing: `make unit-test`
 * Integration testing: `make integ-test`
 
-#### Testing with Tox
-
-#### Unit Testing
-
-* Install `tox`
-* From a Linux terminal, run:
-```bash
-tox -e unit-torch
-# Or
-tox -e unit-tensorflow
-```
-* You can increase the degree of test parallelism by passing `-n`:
-```bash
-tox -e unit-torch -- -n 4
-```
-
-#### Integration Testing
-
-* There are two types of integration tests: **local** and **remote**
-* **Local** tests simulate a scenario where users bring their own model which was previously downloaded and stored externally
-* **Remote** tests simulate a scenario where models are download on the fly, as part of container startup
-
-##### Local Integration Testing
-
-* Build the relevant docker image
-* To run local integration tests, before running `tox`, we need to create a mount point which will store model artifacts. Example:
-
-```bash
-sudo mount --bind /home/ubuntu/.cache/huggingface/ /mnt/hf_cache/
-```
-
-* Make sure that permissions are sufficient for the mount point you created
-* Then, run:
-```bash
-tox -e torch-integration-local-gpu
-# Or
-tox -e torch-integration-local-cpu
-```
-
-##### Remote Integration Testing
-
-* Build the relevant docker image
-* From a Linux terminal, run:
-```bash
-tox -e torch-integration-remote-gpu
-#Or
-tox -e torch-integration-remote-cpu
-```
-
 ---
 ## 📜  License
 

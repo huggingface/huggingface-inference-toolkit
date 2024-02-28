@@ -20,11 +20,14 @@ install_requires = [
     "transformers[sklearn,sentencepiece, audio, vision]==4.38.1",
     "huggingface_hub==0.20.3",
     "orjson",
+    # vision
     "Pillow",
     "librosa",
+    # speech + torchaudio
     "pyctcdecode>=0.3.0",
     "phonemizer",
     "ffmpeg",
+    # web api
     "starlette",
     "uvicorn",
     "pandas"
@@ -32,7 +35,7 @@ install_requires = [
 
 extras = {}
 
-extras["st"] = ["sentence_transformers==2.3.1"]
+extras["st"] = ["sentence_transformers==2.4.0"]
 extras["diffusers"] = ["diffusers==0.26.3", "accelerate==0.27.2"]
 extras["torch"] = ["torch==2.2.0", "torchvision", "torchaudio"]
 extras["tensorflow"] = ["tensorflow"]

@@ -75,11 +75,11 @@ def wrap_conversation_pipeline(pipeline):
     """
 
     def wrapped_pipeline(inputs, *args, **kwargs):
-        logging.info(f"Inputs: {inputs}")
-        logging.info(f"Args: {args}")
-        logging.info(f"KWArgs: {kwargs}")
+        logger.info(f"Inputs: {inputs}")
+        logger.info(f"Args: {args}")
+        logger.info(f"KWArgs: {kwargs}")
         prediction = pipeline(inputs, *args, **kwargs)
-        logging.info(f"Prediction: {prediction}")
+        logger.info(f"Prediction: {prediction}")
         return list(prediction)
 
 
@@ -151,7 +151,7 @@ def _load_repository_from_hf(
 
     # create regex to only include the framework specific weights
     ignore_regex = create_artifact_filter(framework)
-    logging.info(f"Ignore regex pattern for files, which are not downloaded: { ', '.join(ignore_regex) }")
+    logger.info(f"Ignore regex pattern for files, which are not downloaded: { ', '.join(ignore_regex) }")
 
     # Download the repository to the workdir and filter out non-framework
     # specific weights
@@ -174,7 +174,7 @@ def check_and_register_custom_pipeline_from_directory(model_dir):
     custom_module = Path(model_dir).joinpath(HF_DEFAULT_PIPELINE_NAME)
     legacy_module = Path(model_dir).joinpath("pipeline.py")
     if custom_module.is_file():
-        logging.info(f"Found custom pipeline at {custom_module}")
+        logger.info(f"Found custom pipeline at {custom_module}")
         spec = importlib.util.spec_from_file_location(HF_MODULE_NAME, custom_module)
         if spec:
             # add the whole directory to path for submodlues
@@ -187,7 +187,7 @@ def check_and_register_custom_pipeline_from_directory(model_dir):
             custom_pipeline = handler.EndpointHandler(model_dir)
 
     elif legacy_module.is_file():
-        logging.warning(
+        logger.warning(
             """You are using a legacy custom pipeline.
             Please update to the new format.
             See documentation for more information."""
@@ -203,7 +203,7 @@ def check_and_register_custom_pipeline_from_directory(model_dir):
             # init custom handler with model_dir
             custom_pipeline = pipeline.PreTrainedPipeline(model_dir)
     else:
-        logging.info(f"No custom pipeline found at {custom_module}")
+        logger.info(f"No custom pipeline found at {custom_module}")
         custom_pipeline = None
     return custom_pipeline
 
@@ -213,7 +213,7 @@ def get_device():
     The get device function will return the device for the DL Framework.
     """
     gpu = _is_gpu_available()
-    logging.info(f"GPU Available: {gpu}")
+    logger.info(f"GPU Available: {gpu}")
 
     if gpu:
         return 0
@@ -231,7 +231,7 @@ def get_pipeline(
     create pipeline class for a specific task based on local saved model
     """
     device = get_device()
-    logging.info(f"Using device { 'GPU' if device == 0 else 'CPU'}")
+    logger.info(f"Using device { 'GPU' if device == 0 else 'CPU'}")
 
     if task is None:
         raise EnvironmentError(
@@ -254,7 +254,7 @@ def get_pipeline(
         kwargs["tokenizer"] = model_dir
 
     if is_optimum_available():
-        logging.info("Optimum is not implemented yet using default pipeline.")
+        logger.info("Optimum is not implemented yet using default pipeline.")
         hf_pipeline = pipeline(task=task, model=model_dir, device=device, **kwargs)
     elif is_sentence_transformers_available() and task in [
         "sentence-similarity",

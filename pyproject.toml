@@ -13,6 +13,7 @@ lint.select = [
   "B", # flake8-bugbear
 ]
 lint.ignore = [
+  "E501", # Line length (handled by ruff-format)
   "B008", # do not perform function calls in argument defaults
   "C901", # too complex
 ]

@@ -25,8 +25,8 @@ RUN apt-get update && \
         cmake \
         libprotobuf-dev \
         protobuf-compiler \
-        python3-venv \
         python3-dev \
+        python3-pip \
         python3.11 \
         libsndfile1-dev \
         ffmpeg \
@@ -36,9 +36,7 @@ RUN apt-get update && \
 COPY . .
 
 # install wheel and setuptools
-RUN python3 -m venv .venv && \
-    source .venv/bin/activate && \
-    pip install --no-cache-dir -U pip -e ".[torch, st, diffusers]"
+RUN pip install --no-cache-dir -U pip ".[torch, st, diffusers]"
 
 # copy application
 COPY src/huggingface_inference_toolkit huggingface_inference_toolkit
@@ -48,4 +46,4 @@ COPY src/huggingface_inference_toolkit/webservice_starlette.py webservice_starle
 COPY scripts/entrypoint.sh entrypoint.sh
 RUN chmod +x entrypoint.sh
 
-ENTRYPOINT ["bash", "-c", "source .venv/bin/activate && ./entrypoint.sh"]
+ENTRYPOINT ["bash", "-c", "./entrypoint.sh"]

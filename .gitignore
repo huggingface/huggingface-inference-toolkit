@@ -178,3 +178,5 @@ cython_debug/
 model
 tests/tmp
 tmp/
+act.sh
+.act

@@ -39,7 +39,7 @@ on:
       runs_on:
         type: string
         required: false
-        default: "['single-gpu', 'nvidia-gpu', 't4', 'ci']"
+        default: '["single-gpu", "nvidia-gpu", "t4", "ci"]'
 
 jobs:
   pytorch-integration-tests:
@@ -60,7 +60,7 @@ jobs:
       with:
         python-version: 3.11
     - name: Install dependencies
-      run: pip install -e ".[torch, test]"
+      run: pip install ".[torch, test]"
     - name: Run local integration tests
       run: |
         python -m pytest \
