@@ -203,8 +203,8 @@ def test_wrapped_pipeline():
         assert "error" not in res[-1]["content"]
 
 
-def test_local_custom_pipeline():
-    model_dir = os.path.join(os.getcwd(), "tests/resources/custom_handler")
+def test_local_custom_pipeline(cache_test_dir):
+    model_dir = f"{cache_test_dir}/resources/custom_handler"
     pipeline = check_and_register_custom_pipeline_from_directory(model_dir)
     payload = "test"
     assert pipeline.path == model_dir
@@ -214,7 +214,9 @@ def test_local_custom_pipeline():
 def test_remote_custom_pipeline():
     with tempfile.TemporaryDirectory() as tmpdirname:
         storage_dir = _load_repository_from_hf(
-            "philschmid/custom-pipeline-text-classification", tmpdirname, framework="pytorch"
+            "philschmid/custom-pipeline-text-classification",
+            tmpdirname,
+            framework="pytorch"
         )
         pipeline = check_and_register_custom_pipeline_from_directory(str(storage_dir))
         payload = "test"
@@ -225,7 +227,9 @@ def test_remote_custom_pipeline():
 def test_get_inference_handler_either_custom_or_default_pipeline():
     with tempfile.TemporaryDirectory() as tmpdirname:
         storage_dir = _load_repository_from_hf(
-            "philschmid/custom-pipeline-text-classification", tmpdirname, framework="pytorch"
+            "philschmid/custom-pipeline-text-classification",
+            tmpdirname,
+            framework="pytorch"
         )
         pipeline = get_inference_handler_either_custom_or_default_handler(str(storage_dir))
         payload = "test"
