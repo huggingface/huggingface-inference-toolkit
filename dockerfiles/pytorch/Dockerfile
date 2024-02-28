@@ -43,7 +43,6 @@ COPY src/huggingface_inference_toolkit huggingface_inference_toolkit
 COPY src/huggingface_inference_toolkit/webservice_starlette.py webservice_starlette.py
 
 # copy entrypoint and change permissions
-COPY scripts/entrypoint.sh entrypoint.sh
-RUN chmod +x entrypoint.sh
+COPY --chmod=0755  scripts/entrypoint.sh entrypoint.sh
 
 ENTRYPOINT ["bash", "-c", "./entrypoint.sh"]
