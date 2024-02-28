@@ -212,7 +212,6 @@ def get_device():
     The get device function will return the device for the DL Framework.
     """
     gpu = _is_gpu_available()
-    logger.info(f"GPU Available: {gpu}")
 
     if gpu:
         return 0

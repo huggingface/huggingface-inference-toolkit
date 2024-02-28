@@ -9,7 +9,6 @@ from huggingface_inference_toolkit.serialization import (
     Imager
 )
 from PIL import Image
-import logging
 
 def test_json_serialization():
     t = {"res": np.array([2.0]), "text": "I like you.", "float": 1.2}

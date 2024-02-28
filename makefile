@@ -5,7 +5,7 @@ check_dirs := src
 # run tests
 
 unit-test:
-	python3 -m pytest -s -v tests/unit -n 10 --log-cli-level='DEBUG'
+	RUN_SLOW=True python3 -m pytest -s -v tests/unit -n 10 --log-cli-level='ERROR'
 
 integ-test:
 	python3 -m pytest -s -v tests/integ/
