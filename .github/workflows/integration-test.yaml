@@ -4,6 +4,8 @@ on:
   push:
     paths-ignore:
       - 'README.md'
+      - '.github/workflows/unit-test.yaml'
+      - '.github/workflows/quality.yaml'
     branches:
      - main
   pull_request:
