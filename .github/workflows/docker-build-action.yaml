@@ -28,9 +28,13 @@ on:
       TAILSCALE_AUTHKEY:
         required: true
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   buildx:
-    runs-on: ubuntu-latest
+    runs-on: [single-gpu, nvidia-gpu, t4, ci]
     steps:
       - name: Check out
         uses: actions/checkout@v3
