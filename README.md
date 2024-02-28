@@ -188,7 +188,6 @@ Below you ll find a list of supported and tested transformers and sentence trans
 * We recommend `pyenv` for easily switching between different Python versions
 * There are two options for unit and integration tests:
 	* `Make` - see `makefile`
-	* `tox` - see `tox.ini`
 
 #### Testing with Make
 
