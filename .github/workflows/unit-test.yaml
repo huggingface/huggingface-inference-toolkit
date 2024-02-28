@@ -29,7 +29,7 @@ jobs:
       run: |
         rm -rf ${{ env.CACHE_TEST_DIR }} && \
         mkdir ${{ env.CACHE_TEST_DIR }} && \
-        cp -r tests/unit ${{ env.CACHE_TEST_DIR }}
+        cp -r tests ${{ env.CACHE_TEST_DIR }}
     - name: Docker Setup Buildx
       uses: docker/setup-buildx-action@v3.0.0
     - name: Docker Build
@@ -42,5 +42,5 @@ jobs:
           -v ./tests:${{ env.CACHE_TEST_DIR }} \
           --entrypoint /bin/bash \
           integration-test-pytorch:gpu \
-          -c "source .venv/bin/activate && pip install '.[test]' && pytest ${{ env.CACHE_TEST_DIR }}"
+          -c "source .venv/bin/activate && pip install '.[test]' && pytest ${{ env.CACHE_TEST_DIR }}/unit"
         
