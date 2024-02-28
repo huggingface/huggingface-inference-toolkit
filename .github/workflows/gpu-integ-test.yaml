@@ -30,7 +30,7 @@ jobs:
     name: Remote Integration Tests - CPU
     uses: ./.github/workflows/integration_test.yaml
     with:
-      test_path: "tests/integ/test_pytorch_remote_gpu.py"
+      test_path: "tests/integ/test_pytorch_remote_cpu.py"
       build_img_cmd: "make inference-pytorch-cpu"
       runs_on: "['ci']"
   pytorch-integration-local-cpu:

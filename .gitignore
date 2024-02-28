@@ -37,6 +37,7 @@ __pycache__/
 *$py.class
 .vscode
 .make
+tox.ini
 
 # C extensions
 *.so
