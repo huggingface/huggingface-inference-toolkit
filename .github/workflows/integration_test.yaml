@@ -28,6 +28,14 @@ on:
         type: string
         required: false
         default: "make inference-pytorch-gpu"
+      log_level:
+        type: string
+        required: false
+        default: "ERROR"
+      log_format:
+        type: string
+        required: false
+        default: "%(asctime)s %(levelname)s %(module)s:%(lineno)d %(message)s"
 
 jobs:
   pytorch-integration-local:
@@ -42,7 +50,7 @@ jobs:
     - name: Docker Setup Buildx
       uses: docker/setup-buildx-action@v3.0.0
     - name: Docker Build
-      run: ${{ inputs.build_image_cmd }}
+      run: ${{ inputs.build_img_cmd }}
     - name: Set up Python 3.11
       uses: actions/setup-python@v2
       with:
