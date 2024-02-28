@@ -36,10 +36,14 @@ on:
         type: string
         required: false
         default: "%(asctime)s %(levelname)s %(module)s:%(lineno)d %(message)s"
+      runs_on:
+        type: string
+        required: false
+        default: "['single-gpu', 'nvidia-gpu', 't4', 'ci']"
 
 jobs:
-  pytorch-integration-local:
-    runs-on: [single-gpu, nvidia-gpu, t4, ci]
+  pytorch-integration-tests:
+    runs-on: ${{ fromJson(inputs.runs_on) }}
     env:
       AWS_REGION: ${{ inputs.region }}
       HF_HOME: ${{ inputs.hf_home }}
@@ -61,5 +65,5 @@ jobs:
       run: |
         python -m pytest \
         ${{ inputs.test_path }} -n ${{ inputs.test_parallelism }} \
-        --log-cli-level=${{ inputs.log_level }} \
-        --log-format=${{ inputs.log_format }}
+        --log-cli-level='${{ inputs.log_level }}' \
+        --log-format='${{ inputs.log_format }}'
