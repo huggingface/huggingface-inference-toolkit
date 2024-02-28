@@ -6,3 +6,5 @@
 .gitignore
 makefile
 __pycache__
+tests
+.vscode

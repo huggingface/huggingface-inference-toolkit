@@ -9,8 +9,6 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 WORKDIR /app
 
-COPY . .
-
 RUN apt-get update && \
     apt-get install software-properties-common -y && \
     add-apt-repository ppa:deadsnakes/ppa && \
@@ -35,6 +33,8 @@ RUN apt-get update && \
     && apt-get clean autoremove --yes \
     && rm -rf /var/lib/{apt,dpkg,cache,log}
 
+COPY . .
+
 # install wheel and setuptools
 RUN python3 -m venv .venv && \
     source .venv/bin/activate && \
@@ -43,9 +43,6 @@ RUN python3 -m venv .venv && \
 # copy application
 COPY src/huggingface_inference_toolkit huggingface_inference_toolkit
 COPY src/huggingface_inference_toolkit/webservice_starlette.py webservice_starlette.py
-
-#unit tests - tmp dir gets removed in entrypoint.sh
-COPY . /tmp/hf-inference-test
 
 # copy entrypoint and change permissions
 COPY scripts/entrypoint.sh entrypoint.sh
