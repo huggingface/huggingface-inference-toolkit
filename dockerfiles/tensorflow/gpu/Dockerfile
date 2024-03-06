@@ -34,11 +34,6 @@ RUN curl -L https://micro.mamba.pm/api/micromamba/linux-64/latest | tar -xj "bin
 
 WORKDIR /app
 
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
-    source $HOME/.cargo/env && \
-    source .venv/bin/activate && \
-    ls -all
-
 # install base python dependencies
 COPY dockerfiles/tensorflow/gpu/environment.yaml /app/environment.yaml
 RUN micromamba install -y -n base -f environment.yaml \
