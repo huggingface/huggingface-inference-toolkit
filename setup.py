@@ -39,6 +39,8 @@ extras = {}
 extras["st"] = ["sentence_transformers==2.4.0"]
 extras["diffusers"] = ["diffusers==0.26.3", "accelerate==0.27.2"]
 extras["torch"] = ["torch==2.2.0", "torchvision", "torchaudio"]
+# For neuronx
+extras["torch1"] = ["torch==1.13.1", "torchvision", "torchaudio"]
 extras["tensorflow"] = ["tensorflow"]
 extras["test"] = [
     "pytest==7.2.1",
