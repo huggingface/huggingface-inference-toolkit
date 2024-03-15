@@ -30,7 +30,8 @@ install_requires = [
     # web api
     "starlette",
     "uvicorn",
-    "pandas"
+    "pandas",
+    "peft==0.9.0"
 ]
 
 extras = {}
