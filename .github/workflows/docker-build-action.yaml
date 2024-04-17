@@ -36,9 +36,12 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Tailscale
-        uses: huggingface/tailscale-action@main
+        uses: huggingface/tailscale-action@v1
         with:
           authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
+          slackChannel: ${{ secrets.SLACK_CIFEEDBACK_CHANNEL }}
+          slackToken: ${{ secrets.SLACK_CIFEEDBACK_BOT_TOKEN }}
+          
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2.0.0
         with:
@@ -62,3 +65,9 @@ jobs:
           build-args: ${{ inputs.build_args }}
           file:  ${{ inputs.context }}/${{ inputs.dockerfile }}
           tags: ${{ inputs.repository }}/${{ inputs.image }}:sha-${{ env.GITHUB_SHA_SHORT }},${{ inputs.repository }}/${{ inputs.image }}:latest
+     
+      - name: Tailscale Wait
+        if: ${{ failure() || runner.debug == '1' }}
+        uses: huggingface/tailscale-action@v1
+        with:
+           waitForSSH: true
