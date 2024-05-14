@@ -38,4 +38,4 @@ apt-get clean autoremove --yes
 
 rm -rf /var/lib/{apt,cache,log} fi
 
-echo "PATH=\"$PATH:/opt/aws/neuron/bin\"" > /etc/environment
+echo "export PATH=\"$PATH:/opt/aws/neuron/bin\"" >> /root/.bashrc
