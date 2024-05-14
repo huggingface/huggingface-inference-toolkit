@@ -70,7 +70,7 @@ def load_optimum_diffusion_pipeline(task, model_dir):
     pipeline_class_name = config['_class_name']
 
     logger.debug("Repository pipeline class name %s", pipeline_class_name)
-    if pipeline_class_name.contains("Diffusion") and pipeline_class_name.contains("XL"):
+    if "Diffusion" in pipeline_class_name and "XL" in pipeline_class_name:
         if task == "image-to-image":
             pipeline_class = neuron.NeuronStableDiffusionXLImg2ImgPipeline
         else:
@@ -84,7 +84,7 @@ def load_optimum_diffusion_pipeline(task, model_dir):
     logger.debug("Pipeline class %s", pipeline_class.__class__)
 
     # if is neuron model, no need for additional kwargs
-    if pipeline_class_name.contains("Neuron"):
+    if "Neuron" in pipeline_class_name:
         kwargs = {}
     else:
         # Model will be compiled and exported on the flight as the cached models cause a performance drop
@@ -99,8 +99,8 @@ def load_optimum_diffusion_pipeline(task, model_dir):
             "data_parallel_mode": os.environ.get("DATA_PARALLEL_MODE", "unet")
         }
         input_shapes = {"batch_size": 1,
-                        "height": int(os.environ("IMAGE_HEIGHT", 512)),
-                        "width": int(os.environ("IMAGE_WIDTH", 512))}
+                        "height": int(os.environ.get("IMAGE_HEIGHT", 512)),
+                        "width": int(os.environ.get("IMAGE_WIDTH", 512))}
         kwargs = {**compiler_args, **input_shapes, "export": True}
 
     # In the second case, exporting can take a huge amount of time, which makes endpoints not a really suited solution
