@@ -33,7 +33,7 @@ _optimum_available = importlib.util.find_spec("optimum") is not None
 
 
 def is_optimum_available():
-    return True
+    return False
     # TODO: change when supported
     # return _optimum_available
 
