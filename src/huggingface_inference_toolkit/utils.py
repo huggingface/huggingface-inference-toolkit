@@ -33,7 +33,7 @@ _optimum_available = importlib.util.find_spec("optimum") is not None
 
 
 def is_optimum_available():
-    return False
+    return True
     # TODO: change when supported
     # return _optimum_available
 
@@ -229,7 +229,7 @@ def get_pipeline(
     create pipeline class for a specific task based on local saved model
     """
     device = get_device()
-    logger.info(f"Using device { 'GPU' if device == 0 else 'CPU'}")
+    logger.info(f"Using device { 'GPU' if device == 0 else 'CPU/TPU/Neuron...)'}")
 
     if task is None:
         raise EnvironmentError(
@@ -265,11 +265,10 @@ def get_pipeline(
             device=device,
             **kwargs
         )
-    elif is_diffusers_available() and task == "text-to-image":
+    elif is_diffusers_available() and task in ["text-to-image", "image-to-image"]:
         hf_pipeline = get_diffusers_pipeline(
             task=task,
             model_dir=model_dir,
-            device=device,
             **kwargs
         )
     else:
@@ -308,3 +307,21 @@ def convert_params_to_int_or_bool(params):
         if v == "true":
             params[k] = True
     return params
+
+
+# def local_model_card(model_dir: str) -> Optional[ModelCard]:
+#
+#     logger.debug("Rebuilding offline model info for repo %s", model_dir)
+#
+#     # Let's rebuild some partial model info from what we see in cache, info extracted should be enough
+#     # for most use cases
+#
+#     card_path = Path(model_dir) / "README.md"
+#     if not card_path.exists():
+#         logger.debug("Unable to build model info for directory %s", model_dir)
+#         return None
+#
+#     logger.debug("Loading model card from model readme %s", card_path)
+#     model_card = ModelCard.load(card_path)
+#     logger.info("Local repo %s, model card data %s", model_dir, model_card.data.to_dict())
+#     return model_card

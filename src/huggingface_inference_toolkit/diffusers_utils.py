@@ -1,7 +1,9 @@
 import importlib.util
 import logging
+import os
 
 from transformers.utils.import_utils import is_torch_bf16_gpu_available
+from optimum import neuron
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(format="%(asctime)s | %(levelname)s | %(message)s", level=logging.INFO)
@@ -49,14 +51,64 @@ class IEAutoPipelineForText2Image:
         out = self.pipeline(prompt, num_images_per_prompt=1, **kwargs)
         return out.images[0]
 
+#
+# DIFFUSERS_TASKS = {
+#     "text-to-image": [NeuronStableDiffusionXLPipeline],
+# }
 
-DIFFUSERS_TASKS = {
-    "text-to-image": IEAutoPipelineForText2Image,
-}
+
+def load_optimum_diffusion_pipeline(task, model_dir):
+
+    # Step 1: load config and look for _class_name
+    try:
+        config = StableDiffusionPipeline.load_config(pretrained_model_name_or_path=model_dir)
+    except OSError as e:
+        logger.error("Unable to load config file for repository %s", model_dir)
+        logger.exception(e)
+        raise
+
+    pipeline_class_name = config['_class_name']
+
+    logger.debug("Repository pipeline class name %s", pipeline_class_name)
+    if pipeline_class_name.contains("Diffusion") and pipeline_class_name.contains("XL"):
+        if task == "image-to-image":
+            pipeline_class = neuron.NeuronStableDiffusionXLImg2ImgPipeline
+        else:
+            pipeline_class = neuron.NeuronStableDiffusionXLPipeline
+    else:
+        if task == "image-to-image":
+            pipeline_class = neuron.NeuronStableDiffusionImg2ImgPipeline
+        else:
+            pipeline_class = neuron.NeuronStableDiffusionPipeline
+
+    logger.debug("Pipeline class %s", pipeline_class.__class__)
+
+    # if is neuron model, no need for additional kwargs
+    if pipeline_class_name.contains("Neuron"):
+        kwargs = {}
+    else:
+        # Model will be compiled and exported on the flight as the cached models cause a performance drop
+        # for diffusion models, unless otherwise specified through an explicit env variable
+
+        # Image shapes need to be frozen at loading/compilation time
+        compiler_args = {
+            "auto_cast": "matmul",
+            "auto_cast_type": "bf16",
+            "inline_weights_to_neff": os.environ.get("INLINE_WEIGHTS_TO_NEFF",
+                                                     "false").lower() in ["false", "no", "0"],
+            "data_parallel_mode": os.environ.get("DATA_PARALLEL_MODE", "unet")
+        }
+        input_shapes = {"batch_size": 1,
+                        "height": int(os.environ("IMAGE_HEIGHT", 512)),
+                        "width": int(os.environ("IMAGE_WIDTH", 512))}
+        kwargs = {**compiler_args, **input_shapes, "export": True}
+
+    # In the second case, exporting can take a huge amount of time, which makes endpoints not a really suited solution
+    # at least as long as the cache is not really an option for diffusion
+    return pipeline_class(kwargs)
 
 
-def get_diffusers_pipeline(task=None, model_dir=None, device=-1, **kwargs):
+def get_diffusers_pipeline(task=None, model_dir=None, **kwargs):
     """Get a pipeline for Diffusers models."""
-    device = "cuda" if device == 0 else "cpu"
-    pipeline = DIFFUSERS_TASKS[task](model_dir=model_dir, device=device)
+    pipeline = load_optimum_diffusion_pipeline(task=task, model_dir=model_dir)
     return pipeline
