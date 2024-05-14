@@ -49,5 +49,3 @@ COPY src/huggingface_inference_toolkit/webservice_starlette.py webservice_starle
 COPY --chmod=0755  scripts/entrypoint.sh entrypoint.sh
 
 ENTRYPOINT ["bash", "-c", "./entrypoint.sh"]
-
-RUN apt-get update && apt-get install -y vim
