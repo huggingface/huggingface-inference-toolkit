@@ -84,28 +84,21 @@ def load_optimum_diffusion_pipeline(task, model_dir):
     logger.debug("Pipeline class %s", pipeline_class.__class__)
 
     # if is neuron model, no need for additional kwargs
-    if "Neuron" in pipeline_class_name:
-        kwargs = {}
-    else:
-        # Model will be compiled and exported on the flight as the cached models cause a performance drop
-        # for diffusion models, unless otherwise specified through an explicit env variable
-
-        # Image shapes need to be frozen at loading/compilation time
-        compiler_args = {
-            "auto_cast": "matmul",
-            "auto_cast_type": "bf16",
-            "inline_weights_to_neff": os.environ.get("INLINE_WEIGHTS_TO_NEFF",
-                                                     "false").lower() in ["false", "no", "0"],
-            "data_parallel_mode": os.environ.get("DATA_PARALLEL_MODE", "unet")
-        }
-        input_shapes = {"batch_size": 1,
-                        "height": int(os.environ.get("IMAGE_HEIGHT", 512)),
-                        "width": int(os.environ.get("IMAGE_WIDTH", 512))}
-        kwargs = {**compiler_args, **input_shapes, "export": True}
+    compiler_args = {
+        "auto_cast": "matmul",
+        "auto_cast_type": "bf16",
+        "inline_weights_to_neff": os.environ.get("INLINE_WEIGHTS_TO_NEFF",
+                                                 "false").lower() in ["false", "no", "0"],
+        "data_parallel_mode": os.environ.get("DATA_PARALLEL_MODE", "unet")
+    }
+    input_shapes = {"batch_size": 1,
+                    "height": int(os.environ.get("IMAGE_HEIGHT", 512)),
+                    "width": int(os.environ.get("IMAGE_WIDTH", 512))}
+    kwargs = {**compiler_args, **input_shapes, "export": True}
 
     # In the second case, exporting can take a huge amount of time, which makes endpoints not a really suited solution
     # at least as long as the cache is not really an option for diffusion
-    return pipeline_class(kwargs)
+    return pipeline_class.from_pretrained(model_dir, **kwargs)
 
 
 def get_diffusers_pipeline(task=None, model_dir=None, **kwargs):
