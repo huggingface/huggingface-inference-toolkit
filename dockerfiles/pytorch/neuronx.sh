@@ -23,11 +23,17 @@ apt-get update -y \
 
 pip install -U pip
 
-pip3 install neuronx-cc==2.* \
-    torch-neuronx==2.* \
-    transformers-neuronx\
+# Taken from optimum neuron, tgi dockerfile
+pip3 install \
+    neuronx-cc==2.13.66.0 \
+    torch-neuronx==2.1.2.2.1.0 \
+    transformers-neuronx==0.10.0.21 \
     --extra-index-url=https://pip.repos.neuron.amazonaws.com
 
 pip3 install --extra-index-url=https://pip.repos.neuron.amazonaws.com optimum[neuronx,diffusers]
 
 pip install ".[st,torch-neuronx]"
+
+apt-get clean autoremove --yes
+
+rm -rf /var/lib/{apt,cache,log} fi
