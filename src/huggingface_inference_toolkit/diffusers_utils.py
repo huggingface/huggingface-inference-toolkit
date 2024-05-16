@@ -7,6 +7,7 @@ from transformers.utils.import_utils import is_torch_bf16_gpu_available
 from optimum import neuron
 from optimum.neuron.modeling_base import OptimizedModel
 
+
 logger = logging.getLogger(__name__)
 logging.basicConfig(format="%(asctime)s | %(levelname)s | %(message)s", level=logging.INFO)
 
@@ -53,10 +54,10 @@ class IEAutoPipelineForText2Image:
         out = self.pipeline(prompt, num_images_per_prompt=1, **kwargs)
         return out.images[0]
 
-#
-# DIFFUSERS_TASKS = {
-#     "text-to-image": [NeuronStableDiffusionXLPipeline],
-# }
+
+DIFFUSERS_TASKS = {
+    "text-to-image": IEAutoPipelineForText2Image,
+}
 
 
 def _is_neuron_model(model_dir):
@@ -76,7 +77,7 @@ def _is_neuron_model(model_dir):
     return False
 
 
-def load_optimum_diffusion_pipeline(task: str, model_dir: str) -> OptimizedModel:
+def neuron_diffusion_pipeline(task: str, model_dir: str) -> OptimizedModel:
 
     # Step 1: load config and look for _class_name
     try:
@@ -134,7 +135,16 @@ def load_optimum_diffusion_pipeline(task: str, model_dir: str) -> OptimizedModel
         return pipeline_class.from_pretrained(model_dir, **fallback_kwargs)
 
 
-def get_diffusers_pipeline(task=None, model_dir=None, **kwargs):
+def get_diffusers_pipeline(task=None, model_dir=None, device=-1, **_kwargs):
     """Get a pipeline for Diffusers models."""
-    pipeline = load_optimum_diffusion_pipeline(task=task, model_dir=model_dir)
+    if device == 0:
+        device = "cuda"
+    elif device is not None:
+        device = "cpu"
+    # None case: neuronx, no need to specify device
+
+    if device is not None:
+        pipeline = DIFFUSERS_TASKS[task](model_dir=model_dir, device=device)
+    else:
+        pipeline = neuron_diffusion_pipeline(task=task, model_dir=model_dir)
     return pipeline

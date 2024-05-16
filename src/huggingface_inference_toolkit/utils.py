@@ -30,12 +30,24 @@ if is_torch_available():
     import torch
 
 _optimum_available = importlib.util.find_spec("optimum") is not None
+if _optimum_available:
+    _optimum_neuron = importlib.util.find_spec("optimum.neuron") is not None
+    from optimum.neuron.modeling_decoder import get_available_cores as get_neuron_cores
+else:
+    _optimum_neuron = False
+
+    def get_neuron_cores():
+        return 0
 
 
 def is_optimum_available():
     return False
     # TODO: change when supported
     # return _optimum_available
+
+
+def is_optimum_neuron_available():
+    return _optimum_neuron
 
 
 framework2weight = {
@@ -215,6 +227,8 @@ def get_device():
 
     if gpu:
         return 0
+    elif get_neuron_cores() > 0:
+        return None
     else:
         return -1
 
@@ -229,7 +243,10 @@ def get_pipeline(
     create pipeline class for a specific task based on local saved model
     """
     device = get_device()
-    logger.info(f"Using device { 'GPU' if device == 0 else 'CPU/TPU/Neuron...)'}")
+    logger.info(f"Using device { 'GPU' if device == 0 else 'Neuron' if device is None else 'CPU'}")
+
+    if device is None and task != "text-to-image":
+        raise Exception("This container only supports text-to-image task with neurons")
 
     if task is None:
         raise EnvironmentError(
@@ -265,10 +282,11 @@ def get_pipeline(
             device=device,
             **kwargs
         )
-    elif is_diffusers_available() and task in ["text-to-image", "image-to-image"]:
+    elif is_diffusers_available() and task == "text-to-image":
         hf_pipeline = get_diffusers_pipeline(
             task=task,
             model_dir=model_dir,
+            device=device
             **kwargs
         )
     else:
