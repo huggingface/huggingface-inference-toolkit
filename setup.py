@@ -17,7 +17,7 @@ install_requires = [
     "wheel==0.42.0",
     "setuptools==69.1.0",
     "cmake==3.28.3",
-    "transformers[sklearn,sentencepiece, audio, vision]>=4.36.0",
+    "transformers[sklearn,sentencepiece, audio, vision]>=4.38.2",
     "huggingface_hub==0.23.0",
     "orjson",
     # vision
