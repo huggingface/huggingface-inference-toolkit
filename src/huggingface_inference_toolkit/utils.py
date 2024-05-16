@@ -286,7 +286,7 @@ def get_pipeline(
         hf_pipeline = get_diffusers_pipeline(
             task=task,
             model_dir=model_dir,
-            device=device
+            device=device,
             **kwargs
         )
     else:
