@@ -5,6 +5,7 @@ import os
 
 from transformers.utils.import_utils import is_torch_bf16_gpu_available
 from optimum import neuron
+from optimum.neuron.modeling_base import OptimizedModel
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(format="%(asctime)s | %(levelname)s | %(message)s", level=logging.INFO)
@@ -75,7 +76,7 @@ def _is_neuron_model(model_dir):
     return False
 
 
-def load_optimum_diffusion_pipeline(task, model_dir):
+def load_optimum_diffusion_pipeline(task: str, model_dir: str) -> OptimizedModel:
 
     # Step 1: load config and look for _class_name
     try:
