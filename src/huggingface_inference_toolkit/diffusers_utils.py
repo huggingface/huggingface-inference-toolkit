@@ -27,7 +27,6 @@ if is_diffusers_available():
 
 if _optimum_neuron:
     from optimum import neuron
-    from optimum.neuron.modeling_base import OptimizedModel
 
 
 class IEAutoPipelineForText2Image:
@@ -84,7 +83,7 @@ def _is_neuron_model(model_dir):
     return False
 
 
-def neuron_diffusion_pipeline(task: str, model_dir: str) -> OptimizedModel:
+def neuron_diffusion_pipeline(task: str, model_dir: str):
 
     # Step 1: load config and look for _class_name
     try:
