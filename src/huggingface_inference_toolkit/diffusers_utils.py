@@ -3,14 +3,13 @@ import json
 import logging
 import os
 
-from optimum import neuron
-from optimum.neuron.modeling_base import OptimizedModel
 from transformers.utils.import_utils import is_torch_bf16_gpu_available
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(format="%(asctime)s | %(levelname)s | %(message)s", level=logging.INFO)
 
 _diffusers = importlib.util.find_spec("diffusers") is not None
+_optimum_neuron = importlib.util.find_spec("optimum.neuron") is not None
 
 
 def is_diffusers_available():
@@ -20,6 +19,11 @@ def is_diffusers_available():
 if is_diffusers_available():
     import torch
     from diffusers import AutoPipelineForText2Image, DPMSolverMultistepScheduler, StableDiffusionPipeline
+
+
+if _optimum_neuron:
+    from optimum import neuron
+    from optimum.neuron.modeling_base import OptimizedModel
 
 
 class IEAutoPipelineForText2Image:
