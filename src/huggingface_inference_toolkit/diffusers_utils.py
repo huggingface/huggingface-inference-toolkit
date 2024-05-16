@@ -1,4 +1,5 @@
 import importlib.util
+import json
 import logging
 import os
 
@@ -57,6 +58,23 @@ class IEAutoPipelineForText2Image:
 # }
 
 
+def _is_neuron_model(model_dir):
+    for root, _, files in os.walk(model_dir):
+        for f in files:
+            if f == "config.json":
+                filename = os.path.join(root, f)
+                with open(filename, 'r') as fh:
+                    try:
+                        config = json.load(fh)
+                    except Exception as e:
+                        logger.warning("Unable to load config %s properly, skipping", filename)
+                        logger.exception(e)
+                        continue
+                    if 'neuron' in config.keys():
+                        return True
+    return False
+
+
 def load_optimum_diffusion_pipeline(task, model_dir):
 
     # Step 1: load config and look for _class_name
@@ -83,7 +101,6 @@ def load_optimum_diffusion_pipeline(task, model_dir):
 
     logger.debug("Pipeline class %s", pipeline_class.__class__)
 
-    # if is neuron model, no need for additional kwargs
     compiler_args = {
         "auto_cast": "matmul",
         "auto_cast_type": "bf16",
@@ -94,11 +111,26 @@ def load_optimum_diffusion_pipeline(task, model_dir):
     input_shapes = {"batch_size": 1,
                     "height": int(os.environ.get("IMAGE_HEIGHT", 512)),
                     "width": int(os.environ.get("IMAGE_WIDTH", 512))}
-    kwargs = {**compiler_args, **input_shapes, "export": True}
+    export_kwargs = {**compiler_args, **input_shapes, "export": True}
+
+    # if is neuron model, no need for additional kwargs, any info lies within the repo
+    is_neuron_m = _is_neuron_model(model_dir)
+    if is_neuron_m:
+        kwargs = {}
+        fallback_kwargs = export_kwargs
+    else:
+        kwargs = export_kwargs
+        fallback_kwargs = {}
 
     # In the second case, exporting can take a huge amount of time, which makes endpoints not a really suited solution
     # at least as long as the cache is not really an option for diffusion
-    return pipeline_class.from_pretrained(model_dir, **kwargs)
+    try:
+        logger.info("Loading model %s with kwargs %s", model_dir, kwargs)
+        return pipeline_class.from_pretrained(model_dir, **kwargs)
+    except Exception as e:
+        logger.error("Unable to load model %s properly falling back to kwargs %s", model_dir, fallback_kwargs)
+        logger.exception(e)
+        return pipeline_class.from_pretrained(model_dir, **fallback_kwargs)
 
 
 def get_diffusers_pipeline(task=None, model_dir=None, **kwargs):
