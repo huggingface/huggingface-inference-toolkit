@@ -307,21 +307,3 @@ def convert_params_to_int_or_bool(params):
         if v == "true":
             params[k] = True
     return params
-
-
-# def local_model_card(model_dir: str) -> Optional[ModelCard]:
-#
-#     logger.debug("Rebuilding offline model info for repo %s", model_dir)
-#
-#     # Let's rebuild some partial model info from what we see in cache, info extracted should be enough
-#     # for most use cases
-#
-#     card_path = Path(model_dir) / "README.md"
-#     if not card_path.exists():
-#         logger.debug("Unable to build model info for directory %s", model_dir)
-#         return None
-#
-#     logger.debug("Loading model card from model readme %s", card_path)
-#     model_card = ModelCard.load(card_path)
-#     logger.info("Local repo %s, model card data %s", model_dir, model_card.data.to_dict())
-#     return model_card
