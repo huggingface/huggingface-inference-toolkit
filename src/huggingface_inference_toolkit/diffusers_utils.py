@@ -3,10 +3,9 @@ import json
 import logging
 import os
 
-from transformers.utils.import_utils import is_torch_bf16_gpu_available
 from optimum import neuron
 from optimum.neuron.modeling_base import OptimizedModel
-
+from transformers.utils.import_utils import is_torch_bf16_gpu_available
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(format="%(asctime)s | %(levelname)s | %(message)s", level=logging.INFO)
