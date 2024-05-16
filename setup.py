@@ -17,8 +17,8 @@ install_requires = [
     "wheel==0.42.0",
     "setuptools==69.1.0",
     "cmake==3.28.3",
-    "transformers[sklearn,sentencepiece, audio, vision]==4.38.2",
-    "huggingface_hub==0.20.3",
+    "transformers[sklearn,sentencepiece, audio, vision]>=4.38.2",
+    "huggingface_hub==0.23.0",
     "orjson",
     # vision
     "Pillow",
@@ -39,6 +39,8 @@ extras = {}
 extras["st"] = ["sentence_transformers==2.4.0"]
 extras["diffusers"] = ["diffusers==0.26.3", "accelerate==0.27.2"]
 extras["torch"] = ["torch==2.2.0", "torchvision", "torchaudio"]
+# For neuronx
+extras["torch-neuronx"] = ["torch-neuronx", "torchvision", "torchaudio"]
 extras["tensorflow"] = ["tensorflow"]
 extras["test"] = [
     "pytest==7.2.1",

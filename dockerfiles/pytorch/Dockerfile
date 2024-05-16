@@ -1,6 +1,9 @@
 ARG BASE_IMAGE=nvidia/cuda:12.1.0-devel-ubuntu22.04
 
 FROM $BASE_IMAGE
+
+ARG NEURONX=0
+
 SHELL ["/bin/bash", "-c"]
 
 LABEL maintainer="Hugging Face"
@@ -31,12 +34,12 @@ RUN apt-get update && \
         libsndfile1-dev \
         ffmpeg \
     && apt-get clean autoremove --yes \
-    && rm -rf /var/lib/{apt,dpkg,cache,log}
+    && rm -rf /var/lib/{apt,cache,log}
+
 # Copying only necessary files as filtered by .dockerignore
 COPY . .
 
-# install wheel and setuptools
-RUN pip install --no-cache-dir -U pip ".[torch, st, diffusers]"
+RUN if [[ "$NEURONX" == "1" ]];then /bin/bash -c "./dockerfiles/pytorch/neuronx.sh";else pip install --no-cache-dir -U pip ".[torch, st, diffusers]";fi
 
 # copy application
 COPY src/huggingface_inference_toolkit huggingface_inference_toolkit

@@ -1,4 +1,5 @@
 import logging
+import os
 from pathlib import Path
 from time import perf_counter
 
@@ -23,7 +24,7 @@ from huggingface_inference_toolkit.utils import _load_repository_from_hf, conver
 
 
 def config_logging(level=logging.INFO):
-    logging.basicConfig(format="%(asctime)s | %(levelname)s | %(message)s", datefmt="", level=level)
+    logging.basicConfig(format="%(asctime)s | %(levelname)s | %(message)s", datefmt="", level=level, force=True)
     # disable uvicorn access logs to hide /health
     uvicorn_access = logging.getLogger("uvicorn.access")
     uvicorn_access.disabled = True
@@ -31,7 +32,7 @@ def config_logging(level=logging.INFO):
     logging.getLogger("uvicorn").removeHandler(logging.getLogger("uvicorn").handlers[0])
 
 
-config_logging()
+config_logging(os.environ.get("LOG_LEVEL", logging.getLevelName(logging.INFO)))
 logger = logging.getLogger(__name__)
 
 
@@ -50,7 +51,7 @@ async def some_startup_task():
         else:
             raise ValueError(
                 f"""Can't initialize model.
-                Please set env HF_MODEL_DIR or provider a HF_MODEL_ID.
+                Please set env HF_MODEL_DIR or provide a HF_MODEL_ID.
                 Provided values are:
                 HF_MODEL_DIR: {HF_MODEL_DIR} and HF_MODEL_ID:{HF_MODEL_ID}"""
             )

@@ -34,6 +34,16 @@ jobs:
       TAILSCALE_AUTHKEY: ${{ secrets.TAILSCALE_AUTHKEY }}
       REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
       REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+  starlette-pytorch-neuron:
+    uses: ./.github/workflows/docker-build-action.yaml
+    with:
+      image: inference-pytorch-neuron
+      dockerfile: dockerfiles/pytorch/Dockerfile
+      build_args: "BASE_IMAGE=ubuntu:22.04,NEURONX=1"
+    secrets:
+      TAILSCALE_AUTHKEY: ${{ secrets.TAILSCALE_AUTHKEY }}
+      REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
+      REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
   starlette-tensorflow-cpu:
     uses: ./.github/workflows/docker-build-action.yaml
     with:
