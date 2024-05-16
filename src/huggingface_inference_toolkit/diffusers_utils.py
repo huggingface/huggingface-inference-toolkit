@@ -9,7 +9,11 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(format="%(asctime)s | %(levelname)s | %(message)s", level=logging.INFO)
 
 _diffusers = importlib.util.find_spec("diffusers") is not None
-_optimum_neuron = importlib.util.find_spec("optimum.neuron") is not None
+_optimum = importlib.util.find_spec("optimum") is not None
+if _optimum:
+    _optimum_neuron = importlib.util.find_spec("optimum.neuron") is not None
+else:
+    _optimum_neuron = False
 
 
 def is_diffusers_available():
