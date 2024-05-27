@@ -20,7 +20,7 @@ HF_MODEL_ID=hf-internal-testing/tiny-random-distilbert HF_MODEL_DIR=tmp2 HF_TASK
 ### Container
 
 
-1. build the preferred container for either CPU or GPU for PyTorch or TensorFlow.
+1. build the preferred container for either CPU or GPU for PyTorch o.
 
 _cpu images_
 ```bash
@@ -57,6 +57,32 @@ curl --request POST \
 	}
 }'
 ```
+
+### Vertex AI Support
+
+The Hugging Face Inference Toolkit is also supported on Vertex AI, based on [Custom container requirements for prediction](https://cloud.google.com/vertex-ai/docs/predictions/custom-container-requirements). [Enviornment variables set by Vertex AI](https://cloud.google.com/vertex-ai/docs/predictions/custom-container-requirements#aip-variables) are automatically detected and used by the toolkit. 
+
+#### Local run with HF_MODEL_ID and HF_TASK
+
+Start Hugging Face Inference Toolkit with the following environment variables. 
+
+```bash
+mkdir tmp2/
+AIP_MODE=PREDICTION AIP_PORT=8080 AIP_PREDICT_ROUTE=/pred AIP_HEALTH_ROUTE=/h HF_MODEL_DIR=tmp2 HF_MODEL_ID=distilbert/distilbert-base-uncased-finetuned-sst-2-english HF_TASK=text-classification uvicorn src.huggingface_inference_toolkit.webservice_starlette:app  --port 8080
+```
+
+Send request. The API schema is the same as from the [inference API](https://huggingface.co/docs/api-inference/detailed_parameters)
+
+```bash
+curl --request POST \
+  --url http://localhost:8080/pred \
+  --header 'Content-Type: application/json' \
+  --data '{
+	"instances": ["I love this product", "I hate this product"],
+	"parameters": { "top_k": 2 }
+}'
+```
+
 
 
 ---
@@ -176,6 +202,7 @@ Below you ll find a list of supported and tested transformers and sentence trans
 ##  ⚙ Supported Frontend
 
 - [x] Starlette (HF Endpoints)
+- [ ] Starlette (Vertex AI)
 - [ ] Starlette (Azure ML)
 - [ ] Starlette (SageMaker)
 
