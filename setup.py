@@ -31,7 +31,7 @@ install_requires = [
 extras = {}
 
 extras["st"] = ["sentence_transformers==2.7.0"]
-extras["diffusers"] = ["diffusers==0.28.0", "accelerate==0.30.1"]
+extras["diffusers"] = ["diffusers==0.26.3", "accelerate==0.30.1"]
 extras["torch"] = ["torch==2.3.0", "torchvision", "torchaudio"]
 extras["test"] = [
     "pytest==7.2.1",
