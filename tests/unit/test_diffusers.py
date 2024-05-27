@@ -15,7 +15,7 @@ logging.basicConfig(level="DEBUG")
 def test_get_diffusers_pipeline():
     with tempfile.TemporaryDirectory() as tmpdirname:
         storage_dir = _load_repository_from_hf(
-            "hf-internal-testing/tiny-stable-diffusion-torch",
+            "echarlaix/tiny-random-stable-diffusion-xl",
             tmpdirname,
             framework="pytorch"
         )
@@ -28,7 +28,7 @@ def test_get_diffusers_pipeline():
 def test_pipe_on_gpu():
     with tempfile.TemporaryDirectory() as tmpdirname:
         storage_dir = _load_repository_from_hf(
-            "hf-internal-testing/tiny-stable-diffusion-torch",
+            "echarlaix/tiny-random-stable-diffusion-xl",
             tmpdirname,
             framework="pytorch"
         )
@@ -44,7 +44,7 @@ def test_pipe_on_gpu():
 def test_text_to_image_task():
     with tempfile.TemporaryDirectory() as tmpdirname:
         storage_dir = _load_repository_from_hf(
-            "hf-internal-testing/tiny-stable-diffusion-torch",
+            "echarlaix/tiny-random-stable-diffusion-xl",
             tmpdirname,
             framework="pytorch"
         )

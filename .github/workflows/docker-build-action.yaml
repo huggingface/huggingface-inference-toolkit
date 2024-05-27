@@ -63,6 +63,7 @@ jobs:
           push: true
           context: ${{ inputs.context }}
           build-args: ${{ inputs.build_args }}
+          target: base
           file:  ${{ inputs.context }}/${{ inputs.dockerfile }}
           tags: ${{ inputs.repository }}/${{ inputs.image }}:sha-${{ env.GITHUB_SHA_SHORT }},${{ inputs.repository }}/${{ inputs.image }}:latest
      
