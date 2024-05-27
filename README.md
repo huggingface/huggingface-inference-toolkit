@@ -227,7 +227,7 @@ Below you ll find a list of supported and tested transformers and sentence trans
 ##  ⚙ Supported Frontend
 
 - [x] Starlette (HF Endpoints)
-- [ ] Starlette (Vertex AI)
+- [x] Starlette (Vertex AI)
 - [ ] Starlette (Azure ML)
 - [ ] Starlette (SageMaker)
 
