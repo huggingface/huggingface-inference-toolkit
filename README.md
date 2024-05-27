@@ -97,7 +97,7 @@ docker build -t vertex -f dockerfiles/pytorch/Dockerfile -t vertex-test-pytorch:
 docker run -ti -p 8080:8080 -e AIP_MODE=PREDICTION -e AIP_HTTP_PORT=8080 -e AIP_PREDICT_ROUTE=/pred -e AIP_HEALTH_ROUTE=/h -e HF_MODEL_ID=distilbert/distilbert-base-uncased-finetuned-sst-2-english -e HF_TASK=text-classification vertex-test-pytorch:gpu
 ```
 
-1. Send request
+3. Send request
 
 ```bash
 curl --request POST \

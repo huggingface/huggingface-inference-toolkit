@@ -52,7 +52,7 @@ async def prepare_model_artifacts():
             )
         # 3. check if in Vertex AI environment and load from GCS
         # If artifactUri not on Model Creation not set returns an empty string
-        elif len(os.environ.get("AIP_STORAGE_URI", '')) > 0: 
+        elif len(os.environ.get("AIP_STORAGE_URI", '')) > 0:
             _load_repository_from_gcs(os.environ["AIP_STORAGE_URI"], target_dir=HF_MODEL_DIR)
         # 4. if not available, raise error
         else:
@@ -112,8 +112,8 @@ if os.getenv("AIP_MODE", None) == "PREDICTION":
     _predict_route = os.getenv("AIP_PREDICT_ROUTE", None)
     _health_route = os.getenv("AIP_HEALTH_ROUTE", None)
     if _predict_route is None or _health_route is None:
-        raise ValueError("AIP_PREDICT_ROUTE and AIP_HEALTH_ROUTE need to be set in Vertex AI environment")    
-    
+        raise ValueError("AIP_PREDICT_ROUTE and AIP_HEALTH_ROUTE need to be set in Vertex AI environment")
+
     app = Starlette(
         debug=False,
         routes=[
@@ -121,7 +121,7 @@ if os.getenv("AIP_MODE", None) == "PREDICTION":
             Route(_predict_route, predict, methods=["POST"]),
         ],
         on_startup=[prepare_model_artifacts],
-    )    
+    )
 else:
     app = Starlette(
         debug=False,

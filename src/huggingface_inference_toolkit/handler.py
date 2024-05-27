@@ -48,7 +48,7 @@ class VertexAIHandler(HuggingFaceHandler):
     """
     def __init__(self, model_dir: Union[str, Path], task=None, framework="pt"):
         super().__init__(model_dir, task, framework)
-    
+
     def __call__(self, data):
         """
         Handles an inference request with input data and makes a prediction.
@@ -59,13 +59,13 @@ class VertexAIHandler(HuggingFaceHandler):
         if "instances" not in data:
             raise ValueError("The request body must contain a key 'instances' with a list of instances.")
         parameters = data.pop("parameters", None)
-        
+
         predictions = []
         # iterate over all instances and make predictions
         for inputs in data["instances"]:
             payload = {"inputs": inputs, "parameters": parameters}
             predictions.append(super().__call__(payload))
-        
+
         # reutrn predictions
         return {"predictions": predictions}
 
@@ -75,18 +75,18 @@ def get_inference_handler_either_custom_or_default_handler(
 ):
     """
     Returns the appropriate inference handler based on the given model directory and task.
-    
+
     Args:
         model_dir (Path): The directory path where the model is stored.
         task (Optional[str]): The task for which the inference handler is required. Defaults to None.
-    
+
     Returns:
         InferenceHandler: The appropriate inference handler based on the given model directory and task.
     """
     custom_pipeline = check_and_register_custom_pipeline_from_directory(model_dir)
     if custom_pipeline:
         return custom_pipeline
-    elif os.environ.get("AIP_MODE", None) == "PREDICTION": 
+    elif os.environ.get("AIP_MODE", None) == "PREDICTION":
         return VertexAIHandler(model_dir=model_dir, task=task)
     else:
         return HuggingFaceHandler(model_dir=model_dir, task=task)

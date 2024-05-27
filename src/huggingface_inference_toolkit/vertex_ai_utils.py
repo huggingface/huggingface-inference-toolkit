@@ -1,13 +1,12 @@
 import logging
-from pathlib import Path
 import re
+from pathlib import Path
 from typing import Union
-
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(format="%(asctime)s | %(levelname)s | %(message)s", level=logging.INFO)
 
-from google.cloud import storage
+
 
 _logger = logging.getLogger(__name__)
 
@@ -20,9 +19,10 @@ def _load_repository_from_gcs(artifact_uri: str, target_dir: Union[str, Path]="/
     """
     Load files from GCS path to target_dir
     """
+    from google.cloud import storage
     _logger.info(f"Loading model artifacts from {artifact_uri} to {target_dir}")
     target_dir = Path(target_dir)
-    
+
     if artifact_uri.startswith(GCS_URI_PREFIX):
         matches = re.match(f"{GCS_URI_PREFIX}(.*?)/(.*)", artifact_uri)
         bucket_name, prefix = matches.groups()
