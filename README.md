@@ -71,7 +71,7 @@ mkdir tmp2/
 AIP_MODE=PREDICTION AIP_PORT=8080 AIP_PREDICT_ROUTE=/pred AIP_HEALTH_ROUTE=/h HF_MODEL_DIR=tmp2 HF_MODEL_ID=distilbert/distilbert-base-uncased-finetuned-sst-2-english HF_TASK=text-classification uvicorn src.huggingface_inference_toolkit.webservice_starlette:app  --port 8080
 ```
 
-Send request. The API schema is the same as from the [inference API](https://huggingface.co/docs/api-inference/detailed_parameters)
+Send request
 
 ```bash
 curl --request POST \
@@ -83,6 +83,31 @@ curl --request POST \
 }'
 ```
 
+#### Container run with HF_MODEL_ID and HF_TASK
+
+1. build the preferred container for either CPU or GPU for PyTorch o.
+
+```bash
+docker build -t vertex -f dockerfiles/pytorch/Dockerfile -t vertex-test-pytorch:gpu .
+```
+
+2. Run the container and provide either environment variables to the HUB model you want to use or mount a volume to the container, where your model is stored.
+
+```bash
+docker run -ti -p 8080:8080 -e AIP_MODE=PREDICTION -e AIP_HTTP_PORT=8080 -e AIP_PREDICT_ROUTE=/pred -e AIP_HEALTH_ROUTE=/h -e HF_MODEL_ID=distilbert/distilbert-base-uncased-finetuned-sst-2-english -e HF_TASK=text-classification vertex-test-pytorch:gpu
+```
+
+1. Send request
+
+```bash
+curl --request POST \
+	--url http://localhost:8080/pred \
+	--header 'Content-Type: application/json' \
+	--data '{
+	"instances": ["I love this product", "I hate this product"],
+	"parameters": { "top_k": 2 }
+}'
+```
 
 
 ---

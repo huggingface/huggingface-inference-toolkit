@@ -26,5 +26,11 @@ inference-pytorch-gpu:
 inference-pytorch-cpu:
 	docker build --build-arg="BASE_IMAGE=ubuntu:22.04" -f dockerfiles/pytorch/Dockerfile -t integration-test-pytorch:cpu .
 
+vertex-pytorch-gpu:
+	docker build -t vertex -f dockerfiles/pytorch/Dockerfile -t integration-test-pytorch:gpu .
+
+vertex-pytorch-cpu:
+	docker build  -t vertex --build-arg="BASE_IMAGE=ubuntu:22.04" -f dockerfiles/pytorch/Dockerfile -t integration-test-pytorch:cpu .
+
 stop-all:
 	docker stop $$(docker ps -a -q) && docker container prune --force
