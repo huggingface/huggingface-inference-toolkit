@@ -1,6 +1,6 @@
 ARG BASE_IMAGE=nvidia/cuda:12.1.0-devel-ubuntu22.04
 
-FROM $BASE_IMAGE
+FROM $BASE_IMAGE as base 
 SHELL ["/bin/bash", "-c"]
 
 LABEL maintainer="Hugging Face"
@@ -46,3 +46,9 @@ COPY src/huggingface_inference_toolkit/webservice_starlette.py webservice_starle
 COPY --chmod=0755  scripts/entrypoint.sh entrypoint.sh
 
 ENTRYPOINT ["bash", "-c", "./entrypoint.sh"]
+
+
+from base as vertex
+
+# Install Vertex AI requiremented packages
+RUN pip install --no-cache-dir google-cloud-storage

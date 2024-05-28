@@ -1,4 +1,5 @@
 import logging
+import os
 from pathlib import Path
 from time import perf_counter
 
@@ -20,6 +21,7 @@ from huggingface_inference_toolkit.handler import get_inference_handler_either_c
 from huggingface_inference_toolkit.serialization.base import ContentType
 from huggingface_inference_toolkit.serialization.json_utils import Jsoner
 from huggingface_inference_toolkit.utils import _load_repository_from_hf, convert_params_to_int_or_bool
+from huggingface_inference_toolkit.vertex_ai_utils import _load_repository_from_gcs
 
 
 def config_logging(level=logging.INFO):
@@ -35,10 +37,11 @@ config_logging()
 logger = logging.getLogger(__name__)
 
 
-async def some_startup_task():
+async def prepare_model_artifacts():
     global inference_handler
     # 1. check if model artifacts available in HF_MODEL_DIR
     if len(list(Path(HF_MODEL_DIR).glob("**/*"))) <= 0:
+        # 2. if not available, try to load from HF_MODEL_ID
         if HF_MODEL_ID is not None:
             _load_repository_from_hf(
                 repository_id=HF_MODEL_ID,
@@ -47,6 +50,11 @@ async def some_startup_task():
                 revision=HF_REVISION,
                 hf_hub_token=HF_HUB_TOKEN,
             )
+        # 3. check if in Vertex AI environment and load from GCS
+        # If artifactUri not on Model Creation not set returns an empty string
+        elif len(os.environ.get("AIP_STORAGE_URI", '')) > 0:
+            _load_repository_from_gcs(os.environ["AIP_STORAGE_URI"], target_dir=HF_MODEL_DIR)
+        # 4. if not available, raise error
         else:
             raise ValueError(
                 f"""Can't initialize model.
@@ -72,7 +80,7 @@ async def predict(request):
         # try to deserialize payload
         deserialized_body = ContentType.get_deserializer(content_type).deserialize(await request.body())
         # checks if input schema is correct
-        if "inputs" not in deserialized_body:
+        if "inputs" not in deserialized_body and "instances" not in deserialized_body:
             raise ValueError(f"Body needs to provide a inputs key, recieved: {orjson.dumps(deserialized_body)}")
 
         # check for query parameter and add them to the body
@@ -97,14 +105,31 @@ async def predict(request):
         logger.error(e)
         return Response(Jsoner.serialize({"error": str(e)}), status_code=400, media_type="application/json")
 
+# Create app based on which cloud environment is used
+if os.getenv("AIP_MODE", None) == "PREDICTION":
+    logger.info("Running in Vertex AI environment")
+    # extract routes from environment variables
+    _predict_route = os.getenv("AIP_PREDICT_ROUTE", None)
+    _health_route = os.getenv("AIP_HEALTH_ROUTE", None)
+    if _predict_route is None or _health_route is None:
+        raise ValueError("AIP_PREDICT_ROUTE and AIP_HEALTH_ROUTE need to be set in Vertex AI environment")
 
-app = Starlette(
-    debug=True,
-    routes=[
-        Route("/", health, methods=["GET"]),
-        Route("/health", health, methods=["GET"]),
-        Route("/", predict, methods=["POST"]),
-        Route("/predict", predict, methods=["POST"]),
-    ],
-    on_startup=[some_startup_task],
+    app = Starlette(
+        debug=False,
+        routes=[
+            Route(_health_route, health, methods=["GET"]),
+            Route(_predict_route, predict, methods=["POST"]),
+        ],
+        on_startup=[prepare_model_artifacts],
+    )
+else:
+    app = Starlette(
+        debug=False,
+        routes=[
+            Route("/", health, methods=["GET"]),
+            Route("/health", health, methods=["GET"]),
+            Route("/", predict, methods=["POST"]),
+            Route("/predict", predict, methods=["POST"]),
+        ],
+        on_startup=[prepare_model_artifacts],
 )

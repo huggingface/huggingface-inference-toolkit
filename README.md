@@ -20,7 +20,7 @@ HF_MODEL_ID=hf-internal-testing/tiny-random-distilbert HF_MODEL_DIR=tmp2 HF_TASK
 ### Container
 
 
-1. build the preferred container for either CPU or GPU for PyTorch or TensorFlow.
+1. build the preferred container for either CPU or GPU for PyTorch.
 
 _cpu images_
 ```bash
@@ -55,6 +55,57 @@ curl --request POST \
 		"question": "What is used for inference?",
 		"context": "My Name is Philipp and I live in Nuremberg. This model is used with sagemaker for inference."
 	}
+}'
+```
+
+### Vertex AI Support
+
+The Hugging Face Inference Toolkit is also supported on Vertex AI, based on [Custom container requirements for prediction](https://cloud.google.com/vertex-ai/docs/predictions/custom-container-requirements). [Environment variables set by Vertex AI](https://cloud.google.com/vertex-ai/docs/predictions/custom-container-requirements#aip-variables) are automatically detected and used by the toolkit. 
+
+#### Local run with HF_MODEL_ID and HF_TASK
+
+Start Hugging Face Inference Toolkit with the following environment variables. 
+
+```bash
+mkdir tmp2/
+AIP_MODE=PREDICTION AIP_PORT=8080 AIP_PREDICT_ROUTE=/pred AIP_HEALTH_ROUTE=/h HF_MODEL_DIR=tmp2 HF_MODEL_ID=distilbert/distilbert-base-uncased-finetuned-sst-2-english HF_TASK=text-classification uvicorn src.huggingface_inference_toolkit.webservice_starlette:app  --port 8080
+```
+
+Send request
+
+```bash
+curl --request POST \
+  --url http://localhost:8080/pred \
+  --header 'Content-Type: application/json' \
+  --data '{
+	"instances": ["I love this product", "I hate this product"],
+	"parameters": { "top_k": 2 }
+}'
+```
+
+#### Container run with HF_MODEL_ID and HF_TASK
+
+1. build the preferred container for either CPU or GPU for PyTorch o.
+
+```bash
+docker build -t vertex -f dockerfiles/pytorch/Dockerfile -t vertex-test-pytorch:gpu .
+```
+
+2. Run the container and provide either environment variables to the HUB model you want to use or mount a volume to the container, where your model is stored.
+
+```bash
+docker run -ti -p 8080:8080 -e AIP_MODE=PREDICTION -e AIP_HTTP_PORT=8080 -e AIP_PREDICT_ROUTE=/pred -e AIP_HEALTH_ROUTE=/h -e HF_MODEL_ID=distilbert/distilbert-base-uncased-finetuned-sst-2-english -e HF_TASK=text-classification vertex-test-pytorch:gpu
+```
+
+3. Send request
+
+```bash
+curl --request POST \
+	--url http://localhost:8080/pred \
+	--header 'Content-Type: application/json' \
+	--data '{
+	"instances": ["I love this product", "I hate this product"],
+	"parameters": { "top_k": 2 }
 }'
 ```
 
@@ -176,6 +227,7 @@ Below you ll find a list of supported and tested transformers and sentence trans
 ##  ⚙ Supported Frontend
 
 - [x] Starlette (HF Endpoints)
+- [x] Starlette (Vertex AI)
 - [ ] Starlette (Azure ML)
 - [ ] Starlette (SageMaker)
 

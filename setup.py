@@ -1,12 +1,10 @@
 from __future__ import absolute_import
-from datetime import date
 from setuptools import find_packages, setup
 
 # We don't declare our dependency on transformers here because we build with
 # different packages for different variants
 
-VERSION = "0.3.0"
-
+VERSION = "0.4.0"
 
 # Ubuntu packages
 # libsndfile1-dev: torchaudio requires the development version of the libsndfile package which can be installed via a system package manager. On Ubuntu it can be installed as follows: apt install libsndfile1-dev
@@ -14,11 +12,7 @@ VERSION = "0.3.0"
 # libavcodec-extra : libavcodec-extra  inculdes additional codecs for ffmpeg
 
 install_requires = [
-    "wheel==0.42.0",
-    "setuptools==69.1.0",
-    "cmake==3.28.3",
-    "transformers[sklearn,sentencepiece, audio, vision]==4.38.2",
-    "huggingface_hub==0.20.3",
+    "transformers[sklearn,sentencepiece, audio,vision]==4.41.1",
     "orjson",
     # vision
     "Pillow",
@@ -31,15 +25,14 @@ install_requires = [
     "starlette",
     "uvicorn",
     "pandas",
-    "peft==0.9.0"
+    "peft==0.11.1"
 ]
 
 extras = {}
 
-extras["st"] = ["sentence_transformers==2.4.0"]
+extras["st"] = ["sentence_transformers==2.7.0"]
 extras["diffusers"] = ["diffusers==0.26.3", "accelerate==0.27.2"]
-extras["torch"] = ["torch==2.2.0", "torchvision", "torchaudio"]
-extras["tensorflow"] = ["tensorflow"]
+extras["torch"] = ["torch==2.2.2", "torchvision", "torchaudio"]
 extras["test"] = [
     "pytest==7.2.1",
     "pytest-xdist",
