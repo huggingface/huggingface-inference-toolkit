@@ -4,7 +4,7 @@ from setuptools import find_packages, setup
 # We don't declare our dependency on transformers here because we build with
 # different packages for different variants
 
-VERSION = "0.4.0.dev0"
+VERSION = "0.4.1"
 
 # Ubuntu packages
 # libsndfile1-dev: torchaudio requires the development version of the libsndfile package which can be installed via a system package manager. On Ubuntu it can be installed as follows: apt install libsndfile1-dev
