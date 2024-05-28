@@ -20,7 +20,7 @@ HF_MODEL_ID=hf-internal-testing/tiny-random-distilbert HF_MODEL_DIR=tmp2 HF_TASK
 ### Container
 
 
-1. build the preferred container for either CPU or GPU for PyTorch o.
+1. build the preferred container for either CPU or GPU for PyTorch.
 
 _cpu images_
 ```bash
