@@ -37,9 +37,7 @@ class RankingPipeline:
     def __init__(self, model_dir: str, device: str = None):  # needs "cuda" for GPU
         self.model = CrossEncoder(model_dir, device=device)
 
-    def __call__(self, inputs, parameters=None):
-        parameters = parameters or {"return_documents": False}
-
+    def __call__(self, inputs, return_documents=None):
         if isinstance(inputs, list):
             scores = self.model.predict(inputs).tolist()
             return {"scores": scores}
@@ -47,11 +45,11 @@ class RankingPipeline:
             _scores = self.model.rank(
                 inputs["query"],
                 inputs["texts"],
-                return_documents=parameters["return_documents"],
+                return_documents=return_documents,
             )
             # rename "corpus_id" key to "index" for all scores to match TEI
             scores = []
-            for score in scores:
+            for score in _scores:
                 score["index"] = score.pop("corpus_id")
                 scores.append(score)
 
