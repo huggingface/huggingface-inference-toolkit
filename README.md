@@ -40,6 +40,7 @@ docker run -ti -p 5000:5000 -e HF_MODEL_ID=distilbert-base-uncased-distilled-squ
 docker run -ti -p 5000:5000 --gpus all -e HF_MODEL_ID=nlpconnect/vit-gpt2-image-captioning -e HF_TASK=image-to-text integration-test-pytorch:gpu
 docker run -ti -p 5000:5000 --gpus all -e HF_MODEL_ID=echarlaix/tiny-random-stable-diffusion-xl -e HF_TASK=text-to-image integration-test-pytorch:gpu
 docker run -ti -p 5000:5000 --gpus all -e HF_MODEL_ID=stabilityai/stable-diffusion-xl-base-1.0 -e HF_TASK=text-to-image integration-test-pytorch:gpu
+docker run -ti -p 8080:5000 --gpus all -e HF_MODEL_ID=cross-encoder/ms-marco-MiniLM-L-6-v2 -e HF_TASK=sentence-ranking integration-test-pytorch:gpu
 docker run -ti -p 5000:5000 -e HF_MODEL_DIR=/repository -v $(pwd)/distilbert-base-uncased-emotion:/repository integration-test-pytorch:cpu
 ```
 
@@ -65,6 +66,15 @@ The Hugging Face Inference Toolkit is also supported on Vertex AI, based on [Cus
 #### Local run with HF_MODEL_ID and HF_TASK
 
 Start Hugging Face Inference Toolkit with the following environment variables. 
+
+Inference Endpoints
+
+```bash
+mkdir tmp2/
+HF_MODEL_DIR=tmp2 HF_MODEL_ID=cross-encoder/ms-marco-MiniLM-L-6-v2 HF_TASK=sentence-ranking uvicorn src.huggingface_inference_toolkit.webservice_starlette:app  --port 8080
+```
+
+Vertex AI
 
 ```bash
 mkdir tmp2/
