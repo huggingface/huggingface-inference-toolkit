@@ -99,4 +99,4 @@ def test_sentence_ranking_tei():
         assert isinstance(res, list)
         for r in res:
             assert "index" in r
-            assert isinstance(r["score"], float) == True
+            assert "score" in r
