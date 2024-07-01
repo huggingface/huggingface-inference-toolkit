@@ -1,13 +1,11 @@
 import importlib.util
-import logging
+from huggingface_inference_toolkit.logging import logger
 import os
 
 _optimum_neuron = False
 if importlib.util.find_spec("optimum") is not None:
     if importlib.util.find_spec("optimum.neuron") is not None:
         _optimum_neuron = True
-
-logger = logging.getLogger(__name__)
 
 
 def is_optimum_neuron_available():
@@ -73,6 +71,7 @@ def get_input_shapes(model_dir):
 
 def get_optimum_neuron_pipeline(task, model_dir):
     """Method to get optimum neuron pipeline for a given task. Method checks if task is supported by optimum neuron and if required environment variables are set, in case model is not converted. If all checks pass, optimum neuron pipeline is returned. If checks fail, an error is raised."""
+    logger.info("Getting optimum neuron pipeline.")
     from optimum.neuron.pipelines.transformers.base import (
         NEURONX_SUPPORTED_TASKS,
         pipeline,
@@ -106,10 +105,9 @@ def get_optimum_neuron_pipeline(task, model_dir):
     input_shapes = get_input_shapes(model_dir)
     # set NEURON_RT_NUM_CORES to 1 to avoid conflicts with multiple HTTP workers
     # TODO: Talk to optimum team what are the best options for encoder models to run on 2 neuron cores
-    os.environ["NEURON_RT_NUM_CORES"] = "1"
+    # os.environ["NEURON_RT_NUM_CORES"] = "1"
     # get optimum neuron pipeline
     neuron_pipe = pipeline(
         task, model=model_dir, export=export, input_shapes=input_shapes
     )
-
     return neuron_pipe

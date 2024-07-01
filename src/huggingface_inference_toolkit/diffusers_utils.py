@@ -1,10 +1,9 @@
 import importlib.util
-import logging
 
 from transformers.utils.import_utils import is_torch_bf16_gpu_available
 
-logger = logging.getLogger(__name__)
-logging.basicConfig(format="%(asctime)s | %(levelname)s | %(message)s", level=logging.INFO)
+from huggingface_inference_toolkit.logging import logger
+
 
 _diffusers = importlib.util.find_spec("diffusers") is not None
 
@@ -15,7 +14,11 @@ def is_diffusers_available():
 
 if is_diffusers_available():
     import torch
-    from diffusers import AutoPipelineForText2Image, DPMSolverMultistepScheduler, StableDiffusionPipeline
+    from diffusers import (
+        AutoPipelineForText2Image,
+        DPMSolverMultistepScheduler,
+        StableDiffusionPipeline,
+    )
 
 
 class IEAutoPipelineForText2Image:
@@ -25,11 +28,15 @@ class IEAutoPipelineForText2Image:
             dtype = torch.bfloat16 if is_torch_bf16_gpu_available() else torch.float16
         device_map = "auto" if device == "cuda" else None
 
-        self.pipeline = AutoPipelineForText2Image.from_pretrained(model_dir, torch_dtype=dtype, device_map=device_map)
+        self.pipeline = AutoPipelineForText2Image.from_pretrained(
+            model_dir, torch_dtype=dtype, device_map=device_map
+        )
         # try to use DPMSolverMultistepScheduler
         if isinstance(self.pipeline, StableDiffusionPipeline):
             try:
-                self.pipeline.scheduler = DPMSolverMultistepScheduler.from_config(self.pipeline.scheduler.config)
+                self.pipeline.scheduler = DPMSolverMultistepScheduler.from_config(
+                    self.pipeline.scheduler.config
+                )
             except Exception:
                 pass
 
@@ -43,7 +50,9 @@ class IEAutoPipelineForText2Image:
         # TODO: add support for more images (Reason is correct output)
         if "num_images_per_prompt" in kwargs:
             kwargs.pop("num_images_per_prompt")
-            logger.warning("Sending num_images_per_prompt > 1 to pipeline is not supported. Using default value 1.")
+            logger.warning(
+                "Sending num_images_per_prompt > 1 to pipeline is not supported. Using default value 1."
+            )
 
         # Call pipeline with parameters
         out = self.pipeline(prompt, num_images_per_prompt=1, **kwargs)

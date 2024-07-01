@@ -218,14 +218,6 @@ The `HF_FRAMEWORK` environment variable defines the base deep learning framework
 HF_FRAMEWORK="pytorch"
 ```
 
-### `HF_ENDPOINT`
-
-The `HF_ENDPOINT` environment variable indicates whether the service is run inside the HF Inference endpoint service to adjust the `logging` config.
-
-```bash
-HF_ENDPOINT="True"
-```
-
 #### `HF_OPTIMUM_BATCH_SIZE`
 
 The `HF_OPTIMUM_BATCH_SIZE` environment variable defines the batch size, which is used when compiling the model to Neuron. The default value is `1`. Not required when model is already converted. 
@@ -243,36 +235,6 @@ HF_OPTIMUM_SEQUENCE_LENGTH="128"
 ```
 
 ---
-
-## ☑️ Supported & Tested Tasks
-
-Below you ll find a list of supported and tested transformers and sentence transformers tasks. Each of those are always tested through integration tests. In addition to those tasks you can always provide `custom`, which expect a `handler.py` file to be provided.
-
-```bash
-"text-classification",
-"zero-shot-classification",
-"ner",
-"question-answering",
-"fill-mask",
-"summarization",
-"translation_xx_to_yy",
-"text2text-generation",
-"text-generation",
-"feature-extraction",
-"image-classification",
-"automatic-speech-recognition",
-"audio-classification",
-"object-detection",
-"image-segmentation",
-"table-question-answering",
-"conversational"
-"sentence-similarity",
-"sentence-embeddings",
-"sentence-ranking",
-# TODO currently not supported due to multimodality input
-# "visual-question-answering",
-# "zero-shot-image-classification",
-```
 
 ##  ⚙ Supported Frontend
 

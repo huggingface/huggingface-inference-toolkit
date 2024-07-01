@@ -1,5 +1,4 @@
 import importlib.util
-import logging
 import sys
 from pathlib import Path
 from typing import Optional, Union
@@ -14,14 +13,15 @@ from huggingface_inference_toolkit.diffusers_utils import (
     get_diffusers_pipeline,
     is_diffusers_available,
 )
-from huggingface_inference_toolkit.optimum_utils import get_optimum_neuron_pipeline, is_optimum_neuron_available
+from huggingface_inference_toolkit.optimum_utils import (
+    get_optimum_neuron_pipeline,
+    is_optimum_neuron_available,
+)
 from huggingface_inference_toolkit.sentence_transformers_utils import (
     get_sentence_transformers_pipeline,
     is_sentence_transformers_available,
 )
-
-logger = logging.getLogger(__name__)
-logging.basicConfig(format="%(asctime)s | %(levelname)s | %(message)s", level=logging.INFO)
+from huggingface_inference_toolkit.logging import logger
 
 
 if is_tf_available():
@@ -151,16 +151,18 @@ def _load_repository_from_hf(
 
     # create regex to only include the framework specific weights
     ignore_regex = create_artifact_filter(framework)
-    logger.info(f"Ignore regex pattern for files, which are not downloaded: { ', '.join(ignore_regex) }")
+    logger.info(
+        f"Ignore regex pattern for files, which are not downloaded: { ', '.join(ignore_regex) }"
+    )
 
     # Download the repository to the workdir and filter out non-framework
     # specific weights
     snapshot_download(
-        repo_id = repository_id,
-        revision = revision,
-        local_dir = str(target_dir),
-        local_dir_use_symlinks = False,
-        ignore_patterns = ignore_regex,
+        repo_id=repository_id,
+        revision=revision,
+        local_dir=str(target_dir),
+        local_dir_use_symlinks=False,
+        ignore_patterns=ignore_regex,
     )
 
     return target_dir
@@ -192,7 +194,9 @@ def check_and_register_custom_pipeline_from_directory(model_dir):
             Please update to the new format.
             See documentation for more information."""
         )
-        spec = importlib.util.spec_from_file_location("pipeline.PreTrainedPipeline", legacy_module)
+        spec = importlib.util.spec_from_file_location(
+            "pipeline.PreTrainedPipeline", legacy_module
+        )
         if spec:
             # add the whole directory to path for submodlues
             sys.path.insert(0, model_dir)
@@ -223,14 +227,16 @@ def get_device():
 def get_pipeline(
     task: str,
     model_dir: Path,
-    framework = "pytorch",
     **kwargs,
 ) -> Pipeline:
     """
     create pipeline class for a specific task based on local saved model
     """
     device = get_device()
-    logger.info(f"Using device { 'GPU' if device == 0 else 'CPU'}")
+    if is_optimum_neuron_available():
+        logger.info("Using device Neuron")
+    else:
+        logger.info(f"Using device { 'GPU' if device == 0 else 'CPU'}")
 
     if task is None:
         raise EnvironmentError(
@@ -252,7 +258,6 @@ def get_pipeline(
     else:
         kwargs["tokenizer"] = model_dir
 
-
     if is_optimum_neuron_available():
         hf_pipeline = get_optimum_neuron_pipeline(task=task, model_dir=model_dir)
     elif is_sentence_transformers_available() and task in [
@@ -261,41 +266,29 @@ def get_pipeline(
         "sentence-ranking",
     ]:
         hf_pipeline = get_sentence_transformers_pipeline(
-            task=task,
-            model_dir=model_dir,
-            device=device,
-            **kwargs
+            task=task, model_dir=model_dir, device=device, **kwargs
         )
     elif is_diffusers_available() and task == "text-to-image":
         hf_pipeline = get_diffusers_pipeline(
-            task=task,
-            model_dir=model_dir,
-            device=device,
-            **kwargs
+            task=task, model_dir=model_dir, device=device, **kwargs
         )
     else:
-        hf_pipeline = pipeline(
-            task=task,
-            model=model_dir,
-            device=device,
-            **kwargs
-        )
+        hf_pipeline = pipeline(task=task, model=model_dir, device=device, **kwargs)
 
     # wrap specific pipeline to support better ux
     if task == "conversational":
         hf_pipeline = wrap_conversation_pipeline(hf_pipeline)
 
     elif task == "automatic-speech-recognition" and isinstance(
-        hf_pipeline.model,
-        WhisperForConditionalGeneration
+        hf_pipeline.model, WhisperForConditionalGeneration
     ):
         # set chunk length to 30s for whisper to enable long audio files
         hf_pipeline._preprocess_params["chunk_length_s"] = 30
-        hf_pipeline.model.config.forced_decoder_ids = hf_pipeline.tokenizer.get_decoder_prompt_ids(
-            language="english",
-            task="transcribe"
+        hf_pipeline.model.config.forced_decoder_ids = (
+            hf_pipeline.tokenizer.get_decoder_prompt_ids(
+                language="english", task="transcribe"
+            )
         )
-
     return hf_pipeline
 
 
