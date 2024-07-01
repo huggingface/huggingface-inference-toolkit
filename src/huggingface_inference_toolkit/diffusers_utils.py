@@ -4,7 +4,6 @@ from transformers.utils.import_utils import is_torch_bf16_gpu_available
 
 from huggingface_inference_toolkit.logging import logger
 
-
 _diffusers = importlib.util.find_spec("diffusers") is not None
 
 

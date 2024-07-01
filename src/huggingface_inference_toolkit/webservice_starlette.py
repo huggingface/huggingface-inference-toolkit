@@ -19,6 +19,7 @@ from huggingface_inference_toolkit.const import (
 from huggingface_inference_toolkit.handler import (
     get_inference_handler_either_custom_or_default_handler,
 )
+from huggingface_inference_toolkit.logging import logger
 from huggingface_inference_toolkit.serialization.base import ContentType
 from huggingface_inference_toolkit.serialization.json_utils import Jsoner
 from huggingface_inference_toolkit.utils import (
@@ -26,7 +27,6 @@ from huggingface_inference_toolkit.utils import (
     convert_params_to_int_or_bool,
 )
 from huggingface_inference_toolkit.vertex_ai_utils import _load_repository_from_gcs
-from huggingface_inference_toolkit.logging import logger
 
 
 async def prepare_model_artifacts():

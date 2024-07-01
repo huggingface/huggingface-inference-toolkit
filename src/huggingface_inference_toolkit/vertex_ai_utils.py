@@ -1,10 +1,8 @@
-import logging
 import re
 from pathlib import Path
 from typing import Union
 
 from huggingface_inference_toolkit.logging import logger
-
 
 GCS_URI_PREFIX = "gs://"
 

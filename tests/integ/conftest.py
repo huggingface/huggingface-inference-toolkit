@@ -3,7 +3,6 @@ import os
 import random
 import socket
 import time
-import uuid
 
 import docker
 import pytest

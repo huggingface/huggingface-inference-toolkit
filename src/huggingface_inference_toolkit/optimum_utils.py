@@ -1,6 +1,7 @@
 import importlib.util
-from huggingface_inference_toolkit.logging import logger
 import os
+
+from huggingface_inference_toolkit.logging import logger
 
 _optimum_neuron = False
 if importlib.util.find_spec("optimum") is not None:

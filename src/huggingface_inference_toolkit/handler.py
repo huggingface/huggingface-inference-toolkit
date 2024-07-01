@@ -7,8 +7,6 @@ from huggingface_inference_toolkit.utils import (
     get_pipeline,
 )
 
-from huggingface_inference_toolkit.logging import logger
-
 
 class HuggingFaceHandler:
     """

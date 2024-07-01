@@ -13,6 +13,7 @@ from huggingface_inference_toolkit.diffusers_utils import (
     get_diffusers_pipeline,
     is_diffusers_available,
 )
+from huggingface_inference_toolkit.logging import logger
 from huggingface_inference_toolkit.optimum_utils import (
     get_optimum_neuron_pipeline,
     is_optimum_neuron_available,
@@ -21,8 +22,6 @@ from huggingface_inference_toolkit.sentence_transformers_utils import (
     get_sentence_transformers_pipeline,
     is_sentence_transformers_available,
 )
-from huggingface_inference_toolkit.logging import logger
-
 
 if is_tf_available():
     import tensorflow as tf
