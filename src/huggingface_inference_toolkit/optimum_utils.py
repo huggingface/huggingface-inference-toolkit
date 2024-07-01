@@ -26,9 +26,13 @@ def get_input_shapes(model_dir):
         config = AutoConfig.from_pretrained(model_dir)
         if hasattr(config, "neuron"):
             # check if static batch size and sequence length are available
-            if config.neuron.get("static_batch_size", None) and config.neuron.get("static_sequence_length", None):
+            if config.neuron.get("static_batch_size", None) and config.neuron.get(
+                "static_sequence_length", None
+            ):
                 input_shapes["batch_size"] = config.neuron["static_batch_size"]
-                input_shapes["sequence_length"] = config.neuron["static_sequence_length"]
+                input_shapes["sequence_length"] = config.neuron[
+                    "static_sequence_length"
+                ]
                 input_shapes_available = True
                 logger.info(
                     f"Input shapes found in config file. Using input shapes from config with batch size {input_shapes['batch_size']} and sequence length {input_shapes['sequence_length']}"
@@ -70,13 +74,20 @@ def get_input_shapes(model_dir):
 
 def get_optimum_neuron_pipeline(task, model_dir):
     """Method to get optimum neuron pipeline for a given task. Method checks if task is supported by optimum neuron and if required environment variables are set, in case model is not converted. If all checks pass, optimum neuron pipeline is returned. If checks fail, an error is raised."""
-    from optimum.neuron.pipelines.transformers.base import NEURONX_SUPPORTED_TASKS, pipeline
+    from optimum.neuron.pipelines.transformers.base import (
+        NEURONX_SUPPORTED_TASKS,
+        pipeline,
+    )
     from optimum.neuron.utils import NEURON_FILE_NAME
+
+    # convert from os.path or path
+    if not isinstance(model_dir, str):
+        model_dir = str(model_dir)
 
     # check if task is sentence-embeddings and convert to feature-extraction, as sentence-embeddings is supported in feature-extraction pipeline
     if task == "sentence-embeddings":
         task = "feature-extraction"
-    
+
     # check task support
     if task not in NEURONX_SUPPORTED_TASKS:
         raise ValueError(
@@ -88,7 +99,9 @@ def get_optimum_neuron_pipeline(task, model_dir):
     if NEURON_FILE_NAME in os.listdir(model_dir):
         export = False
     if export:
-        logger.info("Model is not converted. Checking if required environment variables are set and converting model.")
+        logger.info(
+            "Model is not converted. Checking if required environment variables are set and converting model."
+        )
 
     # get static input shapes to run inference
     input_shapes = get_input_shapes(model_dir)
@@ -96,6 +109,8 @@ def get_optimum_neuron_pipeline(task, model_dir):
     # TODO: Talk to optimum team what are the best options for encoder models to run on 2 neuron cores
     os.environ["NEURON_RT_NUM_CORES"] = "1"
     # get optimum neuron pipeline
-    neuron_pipe = pipeline(task, model=model_dir, export=export, input_shapes=input_shapes)
+    neuron_pipe = pipeline(
+        task, model=model_dir, export=export, input_shapes=input_shapes
+    )
 
     return neuron_pipe

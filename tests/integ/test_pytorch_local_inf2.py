@@ -11,6 +11,8 @@ from transformers.testing_utils import (
     slow,
     _run_slow_tests
 )
+from huggingface_inference_toolkit.optimum_utils import  is_optimum_neuron_available
+
 import pytest
 
 require_inferentia = pytest.mark.skipif(

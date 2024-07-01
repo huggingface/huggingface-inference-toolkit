@@ -180,3 +180,5 @@ tests/tmp
 tmp/
 act.sh
 .act
+tmp*
+log-*
