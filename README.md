@@ -180,7 +180,7 @@ make inference-pytorch-inf2
 2. Run the container and provide either environment variables to the HUB model you want to use or mount a volume to the container, where your model is stored.
 
 ```bash
-docker run -ti -p 5000:5000 -e HF_MODEL_ID="distilbert/distilbert-base-uncased-finetuned-sst-2-english" -e HF_TASK="text-classification" -e HF_OPTIMUM_BATCH_SIZE=1 -e HF_OPTIMUM_SEQUENCE_LENGTH=128 integration-test-pytorch:inf2
+docker run -ti -p 5000:5000 -e HF_MODEL_ID="distilbert/distilbert-base-uncased-finetuned-sst-2-english" -e HF_TASK="text-classification" -e HF_OPTIMUM_BATCH_SIZE=1 -e HF_OPTIMUM_SEQUENCE_LENGTH=128 --device=/dev/neuron0 integration-test-pytorch:inf2
 ```
 
 3. Send request
@@ -190,7 +190,7 @@ curl --request POST \
 	--url http://localhost:5000 \
 	--header 'Content-Type: application/json' \
 	--data '{
-	"inputs": "Wow, this is such a great product. I love it!"
+	"inputs": "Wow, this is such a great product. I love it!",
 	"parameters": { "top_k": 2 }
 }'
 ```

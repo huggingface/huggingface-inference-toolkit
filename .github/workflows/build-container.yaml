@@ -38,7 +38,7 @@ jobs:
     uses: ./.github/workflows/docker-build-action.yaml
     with:
       image: inference-pytorch-inf2
-      dockerfile: dockerfiles/pytorch/Dockerfile
+      dockerfile: dockerfiles/pytorch/Dockerfile.inf2
     secrets:
       TAILSCALE_AUTHKEY: ${{ secrets.TAILSCALE_AUTHKEY }}
       REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}

@@ -99,25 +99,18 @@ RUN conda install -c conda-forge \
  && conda clean -ya \
  && pip install --upgrade pip --trusted-host pypi.org --trusted-host files.pythonhosted.org \
  && ln -s /opt/conda/bin/pip /usr/local/bin/pip3 \
- && pip install packaging
-
-# Install Neuronx-cc and PyTorch
-RUN pip install --extra-index-url https://pip.repos.neuron.amazonaws.com \
-    neuronx-cc==$NEURONX_CC_VERSION \
-    torch-neuronx==$NEURONX_FRAMEWORK_VERSION \
-    neuronx_distributed==$NEURONX_DISTRIBUTED_VERSION \
-    transformers-neuronx==$NEURONX_TRANSFORMERS_VERSION \
- && pip install "protobuf>=3.18.3,<4" \
- && pip install --no-deps --no-cache-dir -U torchvision==0.16.*
+ && pip install --no-cache-dir "protobuf>=3.18.3,<4" setuptools==69.5.1 packaging
 
 WORKDIR /
 
 # install Hugging Face libraries and its dependencies
-RUN pip install --no-cache-dir optimum-neuron[neuronx]==${OPTIMUM_NEURON_VERSION}
+RUN pip install --extra-index-url https://pip.repos.neuron.amazonaws.com --no-cache-dir optimum-neuron[neuronx]==${OPTIMUM_NEURON_VERSION}  \
+ && pip install --no-deps --no-cache-dir -U torchvision==0.16.*
+
 
 COPY . .
 # install wheel and setuptools
-RUN pip install --no-cache-dir -U pip .
+RUN pip install --no-cache-dir -U pip "."
 
 # copy application
 COPY src/huggingface_inference_toolkit huggingface_inference_toolkit
