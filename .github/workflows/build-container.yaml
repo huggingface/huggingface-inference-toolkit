@@ -34,20 +34,11 @@ jobs:
       TAILSCALE_AUTHKEY: ${{ secrets.TAILSCALE_AUTHKEY }}
       REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
       REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
-  starlette-tensorflow-cpu:
+  starlette-pytorch-inf2:
     uses: ./.github/workflows/docker-build-action.yaml
     with:
-      image: inference-tensorflow-cpu
-      dockerfile: dockerfiles/tensorflow/cpu/Dockerfile
-    secrets:
-      TAILSCALE_AUTHKEY: ${{ secrets.TAILSCALE_AUTHKEY }}
-      REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
-      REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
-  starlette-tensorflow-gpu:
-    uses: ./.github/workflows/docker-build-action.yaml
-    with:
-      image: inference-tensorflow-gpu
-      dockerfile: dockerfiles/tensorflow/gpu/Dockerfile
+      image: inference-pytorch-inf2
+      dockerfile: dockerfiles/pytorch/Dockerfile
     secrets:
       TAILSCALE_AUTHKEY: ${{ secrets.TAILSCALE_AUTHKEY }}
       REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
