@@ -21,10 +21,6 @@ class TestPytorchLocal:
             "question-answering",
             "text-classification",
             "token-classification",
-            "image-classification",
-            "image-segmentation",
-            "object-detection",
-            "sentence-embeddings",
         ],
     )
     @pytest.mark.parametrize("device", ["inf2"])

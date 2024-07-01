@@ -68,12 +68,16 @@ def remote_container(device, task, framework):
 def local_container(device, task, repository_id, framework):
     try:
         time.sleep(random.randint(1, 5))
-        id = uuid.uuid4()
         if not (task == "custom"):
             model = task2model[task][framework]
             id = task
         else:
             model = repository_id
+
+        env = {
+            "HF_MODEL_DIR": "/opt/huggingface/model",
+            "HF_TASK": task,
+        }
 
         logging.info(f"Starting container with model: {model}")
 
@@ -101,8 +105,19 @@ def local_container(device, task, repository_id, framework):
         device_request = (
             [docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])]
             if device == "gpu"
-            else []
+            else None
         )
+        if device == "inf2":
+            devices = {
+                "/dev/neuron0": {
+                    "PathInContainer": "/dev/neuron0",
+                    "CgroupPermissions": "rwm",
+                }
+            }
+            env["HF_OPTIMUM_BATCH_SIZE"] = 1
+            env["HF_OPTIMUM_SEQUENCE_LENGTH"] = 128
+        else:
+            devices = None
 
         object_id = model.replace("/", "--")
         model_dir = f"{HF_HUB_CACHE}/{object_id}"
@@ -115,11 +130,13 @@ def local_container(device, task, repository_id, framework):
             container_image,
             name=container_name,
             ports={"5000": port},
-            environment={"HF_MODEL_DIR": "/opt/huggingface/model", "HF_TASK": task},
+            environment=env,
             volumes={model_dir: {"bind": "/opt/huggingface/model", "mode": "ro"}},
             detach=True,
             # GPU
             device_requests=device_request,
+            # INF2
+            devices=devices,
         ), port
 
         # Teardown

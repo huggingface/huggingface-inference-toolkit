@@ -21,7 +21,7 @@ class TestPytorchRemote:
             "question-answering",
             "fill-mask",
             "summarization",
-            "ner",
+            "token-classification",
             "translation_xx_to_yy",
             "text2text-generation",
             "text-generation",

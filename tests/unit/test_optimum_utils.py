@@ -64,7 +64,7 @@ def test_get_optimum_neuron_pipeline_from_converted_model():
         os.system(
             f"optimum-cli export neuron --model philschmid/tiny-distilbert-classification --sequence_length 32 --batch_size 1 {tmpdirname}"
         )
-        pipe = get_optimum_neuron_pipeline(task=TASK, target_dir=tmpdirname)
+        pipe = get_optimum_neuron_pipeline(task=TASK, model_dir=tmpdirname)
         r = pipe("This is a test")
 
         assert r[0]["score"] > 0.0

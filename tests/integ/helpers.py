@@ -119,7 +119,7 @@ def verify_task(
     [
         "text-classification",
         "zero-shot-classification",
-        "ner",
+        "token-classification",
         "question-answering",
         "fill-mask",
         "summarization",
@@ -177,7 +177,7 @@ def test_pt_container_remote_model(task) -> None:
     [
         "text-classification",
         "zero-shot-classification",
-        "ner",
+        "token-classification",
         "question-answering",
         "fill-mask",
         "summarization",
@@ -315,7 +315,7 @@ def test_pt_container_legacy_custom_pipeline(repository_id) -> None:
     [
         "text-classification",
         "zero-shot-classification",
-        "ner",
+        "token-classification",
         "question-answering",
         "fill-mask",
         "summarization",
@@ -371,7 +371,7 @@ def test_tf_container_remote_model(task) -> None:
     [
         "text-classification",
         "zero-shot-classification",
-        "ner",
+        "token-classification",
         "question-answering",
         "fill-mask",
         "summarization",

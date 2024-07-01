@@ -12,7 +12,7 @@ class TestPytorchLocal:
         [
             "text-classification",
             "zero-shot-classification",
-            "ner",
+            "token-classification",
             "question-answering",
             "fill-mask",
             "summarization",
@@ -33,86 +33,45 @@ class TestPytorchLocal:
             "text-to-image",
         ],
     )
-    @pytest.mark.parametrize(
-        "device",
-        ["gpu"]
-    )
-    @pytest.mark.parametrize(
-        "framework",
-        ["pytorch"]
-    )
-    @pytest.mark.parametrize(
-        "repository_id",
-        [""]
-    )
-    @pytest.mark.usefixtures('local_container')
+    @pytest.mark.parametrize("device", ["gpu"])
+    @pytest.mark.parametrize("framework", ["pytorch"])
+    @pytest.mark.parametrize("repository_id", [""])
+    @pytest.mark.usefixtures("local_container")
     def test_pt_container_local_model(
-        self,
-        local_container,
-        task,
-        framework,
-        device
+        self, local_container, task, framework, device
     ) -> None:
 
-        verify_task(task = task, port = local_container[1])
-
+        verify_task(task=task, port=local_container[1])
 
     @require_torch
     @pytest.mark.parametrize(
         "repository_id",
         ["philschmid/custom-handler-test", "philschmid/custom-handler-distilbert"],
     )
-    @pytest.mark.parametrize(
-        "device",
-        ["gpu"]
-    )
-    @pytest.mark.parametrize(
-        "framework",
-        ["pytorch"]
-    )
-    @pytest.mark.parametrize(
-        "task",
-        ["custom"]
-    )
-    @pytest.mark.usefixtures('local_container')
+    @pytest.mark.parametrize("device", ["gpu"])
+    @pytest.mark.parametrize("framework", ["pytorch"])
+    @pytest.mark.parametrize("task", ["custom"])
+    @pytest.mark.usefixtures("local_container")
     def test_pt_container_custom_handler(
-        self,
-        local_container,
-        task,
-        device,
-        repository_id
+        self, local_container, task, device, repository_id
     ) -> None:
 
         verify_task(
-            task = task,
-            port = local_container[1],
+            task=task,
+            port=local_container[1],
         )
-
 
     @require_torch
     @pytest.mark.parametrize(
         "repository_id",
         ["philschmid/custom-pipeline-text-classification"],
     )
-    @pytest.mark.parametrize(
-        "device",
-        ["gpu"]
-    )
-    @pytest.mark.parametrize(
-        "framework",
-        ["pytorch"]
-    )
-    @pytest.mark.parametrize(
-        "task",
-        ["custom"]
-    )
-    @pytest.mark.usefixtures('local_container')
+    @pytest.mark.parametrize("device", ["gpu"])
+    @pytest.mark.parametrize("framework", ["pytorch"])
+    @pytest.mark.parametrize("task", ["custom"])
+    @pytest.mark.usefixtures("local_container")
     def test_pt_container_legacy_custom_pipeline(
-        self,
-        local_container,
-        repository_id,
-        device,
-        task
+        self, local_container, repository_id, device, task
     ) -> None:
 
-        verify_task(task = task, port = local_container[1])
+        verify_task(task=task, port=local_container[1])
