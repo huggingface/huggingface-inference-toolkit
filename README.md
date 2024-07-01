@@ -8,7 +8,15 @@
 Hugging Face Inference Toolkit is for serving 🤗 Transformers models in containers. This library provides default pre-processing, predict and postprocessing for Transformers, Sentence Tranfsformers. It is also possible to define custom `handler.py` for customization. The Toolkit is build to work with the [Hugging Face Hub](https://huggingface.co/models).
 
 ---
+
 ## 💻  Getting Started with Hugging Face Inference Toolkit
+
+* Clone the repository `git clone https://github.com/huggingface/huggingface-inference-toolkit``
+* Install the dependencies in dev mode `pip install -e ".[torch, st, diffusers, test,quality]"`
+	* If you develop on AWS inferentia2 install with `pip install -e ".[test,quality]" optimum-neuron[neuronx] --upgrade`
+* Unit Testing: `make unit-test`
+* Integration testing: `make integ-test`
+
 
 ### Local run
 
@@ -16,32 +24,6 @@ Hugging Face Inference Toolkit is for serving 🤗 Transformers models in contai
 mkdir tmp2/
 HF_MODEL_ID=hf-internal-testing/tiny-random-distilbert HF_MODEL_DIR=tmp2 HF_TASK=text-classification uvicorn src.huggingface_inference_toolkit.webservice_starlette:app  --port 5000
 ```
-
-### Local run on AWS Inferentia2
-
-_Note: You need to run this on an Inferentia2 instance._
-
-- transformers `text-classification` with `HF_OPTIMUM_BATCH_SIZE` and `HF_OPTIMUM_SEQUENCE_LENGTH`
-```bash
-mkdir tmp2/
-HF_MODEL_ID="distilbert/distilbert-base-uncased-finetuned-sst-2-english" HF_TASK="text-classification" HF_OPTIMUM_BATCH_SIZE=1 HF_OPTIMUM_SEQUENCE_LENGTH=128  HF_MODEL_DIR=tmp2 uvicorn src.huggingface_inference_toolkit.webservice_starlette:app  --port 5000
-```
-- sentence transformers `feature-extration` with `HF_OPTIMUM_BATCH_SIZE` and `HF_OPTIMUM_SEQUENCE_LENGTH`
-```bash
-HF_MODEL_ID="sentence-transformers/all-MiniLM-L6-v2" HF_TASK="feature-extraction" HF_OPTIMUM_BATCH_SIZE=1 HF_OPTIMUM_SEQUENCE_LENGTH=128 HF_MODEL_DIR=tmp2 uvicorn src.huggingface_inference_toolkit.webservice_starlette:app  --port 5000
-```
-
-Send request
-
-```bash
-curl --request POST \
-	--url http://localhost:5000 \
-	--header 'Content-Type: application/json' \
-	--data '{
-	"inputs": "Wow, this is such a great product. I love it!"
-}'
-```
-
 
 ### Container
 
@@ -99,7 +81,6 @@ In this example, `pytroch_model.bin` is the model file saved from training, `han
 The custom module can override the following methods:  
 
 
-
 ### Vertex AI Support
 
 The Hugging Face Inference Toolkit is also supported on Vertex AI, based on [Custom container requirements for prediction](https://cloud.google.com/vertex-ai/docs/predictions/custom-container-requirements). [Environment variables set by Vertex AI](https://cloud.google.com/vertex-ai/docs/predictions/custom-container-requirements#aip-variables) are automatically detected and used by the toolkit. 
@@ -151,7 +132,7 @@ curl --request POST \
 }'
 ```
 
-### Deploy Models on AWS Inferentia2
+### AWS Inferentia2 Support 
 
 The Hugging Face Inference Toolkit provides support for deploying Hugging Face on AWS Inferentia2. To deploy a model on Inferentia2 you have 3 options:
 * Provide `HF_MODEL_ID`, the model repo id on huggingface.co which contains the compiled model under `.neuron` format. e.g. `optimum/bge-base-en-v1.5-neuronx`
@@ -159,6 +140,61 @@ The Hugging Face Inference Toolkit provides support for deploying Hugging Face o
 * Include `neuron` dictionary in the [config.json](https://huggingface.co/optimum/tiny_random_bert_neuron/blob/main/config.json) file in the model archive, e.g. `neuron: {"static_batch_size": 1, "static_sequence_length": 128}`
 
 The currently supported tasks can be found [here](https://huggingface.co/docs/optimum-neuron/en/package_reference/supported_models). If you plan to deploy an LLM, we recommend taking a look at [Neuronx TGI](https://huggingface.co/blog/text-generation-inference-on-inferentia2), which is purposly build for LLMs.
+
+#### Local run with HF_MODEL_ID and HF_TASK
+
+Start Hugging Face Inference Toolkit with the following environment variables. 
+
+_Note: You need to run this on an Inferentia2 instance._
+
+- transformers `text-classification` with `HF_OPTIMUM_BATCH_SIZE` and `HF_OPTIMUM_SEQUENCE_LENGTH`
+```bash
+mkdir tmp2/
+HF_MODEL_ID="distilbert/distilbert-base-uncased-finetuned-sst-2-english" HF_TASK="text-classification" HF_OPTIMUM_BATCH_SIZE=1 HF_OPTIMUM_SEQUENCE_LENGTH=128  HF_MODEL_DIR=tmp2 uvicorn src.huggingface_inference_toolkit.webservice_starlette:app  --port 5000
+```
+- sentence transformers `feature-extration` with `HF_OPTIMUM_BATCH_SIZE` and `HF_OPTIMUM_SEQUENCE_LENGTH`
+```bash
+HF_MODEL_ID="sentence-transformers/all-MiniLM-L6-v2" HF_TASK="feature-extraction" HF_OPTIMUM_BATCH_SIZE=1 HF_OPTIMUM_SEQUENCE_LENGTH=128 HF_MODEL_DIR=tmp2 uvicorn src.huggingface_inference_toolkit.webservice_starlette:app  --port 5000
+```
+
+Send request
+
+```bash
+curl --request POST \
+	--url http://localhost:5000 \
+	--header 'Content-Type: application/json' \
+	--data '{
+	"inputs": "Wow, this is such a great product. I love it!"
+}'
+```
+
+#### Container run with HF_MODEL_ID and HF_TASK
+
+
+1. build the preferred container for either CPU or GPU for PyTorch o.
+
+```bash
+make inference-pytorch-inf2
+```
+
+2. Run the container and provide either environment variables to the HUB model you want to use or mount a volume to the container, where your model is stored.
+
+```bash
+docker run -ti -p 5000:5000 -e HF_MODEL_ID="distilbert/distilbert-base-uncased-finetuned-sst-2-english" -e HF_TASK="text-classification" -e HF_OPTIMUM_BATCH_SIZE=1 -e HF_OPTIMUM_SEQUENCE_LENGTH=128 integration-test-pytorch:inf2
+```
+
+3. Send request
+
+```bash
+curl --request POST \
+	--url http://localhost:5000 \
+	--header 'Content-Type: application/json' \
+	--data '{
+	"inputs": "Wow, this is such a great product. I love it!"
+	"parameters": { "top_k": 2 }
+}'
+```
+
 
 ---
 
@@ -244,20 +280,11 @@ HF_OPTIMUM_SEQUENCE_LENGTH="128"
 - [ ] Starlette (SageMaker)
 
 ---
+
 ## 🤝 Contributing
 
-### Development
-
-* Clone the repository `git clone https://github.com/huggingface/huggingface-inference-toolkit``
-* Install the dependencies in dev mode `pip install -e ".[torch, st, diffusers, test,quality]"`
-	* If you develop on inferentia install with `pip install -e ".[test,quality]" optimum-neuron[neuronx] --upgrade`
-
-#### Testing with Make
-
-* Unit Testing: `make unit-test`
-* Integration testing: `make integ-test`
-
 ---
+
 ## 📜  License
 
 TBD. 
