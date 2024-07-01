@@ -3,6 +3,8 @@ import os
 from tests.integ.utils import (
     validate_automatic_speech_recognition,
     validate_classification,
+    validate_conversational,
+    validate_custom,
     validate_feature_extraction,
     validate_fill_mask,
     validate_ner,
@@ -14,10 +16,7 @@ from tests.integ.utils import (
     validate_text_to_image,
     validate_translation,
     validate_zero_shot_classification,
-    validate_custom,
-    validate_conversational
 )
-
 
 task2model = {
     "text-classification": {

@@ -1,5 +1,3 @@
-import os
-from unittest import mock
 
 
 def test_if_provided():

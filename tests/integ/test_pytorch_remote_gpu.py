@@ -1,19 +1,9 @@
-import tempfile
-from tests.integ.helpers import verify_task
-from tests.integ.config import (
-    task2input,
-    task2model,
-    task2output,
-    task2validation
-)
-from transformers.testing_utils import (
-    require_torch,
-    slow,
-    _run_slow_tests
-)
+import docker
 import pytest
 import tenacity
-import docker
+
+from tests.integ.helpers import verify_task
+
 
 class TestPytorchRemote:
 

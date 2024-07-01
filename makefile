@@ -1,6 +1,6 @@
 .PHONY: quality style unit-test integ-test
 
-check_dirs := src 
+check_dirs := src tests 
 
 # run tests
 

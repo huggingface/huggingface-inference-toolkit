@@ -1,35 +1,23 @@
+import logging
 import random
 import tempfile
 import time
+import traceback
+
 import docker
 import pytest
 import requests
-from huggingface_inference_toolkit.utils import (
-    _is_gpu_available,
-    _load_repository_from_hf
-)
-from tests.integ.config import (
-    task2input,
-    task2model,
-    task2output,
-    task2validation
-)
-from transformers.testing_utils import (
-    require_torch,
-    slow,
-    require_tf,
-    _run_slow_tests
-)
-import tenacity
 from docker import DockerClient
-import logging
-import traceback
-import urllib3
+from huggingface_inference_toolkit.utils import _load_repository_from_hf
+from transformers.testing_utils import _run_slow_tests, require_tf, require_torch
+
+from tests.integ.config import task2input, task2model, task2output, task2validation
 
 IS_GPU = _run_slow_tests
 DEVICE = "gpu" if IS_GPU else "cpu"
 
-client = docker.DockerClient(base_url='unix://var/run/docker.sock')
+client = docker.DockerClient(base_url="unix://var/run/docker.sock")
+
 
 def make_sure_other_containers_are_stopped(client: DockerClient, container_name: str):
     try:
@@ -40,17 +28,13 @@ def make_sure_other_containers_are_stopped(client: DockerClient, container_name:
         return None
 
 
-#@tenacity.retry(
+# @tenacity.retry(
 #    retry = tenacity.retry_if_exception(ValueError),
 #    stop = tenacity.stop_after_attempt(10),
 #    reraise = True
-#)
-def wait_for_container_to_be_ready(
-    base_url,
-    time_between_retries = 1,
-    max_retries = 30
-):
-    
+# )
+def wait_for_container_to_be_ready(base_url, time_between_retries=1, max_retries=30):
+
     retries = 0
     error = None
 
@@ -67,15 +51,16 @@ def wait_for_container_to_be_ready(
             error = exception
             logging.warning(f"Container at {base_url} not ready, trying again...")
         retries += 1
-    
+
     logging.error(f"Unable to start container: {str(error)}")
     raise error
 
+
 def verify_task(
-    #container: DockerClient,
+    # container: DockerClient,
     task: str,
     port: int = 5000,
-    framework: str = "pytorch"
+    framework: str = "pytorch",
 ):
     BASE_URL = f"http://localhost:{port}"
     logging.info(f"Base URL: {BASE_URL}")
@@ -92,18 +77,24 @@ def verify_task(
             or task == "zero-shot-image-classification"
         ):
             prediction = requests.post(
-                f"{BASE_URL}", data=task2input[task], headers={"content-type": "image/x-image"}
+                f"{BASE_URL}",
+                data=task2input[task],
+                headers={"content-type": "image/x-image"},
             ).json()
         elif task == "automatic-speech-recognition" or task == "audio-classification":
             prediction = requests.post(
-                f"{BASE_URL}", data=task2input[task], headers={"content-type": "audio/x-audio"}
+                f"{BASE_URL}",
+                data=task2input[task],
+                headers={"content-type": "audio/x-audio"},
             ).json()
         elif task == "text-to-image":
-            prediction = requests.post(f"{BASE_URL}", json=input, headers={"accept": "image/png"}).content
+            prediction = requests.post(
+                f"{BASE_URL}", json=input, headers={"accept": "image/png"}
+            ).content
 
         else:
             prediction = requests.post(f"{BASE_URL}", json=input).json()
-        
+
         logging.info(f"Input: {input}")
         logging.info(f"Prediction: {prediction}")
         logging.info(f"Snapshot: {task2output[task]}")
@@ -112,10 +103,7 @@ def verify_task(
             for message in prediction:
                 assert "error" not in message.keys()
         else:
-            assert task2validation[task](
-                result=prediction,
-                snapshot=task2output[task]
-            )
+            assert task2validation[task](result=prediction, snapshot=task2output[task])
     except Exception as exception:
         logging.error(f"Base URL: {BASE_URL}")
         logging.error(f"Task: {task}")
@@ -162,7 +150,9 @@ def test_pt_container_remote_model(task) -> None:
     framework = "pytorch"
     model = task2model[task][framework]
     port = random.randint(5000, 6000)
-    device_request = [docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])] if IS_GPU else []
+    device_request = (
+        [docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])] if IS_GPU else []
+    )
 
     make_sure_other_containers_are_stopped(client, container_name)
     container = client.containers.run(
@@ -176,7 +166,7 @@ def test_pt_container_remote_model(task) -> None:
     )
     time.sleep(5)
 
-    verify_task(task = task, port = port)
+    verify_task(task=task, port=port)
     container.stop()
     container.remove()
 
@@ -218,11 +208,13 @@ def test_pt_container_local_model(task) -> None:
     framework = "pytorch"
     model = task2model[task][framework]
     port = random.randint(5000, 6000)
-    device_request = [docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])] if IS_GPU else []
+    device_request = (
+        [docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])] if IS_GPU else []
+    )
     make_sure_other_containers_are_stopped(client, container_name)
     with tempfile.TemporaryDirectory() as tmpdirname:
         # https://github.com/huggingface/infinity/blob/test-ovh/test/integ/utils.py
-        storage_dir = _load_repository_from_hf(model, tmpdirname, framework="pytorch")
+        _storage_dir = _load_repository_from_hf(model, tmpdirname, framework="pytorch")
         container = client.containers.run(
             container_image,
             name=container_name,
@@ -247,13 +239,15 @@ def test_pt_container_local_model(task) -> None:
 def test_pt_container_custom_handler(repository_id) -> None:
     container_name = "integration-test-custom"
     container_image = f"starlette-transformers:{DEVICE}"
-    device_request = [docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])] if IS_GPU else []
+    device_request = (
+        [docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])] if IS_GPU else []
+    )
     port = random.randint(5000, 6000)
 
     make_sure_other_containers_are_stopped(client, container_name)
     with tempfile.TemporaryDirectory() as tmpdirname:
         # https://github.com/huggingface/infinity/blob/test-ovh/test/integ/utils.py
-        storage_dir = _load_repository_from_hf(repository_id, tmpdirname)
+        _storage_dir = _load_repository_from_hf(repository_id, tmpdirname)
         container = client.containers.run(
             container_image,
             name=container_name,
@@ -284,13 +278,15 @@ def test_pt_container_custom_handler(repository_id) -> None:
 def test_pt_container_legacy_custom_pipeline(repository_id) -> None:
     container_name = "integration-test-custom"
     container_image = f"starlette-transformers:{DEVICE}"
-    device_request = [docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])] if IS_GPU else []
+    device_request = (
+        [docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])] if IS_GPU else []
+    )
     port = random.randint(5000, 6000)
 
     make_sure_other_containers_are_stopped(client, container_name)
     with tempfile.TemporaryDirectory() as tmpdirname:
         # https://github.com/huggingface/infinity/blob/test-ovh/test/integ/utils.py
-        storage_dir = _load_repository_from_hf(repository_id, tmpdirname)
+        _storage_dir = _load_repository_from_hf(repository_id, tmpdirname)
         container = client.containers.run(
             container_image,
             name=container_name,
@@ -347,7 +343,9 @@ def test_tf_container_remote_model(task) -> None:
     container_image = f"starlette-transformers:{DEVICE}"
     framework = "tensorflow"
     model = task2model[task][framework]
-    device_request = [docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])] if IS_GPU else []
+    device_request = (
+        [docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])] if IS_GPU else []
+    )
     if model is None:
         pytest.skip("no supported TF model")
     port = random.randint(5000, 6000)
@@ -401,14 +399,16 @@ def test_tf_container_local_model(task) -> None:
     container_image = f"starlette-transformers:{DEVICE}"
     framework = "tensorflow"
     model = task2model[task][framework]
-    device_request = [docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])] if IS_GPU else []
+    device_request = (
+        [docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])] if IS_GPU else []
+    )
     if model is None:
         pytest.skip("no supported TF model")
     port = random.randint(5000, 6000)
     make_sure_other_containers_are_stopped(client, container_name)
     with tempfile.TemporaryDirectory() as tmpdirname:
         # https://github.com/huggingface/infinity/blob/test-ovh/test/integ/utils.py
-        storage_dir = _load_repository_from_hf(model, tmpdirname, framework=framework)
+        _storage_dir = _load_repository_from_hf(model, tmpdirname, framework=framework)
         container = client.containers.run(
             container_image,
             name=container_name,

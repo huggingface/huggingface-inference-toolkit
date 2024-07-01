@@ -1,17 +1,8 @@
-import tempfile
-from tests.integ.helpers import verify_task
-from tests.integ.config import (
-    task2input,
-    task2model,
-    task2output,
-    task2validation
-)
-from transformers.testing_utils import (
-    require_torch,
-    slow,
-    _run_slow_tests
-)
 import pytest
+from transformers.testing_utils import require_torch
+
+from tests.integ.helpers import verify_task
+
 
 class TestPytorchLocal:
 
@@ -91,7 +82,7 @@ class TestPytorchLocal:
         device,
         repository_id
     ) -> None:
-        
+
         verify_task(
             task = task,
             port = local_container[1],

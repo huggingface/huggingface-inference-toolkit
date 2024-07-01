@@ -1,11 +1,7 @@
+import logging
 import os
-from pathlib import Path
 import tempfile
-
-
-from transformers import pipeline
-from transformers.file_utils import is_torch_available
-from transformers.testing_utils import require_tf, require_torch, slow
+from pathlib import Path
 
 from huggingface_inference_toolkit.handler import get_inference_handler_either_custom_or_default_handler
 from huggingface_inference_toolkit.utils import (
@@ -16,8 +12,9 @@ from huggingface_inference_toolkit.utils import (
     get_pipeline,
     wrap_conversation_pipeline,
 )
-
-import logging
+from transformers import pipeline
+from transformers.file_utils import is_torch_available
+from transformers.testing_utils import require_tf, require_torch, slow
 
 MODEL = "lysandre/tiny-bert-random"
 TASK = "text-classification"

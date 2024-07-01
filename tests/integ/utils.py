@@ -1,7 +1,4 @@
 import logging
-from contextlib import contextmanager
-from time import time
-
 
 
 def validate_classification(result=None, snapshot=None):
