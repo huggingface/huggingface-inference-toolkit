@@ -13,12 +13,12 @@ integ-test:
 # Check that source code meets quality standards
 
 quality:
-	ruff $(check_dirs) 
+	ruff check $(check_dirs) 
 
 # Format source code automatically
 
 style: 
-	ruff $(check_dirs) --fix
+	ruff check $(check_dirs) --fix
 
 inference-pytorch-gpu:
 	docker build -f dockerfiles/pytorch/Dockerfile -t integration-test-pytorch:gpu .
