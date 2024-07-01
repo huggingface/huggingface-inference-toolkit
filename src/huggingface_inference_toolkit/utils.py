@@ -18,6 +18,7 @@ from huggingface_inference_toolkit.sentence_transformers_utils import (
     get_sentence_transformers_pipeline,
     is_sentence_transformers_available,
 )
+from huggingface_inference_toolkit.optimum_utils import get_optimum_neuron_pipeline, is_optimum_neuron_available
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(format="%(asctime)s | %(levelname)s | %(message)s", level=logging.INFO)
@@ -251,9 +252,9 @@ def get_pipeline(
     else:
         kwargs["tokenizer"] = model_dir
 
-    if is_optimum_available():
-        logger.info("Optimum is not implemented yet using default pipeline.")
-        hf_pipeline = pipeline(task=task, model=model_dir, device=device, **kwargs)
+
+    if is_optimum_neuron_available():
+        hf_pipeline = get_optimum_neuron_pipeline(task=task, model_dir=model_dir)
     elif is_sentence_transformers_available() and task in [
         "sentence-similarity",
         "sentence-embeddings",

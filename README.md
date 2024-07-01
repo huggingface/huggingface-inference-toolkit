@@ -17,6 +17,32 @@ mkdir tmp2/
 HF_MODEL_ID=hf-internal-testing/tiny-random-distilbert HF_MODEL_DIR=tmp2 HF_TASK=text-classification uvicorn src.huggingface_inference_toolkit.webservice_starlette:app  --port 5000
 ```
 
+### Local run on AWS Inferentia2
+
+_Note: You need to run this on an Inferentia2 instance._
+
+- transformers `text-classification` with `HF_OPTIMUM_BATCH_SIZE` and `HF_OPTIMUM_SEQUENCE_LENGTH`
+```bash
+mkdir tmp2/
+HF_MODEL_ID="distilbert/distilbert-base-uncased-finetuned-sst-2-english" HF_TASK="text-classification" HF_OPTIMUM_BATCH_SIZE=1 HF_OPTIMUM_SEQUENCE_LENGTH=128  HF_MODEL_DIR=tmp2 uvicorn src.huggingface_inference_toolkit.webservice_starlette:app  --port 5000
+```
+- sentence transformers `feature-extration` with `HF_OPTIMUM_BATCH_SIZE` and `HF_OPTIMUM_SEQUENCE_LENGTH`
+```bash
+HF_MODEL_ID="sentence-transformers/all-MiniLM-L6-v2" HF_TASK="feature-extraction" HF_OPTIMUM_BATCH_SIZE=1 HF_OPTIMUM_SEQUENCE_LENGTH=128 HF_MODEL_DIR=tmp2 uvicorn src.huggingface_inference_toolkit.webservice_starlette:app  --port 5000
+```
+
+Send request
+
+```bash
+curl --request POST \
+	--url http://localhost:5000 \
+	--header 'Content-Type: application/json' \
+	--data '{
+	"inputs": "Wow, this is such a great product. I love it!"
+}'
+```
+
+
 ### Container
 
 
@@ -57,6 +83,22 @@ curl --request POST \
 	}
 }'
 ```
+
+### Custom Handler and dependency support
+
+The Hugging Face Inference Toolkit allows user to provide a custom inference through a `handler.py` file which is located in the repository. 
+For an example check [https://huggingface.co/philschmid/custom-pipeline-text-classification](https://huggingface.co/philschmid/custom-pipeline-text-classification):  
+```bash
+model.tar.gz/
+|- pytorch_model.bin
+|- ....
+|- handler.py
+|- requirements.txt 
+```
+In this example, `pytroch_model.bin` is the model file saved from training, `handler.py` is the custom inference handler, and `requirements.txt` is a requirements file to add additional dependencies.
+The custom module can override the following methods:  
+
+
 
 ### Vertex AI Support
 
@@ -109,6 +151,14 @@ curl --request POST \
 }'
 ```
 
+### Deploy Models on AWS Inferentia2
+
+The Hugging Face Inference Toolkit provides support for deploying Hugging Face on AWS Inferentia2. To deploy a model on Inferentia2 you have 3 options:
+* Provide `HF_MODEL_ID`, the model repo id on huggingface.co which contains the compiled model under `.neuron` format. e.g. `optimum/bge-base-en-v1.5-neuronx`
+* Provide the `HF_OPTIMUM_BATCH_SIZE` and `HF_OPTIMUM_SEQUENCE_LENGTH` environment variables to compile the model on the fly, e.g. `HF_OPTIMUM_BATCH_SIZE=1 HF_OPTIMUM_SEQUENCE_LENGTH=128`
+* Include `neuron` dictionary in the [config.json](https://huggingface.co/optimum/tiny_random_bert_neuron/blob/main/config.json) file in the model archive, e.g. `neuron: {"static_batch_size": 1, "static_sequence_length": 128}`
+
+The currently supported tasks can be found [here](https://huggingface.co/docs/optimum-neuron/en/package_reference/supported_models). If you plan to deploy an LLM, we recommend taking a look at [Neuronx TGI](https://huggingface.co/blog/text-generation-inference-on-inferentia2), which is purposly build for LLMs.
 
 ---
 
@@ -176,23 +226,23 @@ The `HF_ENDPOINT` environment variable indicates whether the service is run insi
 HF_ENDPOINT="True"
 ```
 
+#### `HF_OPTIMUM_BATCH_SIZE`
+
+The `HF_OPTIMUM_BATCH_SIZE` environment variable defines the batch size, which is used when compiling the model to Neuron. The default value is `1`. Not required when model is already converted. 
+
+```bash
+HF_OPTIMUM_BATCH_SIZE="1"
+```
+
+#### `HF_OPTIMUM_SEQUENCE_LENGTH`
+
+The `HF_OPTIMUM_SEQUENCE_LENGTH` environment variable defines the sequence length, which is used when compiling the model to Neuron. There is no default value. Not required when model is already converted. 
+
+```bash
+HF_OPTIMUM_SEQUENCE_LENGTH="128"
+```
 
 ---
-
-## 🧑🏻‍💻 Custom Handler and dependency support
-
-The Hugging Face Inference Toolkit allows user to provide a custom inference through a `handler.py` file which is located in the repository. 
-For an example check [https://huggingface.co/philschmid/custom-pipeline-text-classification](https://huggingface.co/philschmid/custom-pipeline-text-classification):  
-```bash
-model.tar.gz/
-|- pytorch_model.bin
-|- ....
-|- handler.py
-|- requirements.txt 
-```
-In this example, `pytroch_model.bin` is the model file saved from training, `handler.py` is the custom inference handler, and `requirements.txt` is a requirements file to add additional dependencies.
-The custom module can override the following methods:  
-
 
 ## ☑️ Supported & Tested Tasks
 
@@ -236,10 +286,9 @@ Below you ll find a list of supported and tested transformers and sentence trans
 
 ### Development
 
-* Recommended Python version: 3.11
-* We recommend `pyenv` for easily switching between different Python versions
-* There are two options for unit and integration tests:
-	* `Make` - see `makefile`
+* Clone the repository `git clone https://github.com/huggingface/huggingface-inference-toolkit``
+* Install the dependencies in dev mode `pip install -e ".[torch, st, diffusers, test,quality]"`
+	* If you develop on inferentia install with `pip install -e ".[test,quality]" optimum-neuron[neuronx] --upgrade`
 
 #### Testing with Make
 
