@@ -58,6 +58,8 @@ def remote_container(device, task, framework):
 
     # Teardown
     previous = client.containers.get(container_name)
+    logs = previous.logs().decode("utf-8")
+    logging.info(f"Container logs:\n{logs}")
     previous.stop()
     previous.remove()
 
@@ -72,7 +74,7 @@ def local_container(device, task, repository_id, framework):
             id = task
         else:
             model = repository_id
-            id = task
+            id = random.randint(1, 1000)
 
         env = {
             "HF_MODEL_DIR": "/opt/huggingface/model",
