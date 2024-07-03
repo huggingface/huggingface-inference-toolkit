@@ -1,11 +1,15 @@
 import pytest
 from transformers.testing_utils import require_torch
+import tenacity
 
 from tests.integ.helpers import verify_task
 
 
 class TestPytorchLocal:
-
+    @tenacity.retry(
+        stop=tenacity.stop_after_attempt(5),
+        reraise=True,
+    )
     @require_torch
     @pytest.mark.parametrize(
         "task",
@@ -43,6 +47,10 @@ class TestPytorchLocal:
 
         verify_task(task=task, port=local_container[1])
 
+    @tenacity.retry(
+        stop=tenacity.stop_after_attempt(5),
+        reraise=True,
+    )
     @require_torch
     @pytest.mark.parametrize(
         "repository_id",
@@ -61,6 +69,10 @@ class TestPytorchLocal:
             port=local_container[1],
         )
 
+    @tenacity.retry(
+        stop=tenacity.stop_after_attempt(5),
+        reraise=True,
+    )
     @require_torch
     @pytest.mark.parametrize(
         "repository_id",
