@@ -7,7 +7,7 @@ def validate_classification(result=None, snapshot=None):
     return True
 
 def validate_conversational(result=None, snapshot=None):
-    assert len(result) >= len(snapshot)
+    assert len(result[0]["generated_text"]) >= len(snapshot)
 
 
 def validate_zero_shot_classification(result=None, snapshot=None):

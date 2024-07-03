@@ -166,8 +166,6 @@ task2input = {
     "conversational": {
         "inputs": [
             {"role": "user", "content": "Which movie is the best ?"},
-            {"role": "assistant", "content": "It's Die Hard for sure."},
-            {"role": "user", "content": "Can you explain why?"},
         ]
     },
     "sentence-similarity": {
@@ -266,8 +264,6 @@ task2output = {
     "conversational": [
         {"role": "user", "content": "Which movie is the best ?"},
         {"role": "assistant", "content": "It's Die Hard for sure."},
-        {"role": "user", "content": "Can you explain why?"},
-        {"role": "assistant", "content": "It's a great movie."},
     ],
     "sentence-similarity": {"similarities": ""},
     "sentence-embeddings": {"embeddings": ""},

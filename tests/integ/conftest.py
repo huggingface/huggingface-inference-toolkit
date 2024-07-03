@@ -72,6 +72,7 @@ def local_container(device, task, repository_id, framework):
             id = task
         else:
             model = repository_id
+            id = task
 
         env = {
             "HF_MODEL_DIR": "/opt/huggingface/model",
