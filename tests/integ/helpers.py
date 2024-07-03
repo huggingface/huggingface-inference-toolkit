@@ -33,7 +33,7 @@ def make_sure_other_containers_are_stopped(client: DockerClient, container_name:
 #    stop = tenacity.stop_after_attempt(10),
 #    reraise = True
 # )
-def wait_for_container_to_be_ready(base_url, time_between_retries=1, max_retries=30):
+def wait_for_container_to_be_ready(base_url, time_between_retries=3, max_retries=30):
 
     retries = 0
     error = None
@@ -46,7 +46,9 @@ def wait_for_container_to_be_ready(base_url, time_between_retries=1, max_retries
                 logging.info("Container ready!")
                 return True
             else:
-                raise ConnectionError(f"Error: {response.status_code}")
+                raise ConnectionError(
+                    f"Couldn'start container, Error: {response.status_code}"
+                )
         except Exception as exception:
             error = exception
             logging.warning(f"Container at {base_url} not ready, trying again...")
