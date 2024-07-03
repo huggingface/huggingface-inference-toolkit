@@ -69,22 +69,6 @@ def create_artifact_filter(framework):
         return []
 
 
-def wrap_conversation_pipeline(pipeline):
-    """
-    Wrap a Conversation with a helper for better UX when using REST API
-    """
-
-    def wrapped_pipeline(inputs, *args, **kwargs):
-        logger.info(f"Inputs: {inputs}")
-        logger.info(f"Args: {args}")
-        logger.info(f"KWArgs: {kwargs}")
-        prediction = pipeline(inputs, *args, **kwargs)
-        logger.info(f"Prediction: {prediction}")
-        return list(prediction)
-
-    return wrapped_pipeline
-
-
 def _is_gpu_available():
     """
     checks if a gpu is available.
@@ -254,6 +238,8 @@ def get_pipeline(
         kwargs["feature_extractor"] = model_dir
     elif task in {"image-to-text"}:
         pass
+    elif task == "conversational":
+        task = "text-generation"
     else:
         kwargs["tokenizer"] = model_dir
 
@@ -274,11 +260,7 @@ def get_pipeline(
     else:
         hf_pipeline = pipeline(task=task, model=model_dir, device=device, **kwargs)
 
-    # wrap specific pipeline to support better ux
-    if task == "conversational":
-        hf_pipeline = wrap_conversation_pipeline(hf_pipeline)
-
-    elif task == "automatic-speech-recognition" and isinstance(
+    if task == "automatic-speech-recognition" and isinstance(
         hf_pipeline.model, WhisperForConditionalGeneration
     ):
         # set chunk length to 30s for whisper to enable long audio files
