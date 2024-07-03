@@ -22,6 +22,7 @@ jobs:
     with:
       test_path: "tests/integ/test_pytorch_local_gpu.py"
       build_img_cmd: "make inference-pytorch-gpu"
+      test_parallelism: "1"
   pytorch-integration-remote-gpu:
     name: Remote Integration Tests - GPU
     uses: ./.github/workflows/integration-test-action.yaml
@@ -41,4 +42,5 @@ jobs:
     with:
       test_path: "tests/integ/test_pytorch_local_cpu.py"
       build_img_cmd: "make inference-pytorch-cpu"
+      test_parallelism: "1"
       runs_on: "['ci']"
