@@ -125,7 +125,7 @@ def local_container(device, task, repository_id, framework):
         model_dir = f"{HF_HUB_CACHE}/{object_id}"
 
         _storage_dir = _load_repository_from_hf(
-            repository_id=model, target_dir=model_dir, framework=framework
+            repository_id=model, target_dir=model_dir
         )
 
         yield client.containers.run(
@@ -143,6 +143,7 @@ def local_container(device, task, repository_id, framework):
 
         # Teardown
         previous = client.containers.get(container_name)
+        time.sleep(5)
         logs = previous.logs().decode("utf-8")
         logging.info(f"Container logs:\n{logs}")
         previous.stop()
