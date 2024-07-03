@@ -11,10 +11,8 @@ from huggingface_inference_toolkit.utils import (
     check_and_register_custom_pipeline_from_directory,
     get_pipeline,
 )
-from transformers import pipeline
 from transformers.file_utils import is_torch_available
 from transformers.testing_utils import require_tf, require_torch, slow
-
 
 TASK_MODEL = "sshleifer/tiny-dbmdz-bert-large-cased-finetuned-conll03-english"
 
