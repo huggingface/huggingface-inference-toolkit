@@ -143,6 +143,8 @@ def local_container(device, task, repository_id, framework):
 
         # Teardown
         previous = client.containers.get(container_name)
+        logs = previous.logs().decode("utf-8")
+        logging.info(f"Container logs:\n{logs}")
         previous.stop()
         previous.remove()
     except Exception as exception:
