@@ -1,6 +1,6 @@
 import pytest
-from transformers.testing_utils import require_torch
 import tenacity
+from transformers.testing_utils import require_torch
 
 from tests.integ.helpers import verify_task
 
