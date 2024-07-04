@@ -49,6 +49,7 @@ extras["quality"] = [
     "isort",
     "ruff"
 ]
+extras["inf2"] = ["optimum-neuron"]
 
 setup(
     name="huggingface-inference-toolkit",

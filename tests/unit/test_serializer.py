@@ -1,14 +1,10 @@
-import base64
-import json
+import os
+
 import numpy as np
 import pytest
-import os
-from huggingface_inference_toolkit.serialization import (
-    Jsoner,
-    Audioer,
-    Imager
-)
+from huggingface_inference_toolkit.serialization import Audioer, Imager, Jsoner
 from PIL import Image
+
 
 def test_json_serialization():
     t = {"res": np.array([2.0]), "text": "I like you.", "float": 1.2}

@@ -1,12 +1,11 @@
-import logging
 import os
 from pathlib import Path
 from typing import Optional, Union
 
-from huggingface_inference_toolkit.utils import check_and_register_custom_pipeline_from_directory, get_pipeline
-
-logger = logging.getLogger(__name__)
-logging.basicConfig(format="%(asctime)s | %(levelname)s | %(message)s", level=logging.INFO)
+from huggingface_inference_toolkit.utils import (
+    check_and_register_custom_pipeline_from_directory,
+    get_pipeline,
+)
 
 
 class HuggingFaceHandler:
@@ -17,9 +16,7 @@ class HuggingFaceHandler:
 
     def __init__(self, model_dir: Union[str, Path], task=None, framework="pt"):
         self.pipeline = get_pipeline(
-            model_dir=model_dir,
-            task=task,
-            framework=framework
+            model_dir=model_dir, task=task, framework=framework
         )
 
     def __call__(self, data):
@@ -46,6 +43,7 @@ class VertexAIHandler(HuggingFaceHandler):
     A Default Vertex AI Hugging Face Inference Handler which abstracts the
     Vertex AI specific logic for inference.
     """
+
     def __init__(self, model_dir: Union[str, Path], task=None, framework="pt"):
         super().__init__(model_dir, task, framework)
 
@@ -57,7 +55,9 @@ class VertexAIHandler(HuggingFaceHandler):
         :return: prediction output
         """
         if "instances" not in data:
-            raise ValueError("The request body must contain a key 'instances' with a list of instances.")
+            raise ValueError(
+                "The request body must contain a key 'instances' with a list of instances."
+            )
         parameters = data.pop("parameters", None)
 
         predictions = []
@@ -69,9 +69,9 @@ class VertexAIHandler(HuggingFaceHandler):
         # reutrn predictions
         return {"predictions": predictions}
 
+
 def get_inference_handler_either_custom_or_default_handler(
-    model_dir: Path,
-    task: Optional[str] = None
+    model_dir: Path, task: Optional[str] = None
 ):
     """
     Returns the appropriate inference handler based on the given model directory and task.

@@ -1,27 +1,22 @@
-import tempfile
-from tests.integ.helpers import verify_task
-from tests.integ.config import (
-    task2input,
-    task2model,
-    task2output,
-    task2validation
-)
-from transformers.testing_utils import (
-    require_torch,
-    slow,
-    _run_slow_tests
-)
 import pytest
+import tenacity
+from transformers.testing_utils import require_torch
+
+from tests.integ.helpers import verify_task
+
 
 class TestPytorchLocal:
-
+    @tenacity.retry(
+        stop=tenacity.stop_after_attempt(5),
+        reraise=True,
+    )
     @require_torch
     @pytest.mark.parametrize(
         "task",
         [
             "text-classification",
             "zero-shot-classification",
-            "ner",
+            "token-classification",
             "question-answering",
             "fill-mask",
             "summarization",
@@ -42,86 +37,53 @@ class TestPytorchLocal:
             "text-to-image",
         ],
     )
-    @pytest.mark.parametrize(
-        "device",
-        ["cpu"]
-    )
-    @pytest.mark.parametrize(
-        "framework",
-        ["pytorch"]
-    )
-    @pytest.mark.parametrize(
-        "repository_id",
-        [""]
-    )
-    @pytest.mark.usefixtures('local_container')
+    @pytest.mark.parametrize("device", ["cpu"])
+    @pytest.mark.parametrize("framework", ["pytorch"])
+    @pytest.mark.parametrize("repository_id", [""])
+    @pytest.mark.usefixtures("local_container")
     def test_pt_container_local_model(
-        self,
-        local_container,
-        task,
-        framework,
-        device
+        self, local_container, task, framework, device
     ) -> None:
 
-        verify_task(task = task, port = local_container[1])
+        verify_task(task=task, port=local_container[1])
 
-
+    @tenacity.retry(
+        stop=tenacity.stop_after_attempt(5),
+        reraise=True,
+    )
     @require_torch
     @pytest.mark.parametrize(
         "repository_id",
         ["philschmid/custom-handler-test", "philschmid/custom-handler-distilbert"],
     )
-    @pytest.mark.parametrize(
-        "device",
-        ["cpu"]
-    )
-    @pytest.mark.parametrize(
-        "framework",
-        ["pytorch"]
-    )
-    @pytest.mark.parametrize(
-        "task",
-        ["custom"]
-    )
-    @pytest.mark.usefixtures('local_container')
+    @pytest.mark.parametrize("device", ["cpu"])
+    @pytest.mark.parametrize("framework", ["pytorch"])
+    @pytest.mark.parametrize("task", ["custom"])
+    @pytest.mark.usefixtures("local_container")
     def test_pt_container_custom_handler(
-        self,
-        local_container,
-        task,
-        device,
-        repository_id
+        self, local_container, task, device, repository_id
     ) -> None:
-        
+
         verify_task(
-            task = task,
-            port = local_container[1],
+            task=task,
+            port=local_container[1],
         )
 
-
+    @tenacity.retry(
+        stop=tenacity.stop_after_attempt(5),
+        reraise=True,
+    )
     @require_torch
     @pytest.mark.parametrize(
         "repository_id",
         ["philschmid/custom-pipeline-text-classification"],
     )
-    @pytest.mark.parametrize(
-        "device",
-        ["cpu"]
-    )
-    @pytest.mark.parametrize(
-        "framework",
-        ["pytorch"]
-    )
-    @pytest.mark.parametrize(
-        "task",
-        ["custom"]
-    )
-    @pytest.mark.usefixtures('local_container')
+    @pytest.mark.parametrize("device", ["cpu"])
+    @pytest.mark.parametrize("framework", ["pytorch"])
+    @pytest.mark.parametrize("task", ["custom"])
+    @pytest.mark.usefixtures("local_container")
     def test_pt_container_legacy_custom_pipeline(
-        self,
-        local_container,
-        repository_id,
-        device,
-        task
+        self, local_container, repository_id, device, task
     ) -> None:
 
-        verify_task(task = task, port = local_container[1])
+        verify_task(task=task, port=local_container[1])

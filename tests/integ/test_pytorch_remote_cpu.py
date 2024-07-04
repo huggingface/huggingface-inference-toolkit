@@ -1,31 +1,18 @@
-import tempfile
-from tests.integ.helpers import verify_task
-from tests.integ.config import (
-    task2input,
-    task2model,
-    task2output,
-    task2validation
-)
-from transformers.testing_utils import (
-    require_torch,
-    slow,
-    _run_slow_tests
-)
+import docker
 import pytest
 import tenacity
-import docker
+
+from tests.integ.helpers import verify_task
+
 
 class TestPytorchRemote:
 
     @tenacity.retry(
-        retry = tenacity.retry_if_exception(docker.errors.APIError),
-        stop = tenacity.stop_after_attempt(5),
-        reraise = True
+        retry=tenacity.retry_if_exception(docker.errors.APIError),
+        stop=tenacity.stop_after_attempt(5),
+        reraise=True,
     )
-    @pytest.mark.parametrize(
-        "device",
-        ["cpu"]
-    )
+    @pytest.mark.parametrize("device", ["cpu"])
     @pytest.mark.parametrize(
         "task",
         [
@@ -34,7 +21,7 @@ class TestPytorchRemote:
             "question-answering",
             "fill-mask",
             "summarization",
-            "ner",
+            "token-classification",
             "translation_xx_to_yy",
             "text2text-generation",
             "text-generation",
@@ -49,14 +36,11 @@ class TestPytorchRemote:
             "sentence-similarity",
             "sentence-embeddings",
             "sentence-ranking",
-            "text-to-image"
-        ]
+            "text-to-image",
+        ],
     )
-    @pytest.mark.parametrize(
-        "framework",
-        ["pytorch"]
-    )
-    @pytest.mark.usefixtures('remote_container')
+    @pytest.mark.parametrize("framework", ["pytorch"])
+    @pytest.mark.usefixtures("remote_container")
     def test_inference_remote(self, remote_container, task, framework, device):
 
-        verify_task(task = task, port = remote_container[1])
+        verify_task(task=task, port=remote_container[1])

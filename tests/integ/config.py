@@ -3,6 +3,8 @@ import os
 from tests.integ.utils import (
     validate_automatic_speech_recognition,
     validate_classification,
+    validate_conversational,
+    validate_custom,
     validate_feature_extraction,
     validate_fill_mask,
     validate_ner,
@@ -14,10 +16,7 @@ from tests.integ.utils import (
     validate_text_to_image,
     validate_translation,
     validate_zero_shot_classification,
-    validate_custom,
-    validate_conversational
 )
-
 
 task2model = {
     "text-classification": {
@@ -32,7 +31,7 @@ task2model = {
         "pytorch": "hf-internal-testing/tiny-random-bert",
         "tensorflow": "hf-internal-testing/tiny-random-bert",
     },
-    "ner": {
+    "token-classification": {
         "pytorch": "hf-internal-testing/tiny-random-roberta",
         "tensorflow": "hf-internal-testing/tiny-random-roberta",
     },
@@ -81,7 +80,7 @@ task2model = {
         "tensorflow": "hf-internal-testing/tiny-random-clip-zero-shot-image-classification",
     },
     "conversational": {
-        #"pytorch": "hf-internal-testing/tiny-random-blenderbot-small",
+        # "pytorch": "hf-internal-testing/tiny-random-blenderbot-small",
         "pytorch": "microsoft/DialoGPT-small",
         "tensorflow": None,
     },
@@ -119,7 +118,7 @@ task2input = {
         "parameters": {"candidate_labels": ["refund", "legal", "faq"]},
     },
     "feature-extraction": {"inputs": "What is the best book."},
-    "ner": {"inputs": "My name is Wolfgang and I live in Berlin"},
+    "token-classification": {"inputs": "My name is Wolfgang and I live in Berlin"},
     "question-answering": {
         "inputs": {
             "question": "What is used for inference?",
@@ -135,12 +134,24 @@ task2input = {
         "inputs": "question: What is 42 context: 42 is the answer to life, the universe and everything."
     },
     "text-generation": {"inputs": "My name is philipp and I am"},
-    "image-classification": open(os.path.join(os.getcwd(), "tests/resources/image/tiger.jpeg"), "rb").read(),
-    "zero-shot-image-classification": open(os.path.join(os.getcwd(), "tests/resources/image/tiger.jpeg"), "rb").read(),
-    "object-detection": open(os.path.join(os.getcwd(), "tests/resources/image/tiger.jpeg"), "rb").read(),
-    "image-segmentation": open(os.path.join(os.getcwd(), "tests/resources/image/tiger.jpeg"), "rb").read(),
-    "automatic-speech-recognition": open(os.path.join(os.getcwd(), "tests/resources/audio/sample1.flac"), "rb").read(),
-    "audio-classification": open(os.path.join(os.getcwd(), "tests/resources/audio/sample1.flac"), "rb").read(),
+    "image-classification": open(
+        os.path.join(os.getcwd(), "tests/resources/image/tiger.jpeg"), "rb"
+    ).read(),
+    "zero-shot-image-classification": open(
+        os.path.join(os.getcwd(), "tests/resources/image/tiger.jpeg"), "rb"
+    ).read(),
+    "object-detection": open(
+        os.path.join(os.getcwd(), "tests/resources/image/tiger.jpeg"), "rb"
+    ).read(),
+    "image-segmentation": open(
+        os.path.join(os.getcwd(), "tests/resources/image/tiger.jpeg"), "rb"
+    ).read(),
+    "automatic-speech-recognition": open(
+        os.path.join(os.getcwd(), "tests/resources/audio/sample1.flac"), "rb"
+    ).read(),
+    "audio-classification": open(
+        os.path.join(os.getcwd(), "tests/resources/audio/sample1.flac"), "rb"
+    ).read(),
     "table-question-answering": {
         "inputs": {
             "query": "How many stars does the transformers repository have?",
@@ -152,27 +163,23 @@ task2input = {
             },
         }
     },
-    "conversational": {"inputs": [
-        {
-            "role": "user",
-            "content": "Which movie is the best ?"
-        },
-        {
-            "role": "assistant",
-            "content": "It's Die Hard for sure."
-        },
-        {
-            "role": "user",
-            "content": "Can you explain why?"
-        }
-    ]},
+    "conversational": {
+        "inputs": [
+            {"role": "user", "content": "Which movie is the best ?"},
+        ]
+    },
     "sentence-similarity": {
-        "inputs": {"source_sentence": "Lets create an embedding", "sentences": ["Lets create an embedding"]}
+        "inputs": {
+            "source_sentence": "Lets create an embedding",
+            "sentences": ["Lets create an embedding"],
+        }
     },
     "sentence-embeddings": {"inputs": "Lets create an embedding"},
-    "sentence-ranking": {"inputs": ["Lets create an embedding", "Lets create an embedding"]},
+    "sentence-ranking": {
+        "inputs": ["Lets create an embedding", "Lets create an embedding"]
+    },
     "text-to-image": {"inputs": "a man on a horse jumps over a broken down airplane."},
-    "custom": {"inputs": "this is a test"}
+    "custom": {"inputs": "this is a test"},
 }
 
 task2output = {
@@ -182,30 +189,67 @@ task2output = {
         "labels": ["refund", "faq", "legal"],
         "scores": [0.96, 0.027, 0.008],
     },
-    "ner": [
-        {"word": "Wolfgang", "score": 0.99, "entity": "I-PER", "index": 4, "start": 11, "end": 19},
-        {"word": "Berlin", "score": 0.99, "entity": "I-LOC", "index": 9, "start": 34, "end": 40},
+    "token-classification": [
+        {
+            "word": "Wolfgang",
+            "score": 0.99,
+            "entity": "I-PER",
+            "index": 4,
+            "start": 11,
+            "end": 19,
+        },
+        {
+            "word": "Berlin",
+            "score": 0.99,
+            "entity": "I-LOC",
+            "index": 9,
+            "start": 34,
+            "end": 40,
+        },
     ],
-    "question-answering": {"score": 0.99, "start": 68, "end": 77, "answer": "sagemaker"},
-    "summarization": [{"summary_text": " The A The The ANew York City has been installed in the US."}],
-    "translation_xx_to_yy": [{"translation_text": "Mein Name ist Sarah und ich lebe in London"}],
-    "text2text-generation": [{"generated_text": "42 is the answer to life, the universe and everything"}],
+    "question-answering": {
+        "score": 0.99,
+        "start": 68,
+        "end": 77,
+        "answer": "sagemaker",
+    },
+    "summarization": [
+        {"summary_text": " The A The The ANew York City has been installed in the US."}
+    ],
+    "translation_xx_to_yy": [
+        {"translation_text": "Mein Name ist Sarah und ich lebe in London"}
+    ],
+    "text2text-generation": [
+        {"generated_text": "42 is the answer to life, the universe and everything"}
+    ],
     "feature-extraction": None,
     "fill-mask": None,
     "text-generation": None,
     "image-classification": [
         {"score": 0.8858247399330139, "label": "tiger, Panthera tigris"},
         {"score": 0.10940514504909515, "label": "tiger cat"},
-        {"score": 0.0006216464680619538, "label": "jaguar, panther, Panthera onca, Felis onca"},
+        {
+            "score": 0.0006216464680619538,
+            "label": "jaguar, panther, Panthera onca, Felis onca",
+        },
         {"score": 0.0004262699221726507, "label": "dhole, Cuon alpinus"},
-        {"score": 0.00030842673731967807, "label": "lion, king of beasts, Panthera leo"},
+        {
+            "score": 0.00030842673731967807,
+            "label": "lion, king of beasts, Panthera leo",
+        },
     ],
     "zero-shot-image-classification": [
         {"score": 0.8858247399330139, "label": "tiger, Panthera tigris"},
         {"score": 0.10940514504909515, "label": "tiger cat"},
-        {"score": 0.0006216464680619538, "label": "jaguar, panther, Panthera onca, Felis onca"},
+        {
+            "score": 0.0006216464680619538,
+            "label": "jaguar, panther, Panthera onca, Felis onca",
+        },
         {"score": 0.0004262699221726507, "label": "dhole, Cuon alpinus"},
-        {"score": 0.00030842673731967807, "label": "lion, king of beasts, Panthera leo"},
+        {
+            "score": 0.00030842673731967807,
+            "label": "lion, king of beasts, Panthera leo",
+        },
     ],
     "automatic-speech-recognition": {
         "text": "GOING ALONG SLUSHY COUNTRY ROADS AND SPEAKING TO DAMP OAUDIENCES IN DROFTY SCHOOL ROOMS DAY AFTER DAY FOR A FORT NIGHT HE'LL HAVE TO PUT IN AN APPEARANCE AT SOME PLACE OF WORSHIP ON SUNDAY MORNING AND HE CAN COME TO US IMMEDIATELY AFTERWARDS"
@@ -218,16 +262,14 @@ task2output = {
     "image-segmentation": [{"score": 0.9143241047859192, "label": "cat", "mask": {}}],
     "table-question-answering": {"answer": "36542"},
     "conversational": [
-        {'role': 'user', 'content': 'Which movie is the best ?'},
-        {'role': 'assistant', 'content': "It's Die Hard for sure."},
-        {'role': 'user', 'content': 'Can you explain why?'},
-        {'role': 'assistant', 'content': "It's a great movie."},
+        {"role": "user", "content": "Which movie is the best ?"},
+        {"role": "assistant", "content": "It's Die Hard for sure."},
     ],
     "sentence-similarity": {"similarities": ""},
     "sentence-embeddings": {"embeddings": ""},
     "sentence-ranking": {"scores": ""},
     "text-to-image": bytes,
-    "custom": {"inputs": "this is a test"}
+    "custom": {"inputs": "this is a test"},
 }
 
 
@@ -236,7 +278,7 @@ task2validation = {
     "zero-shot-classification": validate_zero_shot_classification,
     "zero-shot-image-classification": validate_zero_shot_classification,
     "feature-extraction": validate_feature_extraction,
-    "ner": validate_ner,
+    "token-classification": validate_ner,
     "question-answering": validate_question_answering,
     "fill-mask": validate_fill_mask,
     "summarization": validate_summarization,
@@ -254,5 +296,5 @@ task2validation = {
     "sentence-embeddings": validate_zero_shot_classification,
     "sentence-ranking": validate_zero_shot_classification,
     "text-to-image": validate_text_to_image,
-    "custom": validate_custom
+    "custom": validate_custom,
 }

@@ -1,26 +1,20 @@
-import logging
 import re
 from pathlib import Path
 from typing import Union
 
-logger = logging.getLogger(__name__)
-logging.basicConfig(format="%(asctime)s | %(levelname)s | %(message)s", level=logging.INFO)
-
-
-
-_logger = logging.getLogger(__name__)
-
+from huggingface_inference_toolkit.logging import logger
 
 GCS_URI_PREFIX = "gs://"
 
 
 # copied from https://github.com/googleapis/python-aiplatform/blob/94d838d8cfe1599bc2d706e66080c05108821986/google/cloud/aiplatform/utils/prediction_utils.py#L121
-def _load_repository_from_gcs(artifact_uri: str, target_dir: Union[str, Path]="/tmp"):
+def _load_repository_from_gcs(artifact_uri: str, target_dir: Union[str, Path] = "/tmp"):
     """
     Load files from GCS path to target_dir
     """
     from google.cloud import storage
-    _logger.info(f"Loading model artifacts from {artifact_uri} to {target_dir}")
+
+    logger.info(f"Loading model artifacts from {artifact_uri} to {target_dir}")
     target_dir = Path(target_dir)
 
     if artifact_uri.startswith(GCS_URI_PREFIX):
@@ -43,4 +37,3 @@ def _load_repository_from_gcs(artifact_uri: str, target_dir: Union[str, Path]="/
                 blob.download_to_filename(name_without_prefix)
 
     return str(target_dir.absolute())
-

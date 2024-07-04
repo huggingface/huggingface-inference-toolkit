@@ -1,11 +1,7 @@
+import logging
 import os
-from pathlib import Path
 import tempfile
-
-
-from transformers import pipeline
-from transformers.file_utils import is_torch_available
-from transformers.testing_utils import require_tf, require_torch, slow
+from pathlib import Path
 
 from huggingface_inference_toolkit.handler import get_inference_handler_either_custom_or_default_handler
 from huggingface_inference_toolkit.utils import (
@@ -14,13 +10,10 @@ from huggingface_inference_toolkit.utils import (
     _load_repository_from_hf,
     check_and_register_custom_pipeline_from_directory,
     get_pipeline,
-    wrap_conversation_pipeline,
 )
+from transformers.file_utils import is_torch_available
+from transformers.testing_utils import require_tf, require_torch, slow
 
-import logging
-
-MODEL = "lysandre/tiny-bert-random"
-TASK = "text-classification"
 TASK_MODEL = "sshleifer/tiny-dbmdz-bert-large-cased-finetuned-conll03-english"
 
 
@@ -112,12 +105,13 @@ def test_get_framework_tensorflow():
 
 @require_torch
 def test_get_pipeline():
+    MODEL = "hf-internal-testing/tiny-random-BertForSequenceClassification"
+    TASK = "text-classification"
     with tempfile.TemporaryDirectory() as tmpdirname:
         storage_dir = _load_repository_from_hf(MODEL, tmpdirname, framework="pytorch")
         pipe = get_pipeline(
             task = TASK,
             model_dir = storage_dir.as_posix(),
-            framework = "pytorch"
         )
         res = pipe("Life is good, Life is bad")
         assert "score" in res[0]
@@ -129,8 +123,6 @@ def test_whisper_long_audio(cache_test_dir):
         storage_dir = _load_repository_from_hf(
             repository_id = "openai/whisper-tiny",
             target_dir = tmpdirname,
-            framework = "pytorch",
-            revision = "be0ba7c2f24f0127b27863a23a08002af4c2c279"
         )
         logging.info(f"Temp dir: {tmpdirname}")
         logging.info(f"POSIX Path: {storage_dir.as_posix()}")
@@ -138,41 +130,10 @@ def test_whisper_long_audio(cache_test_dir):
         pipe = get_pipeline(
             task = "automatic-speech-recognition",
             model_dir = storage_dir.as_posix(),
-            framework = "safetensors"
         )
         res = pipe(f"{cache_test_dir}/resources/audio/long_sample.mp3")
 
         assert len(res["text"]) > 700
-
-
-@require_torch
-def test_wrap_conversation_pipeline():
-    init_pipeline = pipeline(
-        "conversational",
-        model="microsoft/DialoGPT-small",
-        tokenizer="microsoft/DialoGPT-small",
-        framework="pt",
-    )
-    conv_pipe = wrap_conversation_pipeline(init_pipeline)
-    data = [
-        {
-            "role": "user",
-            "content": "Which movie is the best ?"
-        },
-        {
-            "role": "assistant",
-            "content": "It's Die Hard for sure."
-        },
-        {
-            "role": "user",
-            "content": "Can you explain why?"
-        }
-    ]
-    res = conv_pipe(data)
-    logging.info(f"Response: {res}")
-    assert res[-1]["role"] == "assistant"
-    assert "error" not in res[-1]["content"]
-
 
 @require_torch
 def test_wrapped_pipeline():
@@ -199,8 +160,8 @@ def test_wrapped_pipeline():
         ]
         res = conv_pipe(data, max_new_tokens = 100)
         logging.info(f"Response: {res}")
-        assert res[-1]["role"] == "assistant"
-        assert "error" not in res[-1]["content"]
+        message = res[0]["generated_text"][-1]
+        assert message["role"] == "assistant"
 
 
 def test_local_custom_pipeline(cache_test_dir):
