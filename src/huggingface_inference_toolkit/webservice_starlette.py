@@ -62,7 +62,6 @@ async def prepare_model_artifacts():
     inference_handler = get_inference_handler_either_custom_or_default_handler(
         HF_MODEL_DIR, task=HF_TASK
     )
-    print("hello world")
     logger.info("Model initialized successfully")
 
 
