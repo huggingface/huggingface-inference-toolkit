@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+
 from setuptools import find_packages, setup
 
 # We don't declare our dependency on transformers here because we build with
@@ -12,7 +13,7 @@ VERSION = "0.4.1.dev0"
 # libavcodec-extra : libavcodec-extra  inculdes additional codecs for ffmpeg
 
 install_requires = [
-    "transformers[sklearn,sentencepiece, audio,vision]==4.41.1",
+    "transformers[sklearn,sentencepiece,audio,vision]==4.41.1",
     "orjson",
     # vision
     "Pillow",
@@ -25,7 +26,7 @@ install_requires = [
     "starlette",
     "uvicorn",
     "pandas",
-    "peft==0.11.1"
+    "peft==0.11.1",
 ]
 
 extras = {}
@@ -43,12 +44,9 @@ extras["test"] = [
     "mock==2.0.0",
     "docker",
     "requests",
-    "tenacity"
+    "tenacity",
 ]
-extras["quality"] = [
-    "isort",
-    "ruff"
-]
+extras["quality"] = ["isort", "ruff"]
 extras["inf2"] = ["optimum-neuron"]
 
 setup(
@@ -61,8 +59,10 @@ setup(
     packages=find_packages(where="src"),
     install_requires=install_requires,
     extras_require=extras,
-    entry_points={"console_scripts": "serve=sagemaker_huggingface_inference_toolkit.serving:main"},
-    python_requires=">=3.8.0",
+    entry_points={
+        "console_scripts": "serve=sagemaker_huggingface_inference_toolkit.serving:main"
+    },
+    python_requires=">=3.8",
     license="Apache License 2.0",
     classifiers=[
         "Development Status :: 5 - Production/Stable",
