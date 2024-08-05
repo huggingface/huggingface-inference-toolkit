@@ -35,6 +35,6 @@ def _load_repository_from_gcs(artifact_uri: str, target_dir: Union[str, Path] = 
             directory = target_dir / Path(*file_split[0:-1])
             directory.mkdir(parents=True, exist_ok=True)
             if name_without_prefix and not name_without_prefix.endswith("/"):
-                blob.download_to_filename(name_without_prefix)
+                blob.download_to_filename(directory / name_without_prefix)
 
     return str(target_dir.absolute())
