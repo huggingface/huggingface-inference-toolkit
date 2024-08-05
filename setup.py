@@ -53,7 +53,7 @@ setup(
     name="huggingface-inference-toolkit",
     version=VERSION,
     author="HuggingFace",
-    description=".",
+    description="Hugging Face Inference Toolkit is for serving 🤗 Transformers models in containers.",
     url="",
     package_dir={"": "src"},
     packages=find_packages(where="src"),
