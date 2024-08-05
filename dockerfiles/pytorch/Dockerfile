@@ -14,29 +14,30 @@ RUN apt-get update && \
     add-apt-repository ppa:deadsnakes/ppa && \
     apt-get -y upgrade --only-upgrade systemd openssl cryptsetup && \
     apt-get install -y \
-        build-essential \
-        bzip2 \
-        curl \
-        git \
-        git-lfs \
-        tar \
-        gcc \
-        g++ \
-        cmake \
-        libprotobuf-dev \
-        protobuf-compiler \
-        python3-dev \
-        python3-pip \
-        python3.11 \
-        libsndfile1-dev \
-        ffmpeg \
+    build-essential \
+    bzip2 \
+    curl \
+    git \
+    git-lfs \
+    tar \
+    gcc \
+    g++ \
+    cmake \
+    libprotobuf-dev \
+    protobuf-compiler \
+    python3-dev \
+    python3-pip \
+    python3.11 \
+    libsndfile1-dev \
+    ffmpeg \
     && apt-get clean autoremove --yes \
     && rm -rf /var/lib/{apt,dpkg,cache,log}
+
 # Copying only necessary files as filtered by .dockerignore
 COPY . .
 
 # install wheel and setuptools
-RUN pip install --no-cache-dir -U pip ".[torch, st, diffusers]"
+RUN pip install --no-cache-dir --upgrade pip ".[torch,st,diffusers]"
 
 # copy application
 COPY src/huggingface_inference_toolkit huggingface_inference_toolkit
@@ -47,8 +48,7 @@ COPY --chmod=0755  scripts/entrypoint.sh entrypoint.sh
 
 ENTRYPOINT ["bash", "-c", "./entrypoint.sh"]
 
+FROM base AS vertex
 
-from base as vertex
-
-# Install Vertex AI requiremented packages
-RUN pip install --no-cache-dir google-cloud-storage
+# Install `google` extra for Vertex AI compatibility
+RUN pip install --no-cache-dir --upgrade ".[google]"
