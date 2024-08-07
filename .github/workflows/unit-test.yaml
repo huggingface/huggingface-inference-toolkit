@@ -44,5 +44,4 @@ jobs:
           -v ./tests:${{ env.CACHE_TEST_DIR }} \
           --entrypoint /bin/bash \
           integration-test-pytorch:gpu \
-          -c "pip install '.[test, st, diffusers]' && pytest ${{ env.CACHE_TEST_DIR }}/unit"
-        
+          -c "pip install '.[test,st,diffusers,google]' && pytest ${{ env.CACHE_TEST_DIR }}/unit"
