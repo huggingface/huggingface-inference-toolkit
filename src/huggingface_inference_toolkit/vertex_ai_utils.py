@@ -15,7 +15,8 @@ def _load_repository_from_gcs(artifact_uri: str, target_dir: Union[str, Path] = 
     from google.cloud import storage
 
     logger.info(f"Loading model artifacts from {artifact_uri} to {target_dir}")
-    target_dir = Path(target_dir)
+    if isinstance(target_dir, str):
+        target_dir = Path(target_dir)
 
     if artifact_uri.startswith(GCS_URI_PREFIX):
         matches = re.match(f"{GCS_URI_PREFIX}(.*?)/(.*)", artifact_uri)
@@ -31,9 +32,9 @@ def _load_repository_from_gcs(artifact_uri: str, target_dir: Union[str, Path] = 
                 else name_without_prefix
             )
             file_split = name_without_prefix.split("/")
-            directory = target_dir.join(file_split[0:-1])
+            directory = target_dir / Path(*file_split[0:-1])
             directory.mkdir(parents=True, exist_ok=True)
             if name_without_prefix and not name_without_prefix.endswith("/"):
-                blob.download_to_filename(name_without_prefix)
+                blob.download_to_filename(target_dir / name_without_prefix)
 
     return str(target_dir.absolute())
