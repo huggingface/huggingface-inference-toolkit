@@ -70,7 +70,7 @@ class VertexAIHandler(HuggingFaceHandler):
             payload = {"inputs": inputs, "parameters": parameters}
             predictions.append(super().__call__(payload))
 
-        # reutrn predictions
+        # return predictions
         return {"predictions": predictions}
 
 

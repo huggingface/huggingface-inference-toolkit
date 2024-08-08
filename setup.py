@@ -10,7 +10,7 @@ VERSION = "0.4.1.dev0"
 # Ubuntu packages
 # libsndfile1-dev: torchaudio requires the development version of the libsndfile package which can be installed via a system package manager. On Ubuntu it can be installed as follows: apt install libsndfile1-dev
 # ffmpeg: ffmpeg is required for audio processing. On Ubuntu it can be installed as follows: apt install ffmpeg
-# libavcodec-extra : libavcodec-extra  inculdes additional codecs for ffmpeg
+# libavcodec-extra : libavcodec-extra  includes additional codecs for ffmpeg
 
 install_requires = [
     "transformers[sklearn,sentencepiece,audio,vision]==4.41.1",

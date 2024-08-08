@@ -294,7 +294,7 @@ def strtobool(val: str) -> bool:
         ValueError: if 'val' is anything else.
 
     Note:
-        Function `strtobool` copied and adapted from `distutils`, as it's deprected from Python 3.10 onwards.
+        Function `strtobool` copied and adapted from `distutils`, as it's deprecated from Python 3.10 onwards.
 
     References:
         - https://github.com/python/cpython/blob/48f9d3e3faec5faaa4f7c9849fecd27eae4da213/Lib/distutils/util.py#L308-L321
