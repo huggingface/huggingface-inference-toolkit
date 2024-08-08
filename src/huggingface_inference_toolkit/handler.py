@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 from typing import Optional, Union
 
+from huggingface_inference_toolkit.const import HF_TRUST_REMOTE_CODE
 from huggingface_inference_toolkit.utils import (
     check_and_register_custom_pipeline_from_directory,
     get_pipeline,
@@ -16,7 +17,10 @@ class HuggingFaceHandler:
 
     def __init__(self, model_dir: Union[str, Path], task=None, framework="pt"):
         self.pipeline = get_pipeline(
-            model_dir=model_dir, task=task, framework=framework
+            model_dir=model_dir,
+            task=task,
+            framework=framework,
+            trust_remote_code=HF_TRUST_REMOTE_CODE,
         )
 
     def __call__(self, data):
