@@ -266,9 +266,7 @@ def get_pipeline(
             task=task, model_dir=model_dir, device=device, **kwargs
         )
     else:
-        hf_pipeline = pipeline(
-            task=task, model=model_dir, device=device, trust_remote_code=True
-        )  # **kwargs)
+        hf_pipeline = pipeline(task=task, model=model_dir, device=device, **kwargs)
 
     if task == "automatic-speech-recognition" and isinstance(
         hf_pipeline.model, WhisperForConditionalGeneration
