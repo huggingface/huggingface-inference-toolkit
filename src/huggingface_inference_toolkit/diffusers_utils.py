@@ -66,5 +66,5 @@ DIFFUSERS_TASKS = {
 def get_diffusers_pipeline(task=None, model_dir=None, device=-1, **kwargs):
     """Get a pipeline for Diffusers models."""
     device = "cuda" if device == 0 else "cpu"
-    pipeline = DIFFUSERS_TASKS[task](model_dir=model_dir, device=device)
+    pipeline = DIFFUSERS_TASKS[task](model_dir=model_dir, device=device, **kwargs)
     return pipeline
