@@ -13,7 +13,7 @@ VERSION = "0.4.2"
 # libavcodec-extra : libavcodec-extra  includes additional codecs for ffmpeg
 
 install_requires = [
-    "transformers[sklearn,sentencepiece,audio,vision]==4.44.0",
+    "transformers[sklearn,sentencepiece,audio,vision,sentencepiece]==4.44.0",
     "peft==0.12.0",
     # vision
     "Pillow",
