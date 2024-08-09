@@ -42,8 +42,6 @@ class IEAutoPipelineForText2Image:
             except Exception:
                 pass
 
-        self.pipeline.to(device)
-
     def __call__(
         self,
         prompt,
