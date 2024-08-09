@@ -8,11 +8,7 @@ from transformers import WhisperForConditionalGeneration, pipeline
 from transformers.file_utils import is_tf_available, is_torch_available
 from transformers.pipelines import Pipeline
 
-from huggingface_inference_toolkit.const import (
-    HF_DEFAULT_PIPELINE_NAME,
-    HF_MODULE_NAME,
-    HF_TRUST_REMOTE_CODE,
-)
+from huggingface_inference_toolkit.const import HF_DEFAULT_PIPELINE_NAME, HF_MODULE_NAME
 from huggingface_inference_toolkit.diffusers_utils import (
     get_diffusers_pipeline,
     is_diffusers_available,
