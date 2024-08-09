@@ -236,7 +236,7 @@ def get_pipeline(
         "zero-shot-image-classification",
     }:
         kwargs["feature_extractor"] = model_dir
-    elif task in {"image-to-text"}:
+    elif task in {"image-to-text", "text-to-image"}:
         pass
     elif task == "conversational":
         task = "text-generation"
