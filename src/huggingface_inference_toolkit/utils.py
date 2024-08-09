@@ -247,10 +247,6 @@ def get_pipeline(
     else:
         kwargs["tokenizer"] = model_dir
 
-    logger.info(f"Creating pipeline for task: {task}")
-    logger.info(f"Using kwargs: {kwargs}")
-    logger.info(f"{HF_TRUST_REMOTE_CODE=}")
-
     if is_optimum_neuron_available():
         hf_pipeline = get_optimum_neuron_pipeline(task=task, model_dir=model_dir)
     elif is_sentence_transformers_available() and task in [
