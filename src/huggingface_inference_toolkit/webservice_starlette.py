@@ -80,7 +80,7 @@ async def predict(request):
         # checks if input schema is correct
         if "inputs" not in deserialized_body and "instances" not in deserialized_body:
             raise ValueError(
-                f"Body needs to provide a inputs key, recieved: {orjson.dumps(deserialized_body)}"
+                f"Body needs to provide a inputs key, received: {orjson.dumps(deserialized_body)}"
             )
 
         # check for query parameter and add them to the body
