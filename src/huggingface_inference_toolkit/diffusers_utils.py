@@ -1,4 +1,5 @@
 import importlib.util
+from typing import Union
 
 from transformers.utils.import_utils import is_torch_bf16_gpu_available
 
@@ -21,14 +22,16 @@ if is_diffusers_available():
 
 
 class IEAutoPipelineForText2Image:
-    def __init__(self, model_dir: str, device: str = None):  # needs "cuda" for GPU
+    def __init__(
+        self, model_dir: str, device: Union[str, None] = None, **kwargs
+    ):  # needs "cuda" for GPU
         dtype = torch.float32
         if device == "cuda":
             dtype = torch.bfloat16 if is_torch_bf16_gpu_available() else torch.float16
         device_map = "auto" if device == "cuda" else None
 
         self.pipeline = AutoPipelineForText2Image.from_pretrained(
-            model_dir, torch_dtype=dtype, device_map=device_map
+            model_dir, torch_dtype=dtype, device_map=device_map, **kwargs
         )
         # try to use DPMSolverMultistepScheduler
         if isinstance(self.pipeline, StableDiffusionPipeline):
@@ -66,5 +69,5 @@ DIFFUSERS_TASKS = {
 def get_diffusers_pipeline(task=None, model_dir=None, device=-1, **kwargs):
     """Get a pipeline for Diffusers models."""
     device = "cuda" if device == 0 else "cpu"
-    pipeline = DIFFUSERS_TASKS[task](model_dir=model_dir, device=device)
+    pipeline = DIFFUSERS_TASKS[task](model_dir=model_dir, device=device, **kwargs)
     return pipeline

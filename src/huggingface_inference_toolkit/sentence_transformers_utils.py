@@ -54,5 +54,5 @@ def get_sentence_transformers_pipeline(
     **kwargs
 ):
     device = "cuda" if device == 0 else "cpu"
-    pipeline = SENTENCE_TRANSFORMERS_TASKS[task](model_dir=model_dir, device=device)
+    pipeline = SENTENCE_TRANSFORMERS_TASKS[task](model_dir=model_dir, device=device, **kwargs)
     return pipeline
