@@ -8,7 +8,9 @@ GCS_URI_PREFIX = "gs://"
 
 
 # copied from https://github.com/googleapis/python-aiplatform/blob/94d838d8cfe1599bc2d706e66080c05108821986/google/cloud/aiplatform/utils/prediction_utils.py#L121
-def _load_repository_from_gcs(artifact_uri: str, target_dir: Union[str, Path] = "/tmp"):
+def _load_repository_from_gcs(
+    artifact_uri: str, target_dir: Union[str, Path] = "/tmp"
+) -> str:
     """
     Load files from GCS path to target_dir
     """
