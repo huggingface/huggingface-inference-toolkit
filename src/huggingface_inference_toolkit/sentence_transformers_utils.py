@@ -51,5 +51,14 @@ SENTENCE_TRANSFORMERS_TASKS = {
 
 def get_sentence_transformers_pipeline(task=None, model_dir=None, device=-1, **kwargs):
     device = "cuda" if device == 0 else "cpu"
-    pipeline = SENTENCE_TRANSFORMERS_TASKS[task](model_dir=model_dir, device=device)
-    return pipeline
+
+    kwargs.pop("tokenizer", None)
+    kwargs.pop("framework", None)
+
+    if task not in SENTENCE_TRANSFORMERS_TASKS:
+        raise ValueError(
+            f"Unknown task {task}. Available tasks are: {', '.join(SENTENCE_TRANSFORMERS_TASKS.keys())}"
+        )
+    return SENTENCE_TRANSFORMERS_TASKS[task](
+        model_dir=model_dir, device=device, **kwargs
+    )
