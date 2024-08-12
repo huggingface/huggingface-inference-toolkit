@@ -15,7 +15,6 @@ VERSION = "0.4.3.dev0"
 install_requires = [
     "transformers[sklearn,sentencepiece,audio,vision,sentencepiece]==4.44.0",
     "huggingface_hub[hf_transfer]==0.24.5",
-    "peft==0.12.0",
     # vision
     "Pillow",
     "librosa",
@@ -34,7 +33,9 @@ extras = {}
 
 extras["st"] = ["sentence_transformers==2.7.0"]
 extras["diffusers"] = ["diffusers==0.30.0", "accelerate==0.33.0"]
-extras["torch"] = ["torch==2.2.2", "torchvision", "torchaudio"]
+# Includes `peft` as PEFT requires `torch` so having `peft` as a core dependency
+# means that `torch` will be installed even if the `torch` extra is not specified.
+extras["torch"] = ["torch==2.2.2", "torchvision", "torchaudio", "peft==0.12.0"]
 extras["test"] = [
     "pytest==7.2.1",
     "pytest-xdist",
