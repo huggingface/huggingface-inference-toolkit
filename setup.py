@@ -49,7 +49,7 @@ extras["test"] = [
 ]
 extras["quality"] = ["isort", "ruff"]
 extras["inf2"] = ["optimum-neuron"]
-extras["google"] = ["google-cloud-storage"]
+extras["google"] = ["google-cloud-storage", "crcmod==1.7"]
 
 setup(
     name="huggingface-inference-toolkit",
