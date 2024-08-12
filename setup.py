@@ -13,8 +13,9 @@ VERSION = "0.4.2"
 # libavcodec-extra : libavcodec-extra  includes additional codecs for ffmpeg
 
 install_requires = [
-    "transformers[sklearn,sentencepiece,audio,vision]==4.41.1",
-    "orjson",
+    "transformers[sklearn,sentencepiece,audio,vision,sentencepiece]==4.44.0",
+    "huggingface_hub[hf_transfer]==0.24.5",
+    "peft==0.12.0",
     # vision
     "Pillow",
     "librosa",
@@ -26,13 +27,13 @@ install_requires = [
     "starlette",
     "uvicorn",
     "pandas",
-    "peft==0.11.1",
+    "orjson",
 ]
 
 extras = {}
 
 extras["st"] = ["sentence_transformers==2.7.0"]
-extras["diffusers"] = ["diffusers==0.26.3", "accelerate==0.27.2"]
+extras["diffusers"] = ["diffusers==0.30.0", "accelerate==0.33.0"]
 extras["torch"] = ["torch==2.2.2", "torchvision", "torchaudio"]
 extras["test"] = [
     "pytest==7.2.1",
@@ -53,7 +54,7 @@ extras["google"] = ["google-cloud-storage"]
 setup(
     name="huggingface-inference-toolkit",
     version=VERSION,
-    author="HuggingFace",
+    author="Hugging Face",
     description="Hugging Face Inference Toolkit is for serving 🤗 Transformers models in containers.",
     url="",
     package_dir={"": "src"},

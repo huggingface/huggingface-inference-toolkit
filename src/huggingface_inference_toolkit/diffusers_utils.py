@@ -28,7 +28,7 @@ class IEAutoPipelineForText2Image:
         dtype = torch.float32
         if device == "cuda":
             dtype = torch.bfloat16 if is_torch_bf16_gpu_available() else torch.float16
-        device_map = "auto" if device == "cuda" else None
+        device_map = "balanced" if device == "cuda" else None
 
         self.pipeline = AutoPipelineForText2Image.from_pretrained(
             model_dir, torch_dtype=dtype, device_map=device_map, **kwargs
@@ -41,8 +41,6 @@ class IEAutoPipelineForText2Image:
                 )
             except Exception:
                 pass
-
-        self.pipeline.to(device)
 
     def __call__(
         self,
