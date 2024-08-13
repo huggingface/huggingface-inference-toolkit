@@ -12,8 +12,8 @@ if is_sentence_transformers_available():
 
 
 class SentenceSimilarityPipeline:
-    def __init__(self, model_dir: str, device: str = None):  # needs "cuda" for GPU
-        self.model = SentenceTransformer(model_dir, device=device)
+    def __init__(self, model_dir: str, device: str = None, **kwargs):  # needs "cuda" for GPU
+        self.model = SentenceTransformer(model_dir, device=device, **kwargs)
 
     def __call__(self, inputs=None):
         embeddings1 = self.model.encode(
@@ -25,8 +25,8 @@ class SentenceSimilarityPipeline:
 
 
 class SentenceEmbeddingPipeline:
-    def __init__(self, model_dir: str, device: str = None):  # needs "cuda" for GPU
-        self.model = SentenceTransformer(model_dir, device=device)
+    def __init__(self, model_dir: str, device: str = None, **kwargs):  # needs "cuda" for GPU
+        self.model = SentenceTransformer(model_dir, device=device, **kwargs)
 
     def __call__(self, inputs):
         embeddings = self.model.encode(inputs).tolist()
@@ -34,8 +34,8 @@ class SentenceEmbeddingPipeline:
 
 
 class RankingPipeline:
-    def __init__(self, model_dir: str, device: str = None):  # needs "cuda" for GPU
-        self.model = CrossEncoder(model_dir, device=device)
+    def __init__(self, model_dir: str, device: str = None, **kwargs):  # needs "cuda" for GPU
+        self.model = CrossEncoder(model_dir, device=device, **kwargs)
 
     def __call__(self, inputs):
         scores = self.model.predict(inputs).tolist()
