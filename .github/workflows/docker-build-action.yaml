@@ -29,7 +29,7 @@ on:
 jobs:
   buildx:
     runs-on: 
-      group: aws-g4dn-2xlarge
+      group: aws-highmemory-32-plus-priv
     steps:
       - name: Check out
         uses: actions/checkout@v3
