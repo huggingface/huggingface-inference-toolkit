@@ -1,5 +1,5 @@
 # Build based on https://github.com/aws/deep-learning-containers/blob/master/huggingface/pytorch/inference/docker/2.1/py3/sdk2.18.0/Dockerfile.neuronx
-FROM ubuntu:20.04
+FROM ubuntu:20.04 as base
 
 LABEL maintainer="Hugging Face"
 
