@@ -1,9 +1,8 @@
-<div style="display:flex; text-align:center; justify-content:center;">
 <img src="https://huggingface.co/front/assets/huggingface_logo.svg" width="100"/>
-<h1 style="margin-top:auto;"> Hugging Face Inference Toolkit <h1>
-</div>
 
-Hugging Face Inference Toolkit is for serving 🤗 Transformers models in containers. This library provides default pre-processing, predict and postprocessing for Transformers, Sentence Tranfsformers. It is also possible to define custom `handler.py` for customization. The Toolkit is build to work with the [Hugging Face Hub](https://huggingface.co/models) and is used as "default" option in [Inference Endpoints](https://ui.endpoints.huggingface.co/)
+# Hugging Face Inference Toolkit 
+
+Hugging Face Inference Toolkit is for serving 🤗 Transformers models in containers. This library provides default pre-processing, prediction, and postprocessing for Transformers, diffusers, and Sentence Transformers. It is also possible to define a custom `handler.py` for customization. The Toolkit is built to work with the [Hugging Face Hub](https://huggingface.co/models) and is used as the "default" option in [Inference Endpoints](https://ui.endpoints.huggingface.co/)
 
 ## 💻 Getting Started with Hugging Face Inference Toolkit
 
