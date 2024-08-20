@@ -1,5 +1,7 @@
 import tempfile
 
+from transformers.testing_utils import require_torch
+
 from huggingface_inference_toolkit.sentence_transformers_utils import (
     SentenceEmbeddingPipeline,
     get_sentence_transformers_pipeline,
@@ -8,7 +10,6 @@ from huggingface_inference_toolkit.utils import (
     _load_repository_from_hf,
     get_pipeline,
 )
-from transformers.testing_utils import require_torch
 
 
 @require_torch

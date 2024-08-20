@@ -20,6 +20,7 @@ def test__load_repository_from_gcs():
         import re
 
         from google.cloud import storage
+
         from huggingface_inference_toolkit.vertex_ai_utils import GCS_URI_PREFIX
 
         if isinstance(target_dir, str):

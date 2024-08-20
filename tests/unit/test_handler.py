@@ -1,6 +1,8 @@
 import tempfile
 
 import pytest
+from transformers.testing_utils import require_tf, require_torch
+
 from huggingface_inference_toolkit.handler import (
     HuggingFaceHandler,
     get_inference_handler_either_custom_or_default_handler,
@@ -9,7 +11,6 @@ from huggingface_inference_toolkit.utils import (
     _is_gpu_available,
     _load_repository_from_hf,
 )
-from transformers.testing_utils import require_tf, require_torch
 
 TASK = "text-classification"
 MODEL = "hf-internal-testing/tiny-random-distilbert"

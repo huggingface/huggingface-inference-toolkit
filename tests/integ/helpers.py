@@ -8,9 +8,9 @@ import docker
 import pytest
 import requests
 from docker import DockerClient
-from huggingface_inference_toolkit.utils import _load_repository_from_hf
 from transformers.testing_utils import _run_slow_tests, require_tf, require_torch
 
+from huggingface_inference_toolkit.utils import _load_repository_from_hf
 from tests.integ.config import task2input, task2model, task2output, task2validation
 
 IS_GPU = _run_slow_tests

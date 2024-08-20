@@ -2,8 +2,9 @@ import os
 
 import numpy as np
 import pytest
-from huggingface_inference_toolkit.serialization import Audioer, Imager, Jsoner
 from PIL import Image
+
+from huggingface_inference_toolkit.serialization import Audioer, Imager, Jsoner
 
 
 def test_json_serialization():

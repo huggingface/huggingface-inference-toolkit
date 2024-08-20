@@ -3,6 +3,9 @@ import os
 import tempfile
 from pathlib import Path
 
+from transformers.file_utils import is_torch_available
+from transformers.testing_utils import require_tf, require_torch, slow
+
 from huggingface_inference_toolkit.handler import get_inference_handler_either_custom_or_default_handler
 from huggingface_inference_toolkit.utils import (
     _get_framework,
@@ -11,8 +14,6 @@ from huggingface_inference_toolkit.utils import (
     check_and_register_custom_pipeline_from_directory,
     get_pipeline,
 )
-from transformers.file_utils import is_torch_available
-from transformers.testing_utils import require_tf, require_torch, slow
 
 TASK_MODEL = "sshleifer/tiny-dbmdz-bert-large-cased-finetuned-conll03-english"
 
