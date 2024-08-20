@@ -9,7 +9,7 @@ Hugging Face Inference Toolkit is for serving 🤗 Transformers models in contai
 
 - Clone the repository `git clone https://github.com/huggingface/huggingface-inference-toolkit`
 - Install the dependencies in dev mode `pip install -e ".[torch,st,diffusers,test,quality]"`
-  - If you develop on AWS inferentia2 install with `pip install -e ".[test,quality]" optimum-neuron[neuronx] --upgrade`
+  - If you develop on AWS Inferentia2 install with `pip install -e ".[inf2,test,quality]" --upgrade`
   - If you develop on Google Cloud install with `pip install -e ".[torch,st,diffusers,google,test,quality]"`
 - Unit Testing: `make unit-test`
 - Integration testing: `make integ-test`
