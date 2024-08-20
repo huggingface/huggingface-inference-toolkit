@@ -1,7 +1,7 @@
 import pytest
-from huggingface_inference_toolkit.optimum_utils import is_optimum_neuron_available
 from transformers.testing_utils import require_torch
 
+from huggingface_inference_toolkit.optimum_utils import is_optimum_neuron_available
 from tests.integ.helpers import verify_task
 
 require_inferentia = pytest.mark.skipif(

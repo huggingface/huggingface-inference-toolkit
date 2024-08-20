@@ -7,9 +7,9 @@ import time
 import docker
 import pytest
 import tenacity
-from huggingface_inference_toolkit.utils import _load_repository_from_hf
 from transformers.testing_utils import _run_slow_tests
 
+from huggingface_inference_toolkit.utils import _load_repository_from_hf
 from tests.integ.config import task2model
 
 HF_HUB_CACHE = os.environ.get("HF_HUB_CACHE", "/home/ubuntu/.cache/huggingface/hub")

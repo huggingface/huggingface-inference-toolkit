@@ -1,10 +1,11 @@
 import logging
 import tempfile
 
-from huggingface_inference_toolkit.diffusers_utils import IEAutoPipelineForText2Image
-from huggingface_inference_toolkit.utils import _load_repository_from_hf, get_pipeline
 from PIL import Image
 from transformers.testing_utils import require_torch, slow
+
+from huggingface_inference_toolkit.diffusers_utils import IEAutoPipelineForText2Image
+from huggingface_inference_toolkit.utils import _load_repository_from_hf, get_pipeline
 
 logging.basicConfig(level="DEBUG")
 

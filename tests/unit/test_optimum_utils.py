@@ -2,13 +2,14 @@ import os
 import tempfile
 
 import pytest
+from transformers.testing_utils import require_torch
+
 from huggingface_inference_toolkit.optimum_utils import (
     get_input_shapes,
     get_optimum_neuron_pipeline,
     is_optimum_neuron_available,
 )
 from huggingface_inference_toolkit.utils import _load_repository_from_hf
-from transformers.testing_utils import require_torch
 
 require_inferentia = pytest.mark.skipif(
     not is_optimum_neuron_available(),
