@@ -4,7 +4,7 @@ no_implicit_optional = true
 scripts_are_modules = true
 
 [tool.ruff]
-lint.select = [
+select = [
   "E", # pycodestyle errors
   "W", # pycodestyle warnings
   "F", # pyflakes
@@ -12,7 +12,7 @@ lint.select = [
   "C", # flake8-comprehensions
   "B", # flake8-bugbear
 ]
-lint.ignore = [
+ignore = [
   "E501", # Line length (handled by ruff-format)
   "B008", # do not perform function calls in argument defaults
   "C901", # too complex
@@ -21,12 +21,12 @@ lint.ignore = [
 line-length = 119
 
 # Allow unused variables when underscore-prefixed.
-lint.dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 
 # Assume Python 3.11.
 target-version = "py311"
 
-lint.per-file-ignores = {"__init__.py" = ["F401"]}
+per-file-ignores = { "__init__.py" = ["F401"] }
 
 [tool.isort]
 profile = "black"
