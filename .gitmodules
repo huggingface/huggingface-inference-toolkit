@@ -1,0 +1,3 @@
+[submodule "speech-to-speech"]
+	path = speech-to-speech
+	url = https://github.com/huggingface/speech-to-speech
