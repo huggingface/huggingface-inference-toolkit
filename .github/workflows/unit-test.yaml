@@ -29,8 +29,9 @@ jobs:
     - uses: actions/checkout@v4.1.1
     - name: Copy unit tests to cache mount
       run: |
-        rm -rf ${{ env.CACHE_TEST_DIR }} && \
-        mkdir ${{ env.CACHE_TEST_DIR }} && \
+        sudo rm -rf ${{ env.CACHE_TEST_DIR }} && \
+        sudo mkdir ${{ env.CACHE_TEST_DIR }} && \
+        sudo chown -R runner ${{ env.CACHE_TEST_DIR }}
         cp -r tests ${{ env.CACHE_TEST_DIR }}
     - name: Docker Setup Buildx
       uses: docker/setup-buildx-action@v3.0.0
