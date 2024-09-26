@@ -39,11 +39,12 @@ on:
       runs_on:
         type: string
         required: false
-        default: '["single-gpu", "nvidia-gpu", "t4", "ci"]'
+        default: 'aws-g4dn-2xlarge-cache'
 
 jobs:
   pytorch-integration-tests:
-    runs-on: ${{ fromJson(inputs.runs_on) }}
+    runs-on:
+      group: ${{ inputs.runs_on }}
     env:
       AWS_REGION: ${{ inputs.region }}
       HF_HOME: ${{ inputs.hf_home }}

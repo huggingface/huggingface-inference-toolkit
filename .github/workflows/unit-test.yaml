@@ -19,7 +19,8 @@ concurrency:
 
 jobs:
   pytorch-unit-test:
-    runs-on: [single-gpu, nvidia-gpu, t4, ci]
+    runs-on: 
+      group: aws-g4dn-2xlarge-cache
     env:
       AWS_REGION: us-east-1
       CACHE_TEST_DIR: /mnt/hf_cache/hf-inference-toolkit-tests
@@ -28,8 +29,9 @@ jobs:
     - uses: actions/checkout@v4.1.1
     - name: Copy unit tests to cache mount
       run: |
-        rm -rf ${{ env.CACHE_TEST_DIR }} && \
-        mkdir ${{ env.CACHE_TEST_DIR }} && \
+        sudo rm -rf ${{ env.CACHE_TEST_DIR }} && \
+        sudo mkdir ${{ env.CACHE_TEST_DIR }} && \
+        sudo chown -R runner ${{ env.CACHE_TEST_DIR }}
         cp -r tests ${{ env.CACHE_TEST_DIR }}
     - name: Docker Setup Buildx
       uses: docker/setup-buildx-action@v3.0.0
