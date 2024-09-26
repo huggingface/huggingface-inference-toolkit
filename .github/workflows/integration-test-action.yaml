@@ -39,7 +39,7 @@ on:
       runs_on:
         type: string
         required: false
-        default: 'aws-g4dn-2xlarge'
+        default: 'aws-g4dn-2xlarge-cache'
 
 jobs:
   pytorch-integration-tests:
