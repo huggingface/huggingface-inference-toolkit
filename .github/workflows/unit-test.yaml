@@ -19,7 +19,8 @@ concurrency:
 
 jobs:
   pytorch-unit-test:
-    runs-on: [single-gpu, nvidia-gpu, t4, ci]
+    runs-on: 
+      group: aws-g4dn-2xlarge-cache
     env:
       AWS_REGION: us-east-1
       CACHE_TEST_DIR: /mnt/hf_cache/hf-inference-toolkit-tests
