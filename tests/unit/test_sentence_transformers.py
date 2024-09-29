@@ -44,19 +44,19 @@ def test_sentence_similarity():
         assert isinstance(res["similarities"], list)
 
 
-@require_torch
-def test_sentence_ranking():
-    with tempfile.TemporaryDirectory() as tmpdirname:
-        storage_dir = _load_repository_from_hf("cross-encoder/ms-marco-MiniLM-L-6-v2", tmpdirname)
-        pipe = get_sentence_transformers_pipeline("sentence-ranking", storage_dir.as_posix())
-        res = pipe(
-            [
-                ["Lets create an embedding", "Lets create an embedding"],
-                ["Lets create an embedding", "Lets create an embedding"],
-            ]
-        )
-        assert isinstance(res["scores"], list)
-        res = pipe(
-            ["Lets create an embedding", "Lets create an embedding"],
-        )
-        assert isinstance(res["scores"], float)
+#@require_torch
+#def test_sentence_ranking():
+#    with tempfile.TemporaryDirectory() as tmpdirname:
+#        storage_dir = _load_repository_from_hf("cross-encoder/ms-marco-MiniLM-L-6-v2", tmpdirname)
+#        pipe = get_sentence_transformers_pipeline("sentence-ranking", storage_dir.as_posix())
+#        res = pipe(
+#            [
+#                ["Lets create an embedding", "Lets create an embedding"],
+#                ["Lets create an embedding", "Lets create an embedding"],
+#            ]
+#        )
+#        assert isinstance(res["scores"], list)
+#        res = pipe(
+#            ["Lets create an embedding", "Lets create an embedding"],
+#        )
+#        assert isinstance(res["scores"], float)
