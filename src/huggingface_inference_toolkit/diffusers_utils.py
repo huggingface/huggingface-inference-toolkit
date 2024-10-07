@@ -47,6 +47,13 @@ class IEAutoPipelineForText2Image:
         prompt,
         **kwargs,
     ):
+        # diffusers doesn't support seed but rather the generator kwarg
+        if "seed" in kwargs:
+            seed = int(kwargs["seed"])
+            generator = torch.Generator().manual_seed(seed)
+            kwargs["generator"] = generator
+            kwargs.pop("seed")
+        
         # TODO: add support for more images (Reason is correct output)
         if "num_images_per_prompt" in kwargs:
             kwargs.pop("num_images_per_prompt")
