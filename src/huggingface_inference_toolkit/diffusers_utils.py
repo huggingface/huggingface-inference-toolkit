@@ -53,7 +53,7 @@ class IEAutoPipelineForText2Image:
             generator = torch.Generator().manual_seed(seed)
             kwargs["generator"] = generator
             kwargs.pop("seed")
-        
+
         # TODO: add support for more images (Reason is correct output)
         if "num_images_per_prompt" in kwargs:
             kwargs.pop("num_images_per_prompt")
