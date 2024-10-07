@@ -48,6 +48,7 @@ class IEAutoPipelineForText2Image:
         **kwargs,
     ):
         # diffusers doesn't support seed but rather the generator kwarg
+        # see: https://github.com/huggingface/api-inference-community/blob/8e577e2d60957959ba02f474b2913d84a9086b82/docker_images/diffusers/app/pipelines/text_to_image.py#L172-L176
         if "seed" in kwargs:
             seed = int(kwargs["seed"])
             generator = torch.Generator().manual_seed(seed)
