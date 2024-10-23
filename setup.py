@@ -13,8 +13,8 @@ VERSION = "0.6.0"
 # libavcodec-extra : libavcodec-extra  includes additional codecs for ffmpeg
 
 install_requires = [
-    "transformers[sklearn,sentencepiece,audio,vision,sentencepiece]==4.44.0",
-    "huggingface_hub[hf_transfer]==0.24.5",
+    "transformers[sklearn,sentencepiece,audio,vision,sentencepiece]==4.45.2",
+    "huggingface_hub[hf_transfer]==0.26.1",
     # vision
     "Pillow",
     "librosa",
@@ -31,11 +31,11 @@ install_requires = [
 
 extras = {}
 
-extras["st"] = ["sentence_transformers==3.1.1"]
-extras["diffusers"] = ["diffusers==0.30.0", "accelerate==0.33.0"]
+extras["st"] = ["sentence_transformers==3.2.1"]
+extras["diffusers"] = ["diffusers==0.31.0", "accelerate==1.0.1"]
 # Includes `peft` as PEFT requires `torch` so having `peft` as a core dependency
 # means that `torch` will be installed even if the `torch` extra is not specified.
-extras["torch"] = ["torch==2.2.2", "torchvision", "torchaudio", "peft==0.12.0"]
+extras["torch"] = ["torch==2.3.1", "torchvision", "torchaudio", "peft==0.13.2"]
 extras["test"] = [
     "pytest==7.2.1",
     "pytest-xdist",
@@ -62,9 +62,7 @@ setup(
     packages=find_packages(where="src"),
     install_requires=install_requires,
     extras_require=extras,
-    entry_points={
-        "console_scripts": "serve=sagemaker_huggingface_inference_toolkit.serving:main"
-    },
+    entry_points={"console_scripts": "serve=sagemaker_huggingface_inference_toolkit.serving:main"},
     python_requires=">=3.8",
     license="Apache License 2.0",
     classifiers=[
