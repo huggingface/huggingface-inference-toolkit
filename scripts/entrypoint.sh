@@ -18,4 +18,4 @@ if [[ ! -z "${HF_MODEL_DIR}" ]]; then
 fi
 
 # Start the server
-uvicorn webservice_starlette:app --host 0.0.0.0 --port ${PORT}
+exec uvicorn webservice_starlette:app --host 0.0.0.0 --port ${PORT}
