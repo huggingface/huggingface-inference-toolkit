@@ -14,7 +14,7 @@ VERSION = "0.6.0"
 
 install_requires = [
     "transformers[sklearn,sentencepiece,audio,vision,sentencepiece]==4.46.0",
-    "huggingface_hub[hf_transfer]==0.26.1",
+    "huggingface_hub[hf_transfer]<0.26",
     # vision
     "Pillow",
     "librosa",
