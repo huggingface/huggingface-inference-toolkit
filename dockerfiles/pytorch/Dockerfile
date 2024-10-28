@@ -1,6 +1,6 @@
 ARG BASE_IMAGE=nvidia/cuda:12.1.0-devel-ubuntu22.04
 
-FROM $BASE_IMAGE as base
+FROM $BASE_IMAGE AS base
 SHELL ["/bin/bash", "-c"]
 
 LABEL maintainer="Hugging Face"
