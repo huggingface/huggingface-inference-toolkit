@@ -11,7 +11,7 @@ WORKDIR /app
 
 RUN apt-get update && \
     apt-get install software-properties-common -y && \
-    add-apt-repository ppa:fkrull/deadsnakes && \
+    add-apt-repository ppa:deadsnakes/ppa && \
     apt-get -y upgrade --only-upgrade systemd openssl cryptsetup && \
     apt-get install -y \
     build-essential \
