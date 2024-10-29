@@ -5,17 +5,17 @@ scripts_are_modules = true
 
 [tool.ruff]
 select = [
-  "E", # pycodestyle errors
-  "W", # pycodestyle warnings
-  "F", # pyflakes
-  "I", # isort
-  "C", # flake8-comprehensions
-  "B", # flake8-bugbear
+    "E", # pycodestyle errors
+    "W", # pycodestyle warnings
+    "F", # pyflakes
+    "I", # isort
+    "C", # flake8-comprehensions
+    "B", # flake8-bugbear
 ]
 ignore = [
-  "E501", # Line length (handled by ruff-format)
-  "B008", # do not perform function calls in argument defaults
-  "C901", # too complex
+    "E501", # Line length (handled by ruff-format)
+    "B008", # do not perform function calls in argument defaults
+    "C901", # too complex
 ]
 # Same as Black.
 line-length = 119
@@ -23,7 +23,7 @@ line-length = 119
 # Allow unused variables when underscore-prefixed.
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 
-# Assume Python 3.11.
+# Assume Python 3.11
 target-version = "py311"
 
 per-file-ignores = { "__init__.py" = ["F401"] }

@@ -1,6 +1,6 @@
 ARG BASE_IMAGE=nvidia/cuda:12.1.0-devel-ubuntu22.04
 
-FROM $BASE_IMAGE as base 
+FROM $BASE_IMAGE AS base
 SHELL ["/bin/bash", "-c"]
 
 LABEL maintainer="Hugging Face"
@@ -25,9 +25,8 @@ RUN apt-get update && \
     cmake \
     libprotobuf-dev \
     protobuf-compiler \
-    python3-dev \
-    python3-pip \
     python3.11 \
+    python3.11-dev \
     libsndfile1-dev \
     ffmpeg \
     && apt-get clean autoremove --yes \
@@ -35,6 +34,15 @@ RUN apt-get update && \
 
 # Copying only necessary files as filtered by .dockerignore
 COPY . .
+
+# Set Python 3.11 as the default python version
+RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1 && \
+    ln -sf /usr/bin/python3.11 /usr/bin/python
+
+# Install pip from source
+RUN curl -O https://bootstrap.pypa.io/get-pip.py && \
+    python get-pip.py && \
+    rm get-pip.py
 
 # install wheel and setuptools
 RUN pip install --no-cache-dir --upgrade pip ".[torch,st,diffusers]"
@@ -44,11 +52,6 @@ COPY src/huggingface_inference_toolkit huggingface_inference_toolkit
 COPY src/huggingface_inference_toolkit/webservice_starlette.py webservice_starlette.py
 
 # copy entrypoint and change permissions
-COPY --chmod=0755  scripts/entrypoint.sh entrypoint.sh
+COPY --chmod=0755 scripts/entrypoint.sh entrypoint.sh
 
 ENTRYPOINT ["bash", "-c", "./entrypoint.sh"]
-
-FROM base AS vertex
-
-# Install `google` extra for Vertex AI compatibility
-RUN pip install --no-cache-dir --upgrade ".[google]"
