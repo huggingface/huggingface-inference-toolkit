@@ -62,9 +62,7 @@ setup(
     packages=find_packages(where="src"),
     install_requires=install_requires,
     extras_require=extras,
-    entry_points={
-        "console_scripts": "serve=sagemaker_huggingface_inference_toolkit.serving:main"
-    },
+    entry_points={"console_scripts": "serve=sagemaker_huggingface_inference_toolkit.serving:main"},
     python_requires=">=3.8",
     license="Apache License 2.0",
     classifiers=[
