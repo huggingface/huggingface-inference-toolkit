@@ -5,7 +5,7 @@ from setuptools import find_packages, setup
 # We don't declare our dependency on transformers here because we build with
 # different packages for different variants
 
-VERSION = "0.5.1"
+VERSION = "0.5.2"
 
 # Ubuntu packages
 # libsndfile1-dev: torchaudio requires the development version of the libsndfile package which can be installed via a system package manager. On Ubuntu it can be installed as follows: apt install libsndfile1-dev
@@ -13,7 +13,7 @@ VERSION = "0.5.1"
 # libavcodec-extra : libavcodec-extra  includes additional codecs for ffmpeg
 
 install_requires = [
-    "transformers[sklearn,sentencepiece,audio,vision,sentencepiece]==4.46.0",
+    "transformers[sklearn,sentencepiece,audio,vision,sentencepiece]==4.46.1",
     "huggingface_hub[hf_transfer]==0.26.2",
     # vision
     "Pillow",
