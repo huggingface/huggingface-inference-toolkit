@@ -17,8 +17,8 @@ class HuggingFaceHandler:
 
     def __init__(self, model_dir: Union[str, Path], task=None, framework="pt"):
         self.pipeline = get_pipeline(
-            model_dir=model_dir,
-            task=task,
+            model_dir=model_dir,  # type: ignore
+            task=task,  # type: ignore
             framework=framework,
             trust_remote_code=HF_TRUST_REMOTE_CODE,
         )
@@ -31,15 +31,49 @@ class HuggingFaceHandler:
         :return: prediction output
         """
         inputs = data.pop("inputs", data)
-        parameters = data.pop("parameters", None)
+        parameters = data.pop("parameters", {})
 
-        # pass inputs with all kwargs in data
-        if parameters is not None:
-            prediction = self.pipeline(inputs, **parameters)
-        else:
-            prediction = self.pipeline(inputs)
-        # postprocess the prediction
-        return prediction
+        if self.pipeline.task == "question-answering" and (
+            not isinstance(inputs, dict) or not all(k in inputs for k in {"question", "context"})
+        ):
+            raise ValueError(
+                f"{self.pipeline.task} expects `inputs` to contain both `question` and `context` as the keys, "
+                "both of them being either a `str` or a `List[str]`."
+            )
+
+        if self.pipeline.task == "table-question-answering":
+            if "question" in inputs:
+                inputs["query"] = inputs.pop("question")
+            if not all(k in inputs for k in {"table", "question"}):
+                raise ValueError(
+                    f"{self.pipeline.task} expects `inputs` to contain `table` and either `question` or `query`"
+                    " as the input parameters."
+                )
+
+        if self.pipeline.task in {"token-classification", "ner"}:
+            # stride and aggregation_strategy are defined on `pipeline` init, but in the Inference API those
+            # are provided on each request instead
+            pass
+
+        if self.pipeline.task.__contains__("translation"):
+            # truncation and generate_parameters are used on Inference API but not available on
+            # `TranslationPipeline.__call__` method
+            pass
+
+        if self.pipeline.task.__contains__("zero-shot-classification"):
+            if "candidateLabels" in inputs:
+                inputs["candidate_labels"] = inputs.pop("candidateLabels")
+            if "text" in inputs:
+                inputs["sequences"] = inputs.pop("text")
+            if not all(k in inputs for k in {"sequences", "candidate_labels"}):
+                raise ValueError(
+                    f"{self.pipeline.task} expects `inputs` to contain either `text` or `sequences` and either "
+                    "`candidate_labels` or `candidateLabels`."
+                )
+
+        if isinstance(inputs, dict):
+            return self.pipeline(**inputs, **parameters)
+        return self.pipeline(inputs, **parameters)
 
 
 class VertexAIHandler(HuggingFaceHandler):
@@ -59,9 +93,7 @@ class VertexAIHandler(HuggingFaceHandler):
         :return: prediction output
         """
         if "instances" not in data:
-            raise ValueError(
-                "The request body must contain a key 'instances' with a list of instances."
-            )
+            raise ValueError("The request body must contain a key 'instances' with a list of instances.")
         parameters = data.pop("parameters", None)
 
         predictions = []
@@ -74,9 +106,7 @@ class VertexAIHandler(HuggingFaceHandler):
         return {"predictions": predictions}
 
 
-def get_inference_handler_either_custom_or_default_handler(
-    model_dir: Path, task: Optional[str] = None
-):
+def get_inference_handler_either_custom_or_default_handler(model_dir: Path, task: Optional[str] = None):
     """
     Returns the appropriate inference handler based on the given model directory and task.
 
