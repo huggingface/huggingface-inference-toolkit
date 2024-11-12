@@ -208,7 +208,7 @@ def get_device():
 
 
 def get_pipeline(
-    task: str,
+    task: Union[str, None],
     model_dir: Path,
     **kwargs,
 ) -> Pipeline:
@@ -219,12 +219,13 @@ def get_pipeline(
     if is_optimum_neuron_available():
         logger.info("Using device Neuron")
     else:
-        logger.info(f"Using device { 'GPU' if device == 0 else 'CPU'}")
+        logger.info(f"Using device {'GPU' if device == 0 else 'CPU'}")
 
     if task is None:
         raise EnvironmentError(
             "The task for this model is not set: Please set one: https://huggingface.co/docs#how-is-a-models-type-of-inference-api-and-widget-determined"
         )
+
     # define tokenizer or feature extractor as kwargs to load it the pipeline
     # correctly
     if task in {
