@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Optional, Union
 
 from huggingface_inference_toolkit.const import HF_TRUST_REMOTE_CODE
+from huggingface_inference_toolkit.sentence_transformers_utils import SENTENCE_TRANSFORMERS_TASKS
 from huggingface_inference_toolkit.utils import (
     check_and_register_custom_pipeline_from_directory,
     get_pipeline,
@@ -33,43 +34,45 @@ class HuggingFaceHandler:
         inputs = data.pop("inputs", data)
         parameters = data.pop("parameters", {})
 
-        if self.pipeline.task == "question-answering" and (
-            not isinstance(inputs, dict) or not all(k in inputs for k in {"question", "context"})
-        ):
-            raise ValueError(
-                f"{self.pipeline.task} expects `inputs` to contain both `question` and `context` as the keys, "
-                "both of them being either a `str` or a `List[str]`."
-            )
-
-        if self.pipeline.task == "table-question-answering":
-            if "question" in inputs:
-                inputs["query"] = inputs.pop("question")
-            if not all(k in inputs for k in {"table", "question"}):
+        # sentence transformers pipelines do not have the `task` arg
+        if not any(isinstance(self.pipeline, v) for v in SENTENCE_TRANSFORMERS_TASKS.values()):
+            if self.pipeline.task == "question-answering" and (
+                not isinstance(inputs, dict) or not all(k in inputs for k in {"question", "context"})
+            ):
                 raise ValueError(
-                    f"{self.pipeline.task} expects `inputs` to contain `table` and either `question` or `query`"
-                    " as the input parameters."
+                    f"{self.pipeline.task} expects `inputs` to contain both `question` and `context` as the keys, "
+                    "both of them being either a `str` or a `List[str]`."
                 )
 
-        if self.pipeline.task in {"token-classification", "ner"}:
-            # stride and aggregation_strategy are defined on `pipeline` init, but in the Inference API those
-            # are provided on each request instead
-            pass
+            if self.pipeline.task == "table-question-answering":
+                if "question" in inputs:
+                    inputs["query"] = inputs.pop("question")
+                if not all(k in inputs for k in {"table", "question"}):
+                    raise ValueError(
+                        f"{self.pipeline.task} expects `inputs` to contain `table` and either `question` or `query`"
+                        " as the input parameters."
+                    )
 
-        if self.pipeline.task.__contains__("translation"):
-            # truncation and generate_parameters are used on Inference API but not available on
-            # `TranslationPipeline.__call__` method
-            pass
+            if self.pipeline.task in {"token-classification", "ner"}:
+                # stride and aggregation_strategy are defined on `pipeline` init, but in the Inference API those
+                # are provided on each request instead
+                pass
 
-        if self.pipeline.task.__contains__("zero-shot-classification"):
-            if "candidateLabels" in inputs:
-                inputs["candidate_labels"] = inputs.pop("candidateLabels")
-            if "text" in inputs:
-                inputs["sequences"] = inputs.pop("text")
-            if not all(k in inputs for k in {"sequences", "candidate_labels"}):
-                raise ValueError(
-                    f"{self.pipeline.task} expects `inputs` to contain either `text` or `sequences` and either "
-                    "`candidate_labels` or `candidateLabels`."
-                )
+            if self.pipeline.task.__contains__("translation"):
+                # truncation and generate_parameters are used on Inference API but not available on
+                # `TranslationPipeline.__call__` method
+                pass
+
+            if self.pipeline.task.__contains__("zero-shot-classification"):
+                if "candidateLabels" in inputs:
+                    inputs["candidate_labels"] = inputs.pop("candidateLabels")
+                if "text" in inputs:
+                    inputs["sequences"] = inputs.pop("text")
+                if not all(k in inputs for k in {"sequences", "candidate_labels"}):
+                    raise ValueError(
+                        f"{self.pipeline.task} expects `inputs` to contain either `text` or `sequences` and either "
+                        "`candidate_labels` or `candidateLabels`."
+                    )
 
         if isinstance(inputs, dict):
             return self.pipeline(**inputs, **parameters)
