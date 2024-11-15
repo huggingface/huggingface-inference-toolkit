@@ -39,7 +39,9 @@ class RankingPipeline:
         # `device` needs to be set to "cuda" for GPU
         self.model = CrossEncoder(model_dir, device=device, **kwargs)
 
-    def __call__(self, sentences: Union[List[List[str]], List[Tuple[str, str]]]) -> Dict[str, List[float]]:
+    def __call__(
+        self, sentences: Union[Tuple[str, str], List[str], List[List[str]], List[Tuple[str, str]]]
+    ) -> Dict[str, List[float]]:
         scores = self.model.predict(sentences).tolist()
         return {"scores": scores}
 
