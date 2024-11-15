@@ -73,14 +73,16 @@ class HuggingFaceHandler:
                         logger.warning(f"provided parameter `{p}`, but it's not supported.")
 
             if self.pipeline.task.__contains__("zero-shot-classification"):
-                if "candidateLabels" in inputs:
-                    inputs["candidate_labels"] = inputs.pop("candidateLabels")
+                if "candidateLabels" in parameters:
+                    parameters["candidate_labels"] = parameters.pop("candidateLabels")
                 if "text" in inputs:
                     inputs["sequences"] = inputs.pop("text")
-                if not all(k in inputs for k in {"sequences", "candidate_labels"}):
+                if not all(k in inputs for k in {"sequences", "parameters"}) or not all(
+                    k in parameters for k in {"candidate_labels"}
+                ):
                     raise ValueError(
-                        f"{self.pipeline.task} expects `inputs` to contain either `text` or `sequences` and either "
-                        "`candidate_labels` or `candidateLabels`."
+                        f"{self.pipeline.task} expects `inputs` to contain either `text` or `sequences` and "
+                        "`parameters` to contain either `candidate_labels` or `candidateLabels`."
                     )
 
         return (
