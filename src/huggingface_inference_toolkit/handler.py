@@ -56,12 +56,19 @@ class HuggingFaceHandler:
             if self.pipeline.task in {"token-classification", "ner"}:
                 # stride and aggregation_strategy are defined on `pipeline` init, but in the Inference API those
                 # are provided on each request instead
-                pass
+                for p in {"stride", "aggregation_strategy"}:
+                    if p in parameters:
+                        parameters.pop(p)
+                        logger.warning(f"provided parameter `{p}`, but it's not supported.")
 
             if self.pipeline.task.__contains__("translation"):
                 # truncation and generate_parameters are used on Inference API but not available on
                 # `TranslationPipeline.__call__` method
-                pass
+                for p in {"truncation", "generate_parameters"}:
+                    if p in parameters:
+                        parameters.pop(p)
+                        logger.warning(f"provided parameter `{p}`, but it's not supported.")
+
 
             if self.pipeline.task.__contains__("zero-shot-classification"):
                 if "candidateLabels" in inputs:
