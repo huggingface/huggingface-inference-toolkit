@@ -1,7 +1,7 @@
 import tempfile
+from typing import Dict
 
 import pytest
-from typing import Dict
 from transformers.testing_utils import require_tf, require_torch
 
 from huggingface_inference_toolkit.handler import (
@@ -12,7 +12,6 @@ from huggingface_inference_toolkit.utils import (
     _is_gpu_available,
     _load_repository_from_hf,
 )
-from huggingface_inference_toolkit.logging import logger
 
 TASK = "text-classification"
 MODEL = "hf-internal-testing/tiny-random-distilbert"
