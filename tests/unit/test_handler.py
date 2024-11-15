@@ -1,6 +1,7 @@
 import tempfile
 
 import pytest
+from typing import Dict
 from transformers.testing_utils import require_tf, require_torch
 
 from huggingface_inference_toolkit.handler import (
@@ -11,14 +12,20 @@ from huggingface_inference_toolkit.utils import (
     _is_gpu_available,
     _load_repository_from_hf,
 )
+from huggingface_inference_toolkit.logging import logger
 
 TASK = "text-classification"
 MODEL = "hf-internal-testing/tiny-random-distilbert"
-INPUT = {"inputs": "My name is Wolfgang and I live in Berlin"}
+
+
+# defined as fixture because it's modified on `pop`
+@pytest.fixture
+def input_data():
+    return {"inputs": "My name is Wolfgang and I live in Berlin"}
 
 
 @require_torch
-def test_pt_get_device():
+def test_pt_get_device() -> None:
     import torch
 
     with tempfile.TemporaryDirectory() as tmpdirname:
@@ -32,52 +39,45 @@ def test_pt_get_device():
 
 
 @require_torch
-def test_pt_predict_call():
+def test_pt_predict_call(input_data: Dict[str, str]) -> None:
     with tempfile.TemporaryDirectory() as tmpdirname:
         # https://github.com/huggingface/infinity/blob/test-ovh/test/integ/utils.py
         storage_dir = _load_repository_from_hf(MODEL, tmpdirname, framework="pytorch")
         h = HuggingFaceHandler(model_dir=str(storage_dir), task=TASK)
 
-        prediction = h(INPUT)
+        prediction = h(input_data)
         assert "label" in prediction[0]
         assert "score" in prediction[0]
 
 
 @require_torch
-def test_pt_custom_pipeline():
+def test_pt_custom_pipeline(input_data: Dict[str, str]) -> None:
     with tempfile.TemporaryDirectory() as tmpdirname:
         storage_dir = _load_repository_from_hf(
             "philschmid/custom-pipeline-text-classification",
             tmpdirname,
             framework="pytorch",
         )
-        h = get_inference_handler_either_custom_or_default_handler(
-            str(storage_dir), task="custom"
-        )
-        assert h(INPUT) == INPUT
+        h = get_inference_handler_either_custom_or_default_handler(str(storage_dir), task="custom")
+        assert h(input_data) == input_data
 
 
 @require_torch
-def test_pt_sentence_transformers_pipeline():
+def test_pt_sentence_transformers_pipeline(input_data: Dict[str, str]) -> None:
     with tempfile.TemporaryDirectory() as tmpdirname:
         storage_dir = _load_repository_from_hf(
             "sentence-transformers/all-MiniLM-L6-v2", tmpdirname, framework="pytorch"
         )
-        h = get_inference_handler_either_custom_or_default_handler(
-            str(storage_dir), task="sentence-embeddings"
-        )
-        pred = h(INPUT)
+        h = get_inference_handler_either_custom_or_default_handler(str(storage_dir), task="sentence-embeddings")
+        pred = h(input_data)
         assert isinstance(pred["embeddings"], list)
 
 
 @require_tf
 def test_tf_get_device():
-
     with tempfile.TemporaryDirectory() as tmpdirname:
         # https://github.com/huggingface/infinity/blob/test-ovh/test/integ/utils.py
-        storage_dir = _load_repository_from_hf(
-            MODEL, tmpdirname, framework="tensorflow"
-        )
+        storage_dir = _load_repository_from_hf(MODEL, tmpdirname, framework="tensorflow")
         h = HuggingFaceHandler(model_dir=str(storage_dir), task=TASK)
         if _is_gpu_available():
             assert h.pipeline.device == 0
@@ -86,33 +86,27 @@ def test_tf_get_device():
 
 
 @require_tf
-def test_tf_predict_call():
+def test_tf_predict_call(input_data: Dict[str, str]) -> None:
     with tempfile.TemporaryDirectory() as tmpdirname:
         # https://github.com/huggingface/infinity/blob/test-ovh/test/integ/utils.py
-        storage_dir = _load_repository_from_hf(
-            MODEL, tmpdirname, framework="tensorflow"
-        )
-        handler = HuggingFaceHandler(
-            model_dir=str(storage_dir), task=TASK, framework="tf"
-        )
+        storage_dir = _load_repository_from_hf(MODEL, tmpdirname, framework="tensorflow")
+        handler = HuggingFaceHandler(model_dir=str(storage_dir), task=TASK, framework="tf")
 
-        prediction = handler(INPUT)
+        prediction = handler(input_data)
         assert "label" in prediction[0]
         assert "score" in prediction[0]
 
 
 @require_tf
-def test_tf_custom_pipeline():
+def test_tf_custom_pipeline(input_data: Dict[str, str]) -> None:
     with tempfile.TemporaryDirectory() as tmpdirname:
         storage_dir = _load_repository_from_hf(
             "philschmid/custom-pipeline-text-classification",
             tmpdirname,
             framework="tensorflow",
         )
-        h = get_inference_handler_either_custom_or_default_handler(
-            str(storage_dir), task="custom"
-        )
-        assert h(INPUT) == INPUT
+        h = get_inference_handler_either_custom_or_default_handler(str(storage_dir), task="custom")
+        assert h(input_data) == input_data
 
 
 @require_tf
@@ -123,6 +117,4 @@ def test_tf_sentence_transformers_pipeline():
             "sentence-transformers/all-MiniLM-L6-v2", tmpdirname, framework="tensorflow"
         )
         with pytest.raises(Exception) as _exc_info:
-            get_inference_handler_either_custom_or_default_handler(
-                str(storage_dir), task="sentence-embeddings"
-            )
+            get_inference_handler_either_custom_or_default_handler(str(storage_dir), task="sentence-embeddings")
