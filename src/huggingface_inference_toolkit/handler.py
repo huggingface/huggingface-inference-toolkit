@@ -43,17 +43,17 @@ class HuggingFaceHandler:
                 not isinstance(inputs, dict) or not all(k in inputs for k in {"question", "context"})
             ):
                 raise ValueError(
-                    f"{self.pipeline.task} expects `inputs` to contain both `question` and `context` as the keys, "
-                    "both of them being either a `str` or a `List[str]`."
+                    f"{self.pipeline.task} expects `inputs` to be a dict containing both `question` and "
+                    "`context` as the keys, both of them being either a `str` or a `List[str]`."
                 )
 
             if self.pipeline.task == "table-question-answering":
-                if "question" in inputs:
+                if isinstance(inputs, dict) and "question" in inputs:
                     inputs["query"] = inputs.pop("question")
-                if not all(k in inputs for k in {"table", "query"}):
+                if not isinstance(inputs, dict) or not all(k in inputs for k in {"table", "query"}):
                     raise ValueError(
-                        f"{self.pipeline.task} expects `inputs` to contain `table` and either `question` or `query`"
-                        " as the input parameters."
+                        f"{self.pipeline.task} expects `inputs` to be a dict containing the keys `table` and "
+                        "either `question` or `query`."
                     )
 
             if self.pipeline.task in {"token-classification", "ner"}:
@@ -75,14 +75,19 @@ class HuggingFaceHandler:
             if self.pipeline.task.__contains__("zero-shot-classification"):
                 if "candidateLabels" in parameters:
                     parameters["candidate_labels"] = parameters.pop("candidateLabels")
-                if "text" in inputs:
+                if not isinstance(inputs, dict) and (isinstance(inputs, str) or isinstance(inputs, list)):
+                    inputs = {"sequences": inputs}
+                if isinstance(inputs, dict) and "text" in inputs:
                     inputs["sequences"] = inputs.pop("text")
-                if not all(k in inputs for k in {"sequences", "parameters"}) or not all(
-                    k in parameters for k in {"candidate_labels"}
+                if (
+                    not isinstance(inputs, dict)
+                    or not all(k in inputs for k in {"sequences", "parameters"})
+                    or not all(k in parameters for k in {"candidate_labels"})
                 ):
                     raise ValueError(
-                        f"{self.pipeline.task} expects `inputs` to contain either `text` or `sequences` and "
-                        "`parameters` to contain either `candidate_labels` or `candidateLabels`."
+                        f"{self.pipeline.task} expects `inputs` to be a dict containing the key `text` or "
+                        "`sequences`, and `parameters` to be another dict containing either `candidate_labels` "
+                        "or `candidateLabels`."
                     )
 
         return (
