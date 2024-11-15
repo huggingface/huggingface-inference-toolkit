@@ -38,58 +38,58 @@ class HuggingFaceHandler:
         parameters = data.pop("parameters", {})
 
         # sentence transformers pipelines do not have the `task` arg
-        if not any(isinstance(self.pipeline, v) for v in SENTENCE_TRANSFORMERS_TASKS.values()):
-            if self.pipeline.task == "question-answering":
-                if not isinstance(inputs, dict):
-                    raise ValueError(f"inputs must be a dict, but a `{type(inputs)}` was provided instead.")
-                if not all(k in inputs for k in {"question", "context"}):
-                    raise ValueError(
-                        f"{self.pipeline.task} expects `inputs` to be a dict containing both `question` and "
-                        "`context` as the keys, both of them being either a `str` or a `List[str]`."
-                    )
+        if any(isinstance(self.pipeline, v) for v in SENTENCE_TRANSFORMERS_TASKS.values()):
+            return self.pipeline(**inputs) if isinstance(inputs, dict) else self.pipeline(inputs)  # type: ignore
 
-            if self.pipeline.task == "table-question-answering":
-                if not isinstance(inputs, dict):
-                    raise ValueError(f"inputs must be a dict, but a `{type(inputs)}` was provided instead.")
-                if "question" in inputs:
-                    inputs["query"] = inputs.pop("question")
-                if not all(k in inputs for k in {"table", "query"}):
-                    raise ValueError(
-                        f"{self.pipeline.task} expects `inputs` to be a dict containing the keys `table` and "
-                        "either `question` or `query`."
-                    )
+        if self.pipeline.task == "question-answering":
+            if not isinstance(inputs, dict):
+                raise ValueError(f"inputs must be a dict, but a `{type(inputs)}` was provided instead.")
+            if not all(k in inputs for k in {"question", "context"}):
+                raise ValueError(
+                    f"{self.pipeline.task} expects `inputs` to be a dict containing both `question` and "
+                    "`context` as the keys, both of them being either a `str` or a `List[str]`."
+                )
 
-            if self.pipeline.task in {"token-classification", "ner"}:
-                # stride and aggregation_strategy are defined on `pipeline` init, but in the Inference API those
-                # are provided on each request instead
-                for p in {"stride", "aggregation_strategy"}:
-                    if p in parameters:
-                        parameters.pop(p)
-                        logger.warning(f"provided parameter `{p}`, but it's not supported.")
+        if self.pipeline.task == "table-question-answering":
+            if not isinstance(inputs, dict):
+                raise ValueError(f"inputs must be a dict, but a `{type(inputs)}` was provided instead.")
+            if "question" in inputs:
+                inputs["query"] = inputs.pop("question")
+            if not all(k in inputs for k in {"table", "query"}):
+                raise ValueError(
+                    f"{self.pipeline.task} expects `inputs` to be a dict containing the keys `table` and "
+                    "either `question` or `query`."
+                )
 
-            if self.pipeline.task.__contains__("translation"):
-                # truncation and generate_parameters are used on Inference API but not available on
-                # `TranslationPipeline.__call__` method
-                for p in {"truncation", "generate_parameters"}:
-                    if p in parameters:
-                        parameters.pop(p)
-                        logger.warning(f"provided parameter `{p}`, but it's not supported.")
+        if self.pipeline.task in {"token-classification", "ner"}:
+            # stride and aggregation_strategy are defined on `pipeline` init, but in the Inference API those
+            # are provided on each request instead
+            for p in {"stride", "aggregation_strategy"}:
+                if p in parameters:
+                    parameters.pop(p)
+                    logger.warning(f"provided parameter `{p}`, but it's not supported.")
 
-            if self.pipeline.task.__contains__("zero-shot-classification"):
-                if "candidateLabels" in parameters:
-                    parameters["candidate_labels"] = parameters.pop("candidateLabels")
-                if not isinstance(inputs, dict):
-                    inputs = {"sequences": inputs}
-                if "text" in inputs:
-                    inputs["sequences"] = inputs.pop("text")
-                if not all(k in inputs for k in {"sequences"}) or not all(
-                    k in parameters for k in {"candidate_labels"}
-                ):
-                    raise ValueError(
-                        f"{self.pipeline.task} expects `inputs` to be either a string or a dict containing the "
-                        "key `text` or `sequences`, and `parameters` to be a dict containing either `candidate_labels` "
-                        "or `candidateLabels`."
-                    )
+        if self.pipeline.task.__contains__("translation"):
+            # truncation and generate_parameters are used on Inference API but not available on
+            # `TranslationPipeline.__call__` method
+            for p in {"truncation", "generate_parameters"}:
+                if p in parameters:
+                    parameters.pop(p)
+                    logger.warning(f"provided parameter `{p}`, but it's not supported.")
+
+        if self.pipeline.task.__contains__("zero-shot-classification"):
+            if "candidateLabels" in parameters:
+                parameters["candidate_labels"] = parameters.pop("candidateLabels")
+            if not isinstance(inputs, dict):
+                inputs = {"sequences": inputs}
+            if "text" in inputs:
+                inputs["sequences"] = inputs.pop("text")
+            if not all(k in inputs for k in {"sequences"}) or not all(k in parameters for k in {"candidate_labels"}):
+                raise ValueError(
+                    f"{self.pipeline.task} expects `inputs` to be either a string or a dict containing the "
+                    "key `text` or `sequences`, and `parameters` to be a dict containing either `candidate_labels` "
+                    "or `candidateLabels`."
+                )
 
         return (
             self.pipeline(**inputs, **parameters) if isinstance(inputs, dict) else self.pipeline(inputs, **parameters)  # type: ignore
