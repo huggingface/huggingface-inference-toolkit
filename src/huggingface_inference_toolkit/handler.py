@@ -50,7 +50,7 @@ class HuggingFaceHandler:
             if self.pipeline.task == "table-question-answering":
                 if "question" in inputs:
                     inputs["query"] = inputs.pop("question")
-                if not all(k in inputs for k in {"table", "question"}):
+                if not all(k in inputs for k in {"table", "query"}):
                     raise ValueError(
                         f"{self.pipeline.task} expects `inputs` to contain `table` and either `question` or `query`"
                         " as the input parameters."
