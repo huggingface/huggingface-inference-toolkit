@@ -1,8 +1,9 @@
 import os
 from pathlib import Path
-from typing import Optional, Union
+from typing import Any, Dict, Literal, Optional, Union
 
 from huggingface_inference_toolkit.const import HF_TRUST_REMOTE_CODE
+from huggingface_inference_toolkit.logging import logger
 from huggingface_inference_toolkit.sentence_transformers_utils import SENTENCE_TRANSFORMERS_TASKS
 from huggingface_inference_toolkit.utils import (
     check_and_register_custom_pipeline_from_directory,
@@ -13,10 +14,12 @@ from huggingface_inference_toolkit.utils import (
 class HuggingFaceHandler:
     """
     A Default Hugging Face Inference Handler which works with all
-    transformers pipelines, Sentence Transformers and Optimum.
+    Transformers, Diffusers, Sentence Transformers and Optimum pipelines.
     """
 
-    def __init__(self, model_dir: Union[str, Path], task=None, framework="pt"):
+    def __init__(
+        self, model_dir: Union[str, Path], task: Union[str, None] = None, framework: Literal["pt"] = "pt"
+    ) -> None:
         self.pipeline = get_pipeline(
             model_dir=model_dir,  # type: ignore
             task=task,  # type: ignore
@@ -24,7 +27,7 @@ class HuggingFaceHandler:
             trust_remote_code=HF_TRUST_REMOTE_CODE,
         )
 
-    def __call__(self, data):
+    def __call__(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Handles an inference request with input data and makes a prediction.
         Args:
@@ -69,7 +72,6 @@ class HuggingFaceHandler:
                         parameters.pop(p)
                         logger.warning(f"provided parameter `{p}`, but it's not supported.")
 
-
             if self.pipeline.task.__contains__("zero-shot-classification"):
                 if "candidateLabels" in inputs:
                     inputs["candidate_labels"] = inputs.pop("candidateLabels")
@@ -81,9 +83,9 @@ class HuggingFaceHandler:
                         "`candidate_labels` or `candidateLabels`."
                     )
 
-        if isinstance(inputs, dict):
-            return self.pipeline(**inputs, **parameters)
-        return self.pipeline(inputs, **parameters)
+        return (
+            self.pipeline(**inputs, **parameters) if isinstance(inputs, dict) else self.pipeline(inputs, **parameters)  # type: ignore
+        )
 
 
 class VertexAIHandler(HuggingFaceHandler):
@@ -92,10 +94,12 @@ class VertexAIHandler(HuggingFaceHandler):
     Vertex AI specific logic for inference.
     """
 
-    def __init__(self, model_dir: Union[str, Path], task=None, framework="pt"):
-        super().__init__(model_dir, task, framework)
+    def __init__(
+        self, model_dir: Union[str, Path], task: Union[str, None] = None, framework: Literal["pt"] = "pt"
+    ) -> None:
+        super().__init__(model_dir=model_dir, task=task, framework=framework)
 
-    def __call__(self, data):
+    def __call__(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Handles an inference request with input data and makes a prediction.
         Args:
@@ -116,7 +120,7 @@ class VertexAIHandler(HuggingFaceHandler):
         return {"predictions": predictions}
 
 
-def get_inference_handler_either_custom_or_default_handler(model_dir: Path, task: Optional[str] = None):
+def get_inference_handler_either_custom_or_default_handler(model_dir: Path, task: Optional[str] = None) -> Any:
     """
     Returns the appropriate inference handler based on the given model directory and task.
 
@@ -128,9 +132,10 @@ def get_inference_handler_either_custom_or_default_handler(model_dir: Path, task
         InferenceHandler: The appropriate inference handler based on the given model directory and task.
     """
     custom_pipeline = check_and_register_custom_pipeline_from_directory(model_dir)
-    if custom_pipeline:
+    if custom_pipeline is not None:
         return custom_pipeline
-    elif os.environ.get("AIP_MODE", None) == "PREDICTION":
+
+    if os.environ.get("AIP_MODE", None) == "PREDICTION":
         return VertexAIHandler(model_dir=model_dir, task=task)
-    else:
-        return HuggingFaceHandler(model_dir=model_dir, task=task)
+
+    return HuggingFaceHandler(model_dir=model_dir, task=task)

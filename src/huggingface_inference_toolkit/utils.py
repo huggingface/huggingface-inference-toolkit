@@ -134,9 +134,7 @@ def _load_repository_from_hf(
 
     # create regex to only include the framework specific weights
     ignore_regex = create_artifact_filter(framework)
-    logger.info(
-        f"Ignore regex pattern for files, which are not downloaded: { ', '.join(ignore_regex) }"
-    )
+    logger.info(f"Ignore regex pattern for files, which are not downloaded: { ', '.join(ignore_regex) }")
 
     # Download the repository to the workdir and filter out non-framework
     # specific weights
@@ -177,9 +175,7 @@ def check_and_register_custom_pipeline_from_directory(model_dir):
             Please update to the new format.
             See documentation for more information."""
         )
-        spec = importlib.util.spec_from_file_location(
-            "pipeline.PreTrainedPipeline", legacy_module
-        )
+        spec = importlib.util.spec_from_file_location("pipeline.PreTrainedPipeline", legacy_module)
         if spec:
             # add the whole directory to path for submodlues
             sys.path.insert(0, model_dir)
@@ -215,16 +211,20 @@ def get_pipeline(
     """
     create pipeline class for a specific task based on local saved model
     """
-    device = get_device()
-    if is_optimum_neuron_available():
-        logger.info("Using device Neuron")
-    else:
-        logger.info(f"Using device {'GPU' if device == 0 else 'CPU'}")
-
     if task is None:
         raise EnvironmentError(
             "The task for this model is not set: Please set one: https://huggingface.co/docs#how-is-a-models-type-of-inference-api-and-widget-determined"
         )
+
+    if task == "conversational":
+        task = "text-generation"
+
+    if is_optimum_neuron_available():
+        logger.info("Using device Neuron")
+        return get_optimum_neuron_pipeline(task=task, model_dir=model_dir)
+
+    device = get_device()
+    logger.info(f"Using device {'GPU' if device == 0 else 'CPU'}")
 
     # define tokenizer or feature extractor as kwargs to load it the pipeline
     # correctly
@@ -237,41 +237,27 @@ def get_pipeline(
         "zero-shot-image-classification",
     }:
         kwargs["feature_extractor"] = model_dir
-    elif task in {"image-to-text", "text-to-image"}:
-        pass
-    elif task == "conversational":
-        task = "text-generation"
-    else:
+    elif task not in {"image-to-text", "text-to-image"}:
         kwargs["tokenizer"] = model_dir
 
-    if is_optimum_neuron_available():
-        hf_pipeline = get_optimum_neuron_pipeline(task=task, model_dir=model_dir)
-    elif is_sentence_transformers_available() and task in [
+    if is_sentence_transformers_available() and task in [
         "sentence-similarity",
         "sentence-embeddings",
         "sentence-ranking",
     ]:
-        hf_pipeline = get_sentence_transformers_pipeline(
-            task=task, model_dir=model_dir, device=device, **kwargs
-        )
+        hf_pipeline = get_sentence_transformers_pipeline(task=task, model_dir=model_dir, device=device, **kwargs)
     elif is_diffusers_available() and task == "text-to-image":
-        hf_pipeline = get_diffusers_pipeline(
-            task=task, model_dir=model_dir, device=device, **kwargs
-        )
+        hf_pipeline = get_diffusers_pipeline(task=task, model_dir=model_dir, device=device, **kwargs)
     else:
         hf_pipeline = pipeline(task=task, model=model_dir, device=device, **kwargs)
 
-    if task == "automatic-speech-recognition" and isinstance(
-        hf_pipeline.model, WhisperForConditionalGeneration
-    ):
+    if task == "automatic-speech-recognition" and isinstance(hf_pipeline.model, WhisperForConditionalGeneration):
         # set chunk length to 30s for whisper to enable long audio files
         hf_pipeline._preprocess_params["chunk_length_s"] = 30
-        hf_pipeline.model.config.forced_decoder_ids = (
-            hf_pipeline.tokenizer.get_decoder_prompt_ids(
-                language="english", task="transcribe"
-            )
+        hf_pipeline.model.config.forced_decoder_ids = hf_pipeline.tokenizer.get_decoder_prompt_ids(
+            language="english", task="transcribe"
         )
-    return hf_pipeline
+    return hf_pipeline  # type: ignore
 
 
 def convert_params_to_int_or_bool(params):
