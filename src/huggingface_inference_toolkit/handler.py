@@ -39,18 +39,21 @@ class HuggingFaceHandler:
 
         # sentence transformers pipelines do not have the `task` arg
         if not any(isinstance(self.pipeline, v) for v in SENTENCE_TRANSFORMERS_TASKS.values()):
-            if self.pipeline.task == "question-answering" and (
-                not isinstance(inputs, dict) or not all(k in inputs for k in {"question", "context"})
-            ):
-                raise ValueError(
-                    f"{self.pipeline.task} expects `inputs` to be a dict containing both `question` and "
-                    "`context` as the keys, both of them being either a `str` or a `List[str]`."
-                )
+            if self.pipeline.task == "question-answering":
+                if not isinstance(inputs, dict):
+                    raise ValueError(f"inputs must be a dict, but a `{type(inputs)}` was provided instead.")
+                if not all(k in inputs for k in {"question", "context"}):
+                    raise ValueError(
+                        f"{self.pipeline.task} expects `inputs` to be a dict containing both `question` and "
+                        "`context` as the keys, both of them being either a `str` or a `List[str]`."
+                    )
 
             if self.pipeline.task == "table-question-answering":
-                if isinstance(inputs, dict) and "question" in inputs:
+                if not isinstance(inputs, dict):
+                    raise ValueError(f"inputs must be a dict, but a `{type(inputs)}` was provided instead.")
+                if "question" in inputs:
                     inputs["query"] = inputs.pop("question")
-                if not isinstance(inputs, dict) or not all(k in inputs for k in {"table", "query"}):
+                if not all(k in inputs for k in {"table", "query"}):
                     raise ValueError(
                         f"{self.pipeline.task} expects `inputs` to be a dict containing the keys `table` and "
                         "either `question` or `query`."
@@ -75,18 +78,16 @@ class HuggingFaceHandler:
             if self.pipeline.task.__contains__("zero-shot-classification"):
                 if "candidateLabels" in parameters:
                     parameters["candidate_labels"] = parameters.pop("candidateLabels")
-                if not isinstance(inputs, dict) and (isinstance(inputs, str) or isinstance(inputs, list)):
+                if not isinstance(inputs, dict):
                     inputs = {"sequences": inputs}
-                if isinstance(inputs, dict) and "text" in inputs:
+                if "text" in inputs:
                     inputs["sequences"] = inputs.pop("text")
-                if (
-                    not isinstance(inputs, dict)
-                    or not all(k in inputs for k in {"sequences", "parameters"})
-                    or not all(k in parameters for k in {"candidate_labels"})
+                if not all(k in inputs for k in {"sequences"}) or not all(
+                    k in parameters for k in {"candidate_labels"}
                 ):
                     raise ValueError(
-                        f"{self.pipeline.task} expects `inputs` to be a dict containing the key `text` or "
-                        "`sequences`, and `parameters` to be another dict containing either `candidate_labels` "
+                        f"{self.pipeline.task} expects `inputs` to be either a string or a dict containing the "
+                        "key `text` or `sequences`, and `parameters` to be a dict containing either `candidate_labels` "
                         "or `candidateLabels`."
                     )
 
