@@ -116,7 +116,7 @@ class VertexAIHandler(HuggingFaceHandler):
         """
         if "instances" not in data:
             raise ValueError("The request body must contain a key 'instances' with a list of instances.")
-        parameters = data.pop("parameters", None)
+        parameters = data.pop("parameters", {})
 
         predictions = []
         # iterate over all instances and make predictions
