@@ -62,12 +62,10 @@ class HuggingFaceHandler:
                 )
 
         if self.pipeline.task in {"token-classification", "ner"}:
-            # stride and aggregation_strategy are defined on `pipeline` init, but in the Inference API those
-            # are provided on each request instead
-            for p in {"stride", "aggregation_strategy"}:
-                if p in parameters:
-                    parameters.pop(p)
-                    logger.warning(f"provided parameter `{p}`, but it's not supported.")
+            # even though the parameters `stride`, `aggregation_strategy` and `ignore_labels` are not explicitly
+            # defined within the `transformers.TokenClassificationPipeline.__call__` method, those are indeed
+            # supported and can be used on both the Inferencen API and Inference Endpoints
+            pass
 
         if self.pipeline.task.__contains__("translation"):
             # truncation and generate_parameters are used on Inference API but not available on
