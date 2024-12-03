@@ -3,7 +3,6 @@ from pathlib import Path
 from typing import Any, Dict, Literal, Optional, Union
 
 from huggingface_inference_toolkit.const import HF_TRUST_REMOTE_CODE
-from huggingface_inference_toolkit.logging import logger
 from huggingface_inference_toolkit.sentence_transformers_utils import SENTENCE_TRANSFORMERS_TASKS
 from huggingface_inference_toolkit.utils import (
     check_and_register_custom_pipeline_from_directory,
@@ -61,19 +60,14 @@ class HuggingFaceHandler:
                     "either `question` or `query`."
                 )
 
-        if self.pipeline.task in {"token-classification", "ner"}:
-            # even though the parameters `stride`, `aggregation_strategy` and `ignore_labels` are not explicitly
-            # defined within the `transformers.TokenClassificationPipeline.__call__` method, those are indeed
-            # supported and can be used on both the Inferencen API and Inference Endpoints
-            pass
-
-        if self.pipeline.task.__contains__("translation"):
-            # truncation and generate_parameters are used on Inference API but not available on
-            # `TranslationPipeline.__call__` method
-            for p in {"truncation", "generate_parameters"}:
-                if p in parameters:
-                    parameters.pop(p)
-                    logger.warning(f"provided parameter `{p}`, but it's not supported.")
+        if self.pipeline.task.__contains__("translation") or self.pipeline.task in {"text-generation"}:
+            # eventually `transformers` will update it to be named `generation_parameters`, in the meantime, in
+            # the current version pinned, it's not supported yet; and is still named `generate_kwargs`
+            # and the Inference API is using `generate_parameters`
+            if "generation_parameters" in parameters:
+                parameters["generate_kwargs"] = parameters.pop("generation_parameters")
+            if "generate_parameters" in parameters:
+                parameters["generate_kwargs"] = parameters.pop("generate_parameters")
 
         if self.pipeline.task.__contains__("zero-shot-classification"):
             if "candidateLabels" in parameters:
