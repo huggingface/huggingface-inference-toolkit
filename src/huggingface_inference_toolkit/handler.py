@@ -68,6 +68,10 @@ class HuggingFaceHandler:
                 parameters["generate_kwargs"] = parameters.pop("generation_parameters")
             if "generate_parameters" in parameters:
                 parameters["generate_kwargs"] = parameters.pop("generate_parameters")
+            generate_kwargs = parameters.pop("generate_kwargs", {})
+            # flatten the values of `generate_kwargs` as it's not supported as is, but via top-level parameters
+            for key, value in generate_kwargs.items():
+                parameters[key] = value
 
         if self.pipeline.task.__contains__("zero-shot-classification"):
             if "candidateLabels" in parameters:
