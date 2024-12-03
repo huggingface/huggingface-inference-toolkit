@@ -60,16 +60,21 @@ class HuggingFaceHandler:
                     "either `question` or `query`."
                 )
 
-        if self.pipeline.task.__contains__("translation") or self.pipeline.task in {"text-generation"}:
-            # eventually `transformers` will update it to be named `generation_parameters`, in the meantime, in
-            # the current version pinned, it's not supported yet; and is still named `generate_kwargs`
-            # and the Inference API is using `generate_parameters`
+        if self.pipeline.task.__contains__("translation") or self.pipeline.task in {
+            "text-generation",
+            "image-to-text",
+            "automatic-speech-recognition",
+            "text-to-audio",
+        }:
+            # `generate_kwargs` needs to be a dict, `generation_parameters` or `generate` are not valid names
             if "generation_parameters" in parameters:
                 parameters["generate_kwargs"] = parameters.pop("generation_parameters")
-            if "generate_parameters" in parameters:
-                parameters["generate_kwargs"] = parameters.pop("generate_parameters")
-            generate_kwargs = parameters.pop("generate_kwargs", {})
+            if "generate" in parameters:
+                parameters["generate_kwargs"] = parameters.pop("generate")
+
+        if self.pipeline.task.__contains__("translation") or self.pipeline.task in {"text-generation"}:
             # flatten the values of `generate_kwargs` as it's not supported as is, but via top-level parameters
+            generate_kwargs = parameters.pop("generate_kwargs", {})
             for key, value in generate_kwargs.items():
                 parameters[key] = value
 
