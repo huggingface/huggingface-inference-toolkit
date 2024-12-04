@@ -34,22 +34,52 @@ class SentenceEmbeddingPipeline:
         return {"embeddings": embeddings}
 
 
-class RankingPipeline:
+class SentenceRankingPipeline:
     def __init__(self, model_dir: str, device: Union[str, None] = None, **kwargs: Any) -> None:
         # `device` needs to be set to "cuda" for GPU
         self.model = CrossEncoder(model_dir, device=device, **kwargs)
 
     def __call__(
-        self, sentences: Union[Tuple[str, str], List[str], List[List[str]], List[Tuple[str, str]]]
-    ) -> Dict[str, List[float]]:
-        scores = self.model.predict(sentences).tolist()
+        self,
+        sentences: Union[Tuple[str, str], List[str], List[List[str]], List[Tuple[str, str]], None] = None,
+        query: Union[str, None] = None,
+        texts: Union[List[str], None] = None,
+        return_documents: bool = False,
+    ) -> Dict[str, List[Any]]:
+        if all(x is not None for x in [sentences, query, texts]):
+            raise ValueError(
+                f"The provided payload contains {sentences=} (i.e. 'inputs'), {query=}, and {texts=}"
+                " but all of those cannot be provided, you should provide either only 'sentences' i.e. 'inputs'"
+                " of both 'query' and 'texts' to run the ranking task."
+            )
+
+        if all(x is None for x in [sentences, query, texts]):
+            raise ValueError(
+                "No inputs have been provided within the input payload, make sure that the input payload"
+                " contains either 'sentences' i.e. 'inputs', or both 'query' and 'texts' to run the ranking task."
+            )
+
+        if sentences is not None:
+            scores = self.model.predict(sentences).tolist()
+            return {"scores": scores}
+
+        if query is None or not isinstance(query, str):
+            raise ValueError(f"Provided {query=} but a non-empty string should be provided instead.")
+
+        if texts is None or not isinstance(texts, list) or not all(isinstance(text, str) for text in texts):
+            raise ValueError(f"Provided {texts=}, but a list of non-empty strings should be provided instead.")
+
+        scores = self.model.rank(query, texts, return_documents=return_documents)
+        # rename "corpus_id" key to "index" for all scores to match TEI
+        for score in scores:
+            score["index"] = score.pop("corpus_id")  # type: ignore
         return {"scores": scores}
 
 
 SENTENCE_TRANSFORMERS_TASKS = {
     "sentence-similarity": SentenceSimilarityPipeline,
     "sentence-embeddings": SentenceEmbeddingPipeline,
-    "sentence-ranking": RankingPipeline,
+    "sentence-ranking": SentenceRankingPipeline,
 }
 
 
