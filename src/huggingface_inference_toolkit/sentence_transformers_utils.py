@@ -1,6 +1,11 @@
 import importlib.util
 from typing import Any, Dict, List, Tuple, Union
 
+try:
+    from typing import Literal
+except ImportError:
+    from typing_extensions import Literal
+
 _sentence_transformers = importlib.util.find_spec("sentence_transformers") is not None
 
 
@@ -45,7 +50,7 @@ class SentenceRankingPipeline:
         query: Union[str, None] = None,
         texts: Union[List[str], None] = None,
         return_documents: bool = False,
-    ) -> Dict[str, List[Any]]:
+    ) -> Union[Dict[str, List[float]], List[Dict[Literal["index", "score", "text"], Any]]]:
         if all(x is not None for x in [sentences, query, texts]):
             raise ValueError(
                 f"The provided payload contains {sentences=} (i.e. 'inputs'), {query=}, and {texts=}"
@@ -73,7 +78,7 @@ class SentenceRankingPipeline:
         # rename "corpus_id" key to "index" for all scores to match TEI
         for score in scores:
             score["index"] = score.pop("corpus_id")  # type: ignore
-        return {"scores": scores}
+        return scores  # type: ignore
 
 
 SENTENCE_TRANSFORMERS_TASKS = {
