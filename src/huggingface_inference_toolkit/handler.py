@@ -65,12 +65,11 @@ class HuggingFaceHandler:
             "image-to-text",
             "automatic-speech-recognition",
             "text-to-audio",
+            "text-to-speech",
         }:
-            # `generate_kwargs` needs to be a dict, `generation_parameters` or `generate` are not valid names
+            # `generate_kwargs` needs to be a dict, `generation_parameters` is here for forward compatibility
             if "generation_parameters" in parameters:
                 parameters["generate_kwargs"] = parameters.pop("generation_parameters")
-            if "generate" in parameters:
-                parameters["generate_kwargs"] = parameters.pop("generate")
 
         if self.pipeline.task.__contains__("translation") or self.pipeline.task in {"text-generation"}:
             # flatten the values of `generate_kwargs` as it's not supported as is, but via top-level parameters
