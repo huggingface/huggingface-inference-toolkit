@@ -7,6 +7,7 @@ from tests.integ.utils import (
     validate_custom,
     validate_feature_extraction,
     validate_fill_mask,
+    validate_image_text_to_text,
     validate_ner,
     validate_object_detection,
     validate_question_answering,
@@ -16,7 +17,6 @@ from tests.integ.utils import (
     validate_text_to_image,
     validate_translation,
     validate_zero_shot_classification,
-    validate_image_text_to_text,
 )
 
 task2model = {
