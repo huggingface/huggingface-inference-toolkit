@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Any, Dict, Literal, Optional, Union
 
 from huggingface_inference_toolkit.const import HF_TRUST_REMOTE_CODE
+from huggingface_inference_toolkit.sentence_transformers_utils import SENTENCE_TRANSFORMERS_TASKS
 from huggingface_inference_toolkit.utils import (
     check_and_register_custom_pipeline_from_directory,
     get_pipeline,
@@ -37,6 +38,12 @@ class HuggingFaceHandler:
 
         # diffusers and sentence transformers pipelines do not have the `task` arg
         if not hasattr(self.pipeline, "task"):
+            # sentence transformers paramters not supported yet
+            if any(isinstance(self.pipeline, v) for v in SENTENCE_TRANSFORMERS_TASKS.values()):
+                return (  # type: ignore
+                    self.pipeline(**inputs) if isinstance(inputs, dict) else self.pipeline(inputs)
+                )
+            # diffusers does support kwargs
             return (  # type: ignore
                 self.pipeline(**inputs, **parameters)
                 if isinstance(inputs, dict)
