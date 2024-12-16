@@ -36,9 +36,19 @@ class HuggingFaceHandler:
         inputs = data.pop("inputs", data)
         parameters = data.pop("parameters", {})
 
-        # sentence transformers pipelines do not have the `task` arg
-        if any(isinstance(self.pipeline, v) for v in SENTENCE_TRANSFORMERS_TASKS.values()):
-            return self.pipeline(**inputs) if isinstance(inputs, dict) else self.pipeline(inputs)  # type: ignore
+        # diffusers and sentence transformers pipelines do not have the `task` arg
+        if not hasattr(self.pipeline, "task"):
+            # sentence transformers paramters not supported yet
+            if any(isinstance(self.pipeline, v) for v in SENTENCE_TRANSFORMERS_TASKS.values()):
+                return (  # type: ignore
+                    self.pipeline(**inputs) if isinstance(inputs, dict) else self.pipeline(inputs)
+                )
+            # diffusers does support kwargs
+            return (  # type: ignore
+                self.pipeline(**inputs, **parameters)
+                if isinstance(inputs, dict)
+                else self.pipeline(inputs, **parameters)
+            )
 
         if self.pipeline.task == "question-answering":
             if not isinstance(inputs, dict):
