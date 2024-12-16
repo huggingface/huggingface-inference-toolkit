@@ -34,7 +34,6 @@ def make_sure_other_containers_are_stopped(client: DockerClient, container_name:
 #    reraise = True
 # )
 def wait_for_container_to_be_ready(base_url, time_between_retries=3, max_retries=30):
-
     retries = 0
     error = None
 
@@ -46,9 +45,7 @@ def wait_for_container_to_be_ready(base_url, time_between_retries=3, max_retries
                 logging.info("Container ready!")
                 return True
             else:
-                raise ConnectionError(
-                    f"Couldn'start container, Error: {response.status_code}"
-                )
+                raise ConnectionError(f"Couldn'start container, Error: {response.status_code}")
         except Exception as exception:
             error = exception
             logging.warning(f"Container at {base_url} not ready, trying again...")
@@ -62,7 +59,6 @@ def verify_task(
     # container: DockerClient,
     task: str,
     port: int = 5000,
-    framework: str = "pytorch",
 ):
     BASE_URL = f"http://localhost:{port}"
     logging.info(f"Base URL: {BASE_URL}")
@@ -90,10 +86,7 @@ def verify_task(
                 headers={"content-type": "audio/x-audio"},
             ).json()
         elif task == "text-to-image":
-            prediction = requests.post(
-                f"{BASE_URL}", json=input, headers={"accept": "image/png"}
-            ).content
-
+            prediction = requests.post(f"{BASE_URL}", json=input, headers={"accept": "image/png"}).content
         else:
             prediction = requests.post(f"{BASE_URL}", json=input).json()
 
@@ -119,6 +112,8 @@ def verify_task(
 @pytest.mark.parametrize(
     "task",
     [
+        # transformers
+        # TODO: "visual-question-answering" and "zero-shot-image-classification" not supported yet due to multimodality input
         "text-classification",
         "zero-shot-classification",
         "token-classification",
@@ -136,9 +131,8 @@ def verify_task(
         "image-segmentation",
         "table-question-answering",
         "conversational",
-        # TODO currently not supported due to multimodality input
-        # "visual-question-answering",
-        # "zero-shot-image-classification",
+        "image-text-to-text",
+        # sentence-transformers
         "sentence-similarity",
         "sentence-embeddings",
         "sentence-ranking",
@@ -146,15 +140,13 @@ def verify_task(
         "text-to-image",
     ],
 )
-def test_pt_container_remote_model(task) -> None:
+def test_pt_container_remote_model(task: str) -> None:
     container_name = f"integration-test-{task}"
     container_image = f"starlette-transformers:{DEVICE}"
     framework = "pytorch"
     model = task2model[task][framework]
     port = random.randint(5000, 6000)
-    device_request = (
-        [docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])] if IS_GPU else []
-    )
+    device_request = [docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])] if IS_GPU else []
 
     make_sure_other_containers_are_stopped(client, container_name)
     container = client.containers.run(
@@ -177,6 +169,8 @@ def test_pt_container_remote_model(task) -> None:
 @pytest.mark.parametrize(
     "task",
     [
+        # transformers
+        # TODO: "visual-question-answering" and "zero-shot-image-classification" not supported yet due to multimodality input
         "text-classification",
         "zero-shot-classification",
         "token-classification",
@@ -194,9 +188,8 @@ def test_pt_container_remote_model(task) -> None:
         "image-segmentation",
         "table-question-answering",
         "conversational",
-        # TODO currently not supported due to multimodality input
-        # "visual-question-answering",
-        # "zero-shot-image-classification",
+        "image-text-to-text",
+        # sentence-transformers
         "sentence-similarity",
         "sentence-embeddings",
         "sentence-ranking",
@@ -204,19 +197,17 @@ def test_pt_container_remote_model(task) -> None:
         "text-to-image",
     ],
 )
-def test_pt_container_local_model(task) -> None:
+def test_pt_container_local_model(task: str) -> None:
     container_name = f"integration-test-{task}"
     container_image = f"starlette-transformers:{DEVICE}"
     framework = "pytorch"
     model = task2model[task][framework]
     port = random.randint(5000, 6000)
-    device_request = (
-        [docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])] if IS_GPU else []
-    )
+    device_request = [docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])] if IS_GPU else []
     make_sure_other_containers_are_stopped(client, container_name)
     with tempfile.TemporaryDirectory() as tmpdirname:
         # https://github.com/huggingface/infinity/blob/test-ovh/test/integ/utils.py
-        _storage_dir = _load_repository_from_hf(model, tmpdirname, framework="pytorch")
+        _load_repository_from_hf(model, tmpdirname, framework="pytorch")
         container = client.containers.run(
             container_image,
             name=container_name,
@@ -241,9 +232,7 @@ def test_pt_container_local_model(task) -> None:
 def test_pt_container_custom_handler(repository_id) -> None:
     container_name = "integration-test-custom"
     container_image = f"starlette-transformers:{DEVICE}"
-    device_request = (
-        [docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])] if IS_GPU else []
-    )
+    device_request = [docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])] if IS_GPU else []
     port = random.randint(5000, 6000)
 
     make_sure_other_containers_are_stopped(client, container_name)
@@ -277,12 +266,10 @@ def test_pt_container_custom_handler(repository_id) -> None:
     "repository_id",
     ["philschmid/custom-pipeline-text-classification"],
 )
-def test_pt_container_legacy_custom_pipeline(repository_id) -> None:
+def test_pt_container_legacy_custom_pipeline(repository_id: str) -> None:
     container_name = "integration-test-custom"
     container_image = f"starlette-transformers:{DEVICE}"
-    device_request = (
-        [docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])] if IS_GPU else []
-    )
+    device_request = [docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])] if IS_GPU else []
     port = random.randint(5000, 6000)
 
     make_sure_other_containers_are_stopped(client, container_name)
@@ -345,9 +332,7 @@ def test_tf_container_remote_model(task) -> None:
     container_image = f"starlette-transformers:{DEVICE}"
     framework = "tensorflow"
     model = task2model[task][framework]
-    device_request = (
-        [docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])] if IS_GPU else []
-    )
+    device_request = [docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])] if IS_GPU else []
     if model is None:
         pytest.skip("no supported TF model")
     port = random.randint(5000, 6000)
@@ -401,9 +386,7 @@ def test_tf_container_local_model(task) -> None:
     container_image = f"starlette-transformers:{DEVICE}"
     framework = "tensorflow"
     model = task2model[task][framework]
-    device_request = (
-        [docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])] if IS_GPU else []
-    )
+    device_request = [docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])] if IS_GPU else []
     if model is None:
         pytest.skip("no supported TF model")
     port = random.randint(5000, 6000)

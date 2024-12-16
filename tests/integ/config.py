@@ -16,6 +16,7 @@ from tests.integ.utils import (
     validate_text_to_image,
     validate_translation,
     validate_zero_shot_classification,
+    validate_image_text_to_text,
 )
 
 task2model = {
@@ -108,6 +109,10 @@ task2model = {
         "pytorch": "hf-internal-testing/tiny-random-beit-pipeline",
         "tensorflow": None,
     },
+    "image-text-to-text": {
+        "pytorch": "Salesforce/blip-image-captioning-base",
+        "tensorflow": None,
+    },
 }
 
 
@@ -134,24 +139,12 @@ task2input = {
         "inputs": "question: What is 42 context: 42 is the answer to life, the universe and everything."
     },
     "text-generation": {"inputs": "My name is philipp and I am"},
-    "image-classification": open(
-        os.path.join(os.getcwd(), "tests/resources/image/tiger.jpeg"), "rb"
-    ).read(),
-    "zero-shot-image-classification": open(
-        os.path.join(os.getcwd(), "tests/resources/image/tiger.jpeg"), "rb"
-    ).read(),
-    "object-detection": open(
-        os.path.join(os.getcwd(), "tests/resources/image/tiger.jpeg"), "rb"
-    ).read(),
-    "image-segmentation": open(
-        os.path.join(os.getcwd(), "tests/resources/image/tiger.jpeg"), "rb"
-    ).read(),
-    "automatic-speech-recognition": open(
-        os.path.join(os.getcwd(), "tests/resources/audio/sample1.flac"), "rb"
-    ).read(),
-    "audio-classification": open(
-        os.path.join(os.getcwd(), "tests/resources/audio/sample1.flac"), "rb"
-    ).read(),
+    "image-classification": open(os.path.join(os.getcwd(), "tests/resources/image/tiger.jpeg"), "rb").read(),
+    "zero-shot-image-classification": open(os.path.join(os.getcwd(), "tests/resources/image/tiger.jpeg"), "rb").read(),
+    "object-detection": open(os.path.join(os.getcwd(), "tests/resources/image/tiger.jpeg"), "rb").read(),
+    "image-segmentation": open(os.path.join(os.getcwd(), "tests/resources/image/tiger.jpeg"), "rb").read(),
+    "automatic-speech-recognition": open(os.path.join(os.getcwd(), "tests/resources/audio/sample1.flac"), "rb").read(),
+    "audio-classification": open(os.path.join(os.getcwd(), "tests/resources/audio/sample1.flac"), "rb").read(),
     "table-question-answering": {
         "inputs": {
             "query": "How many stars does the transformers repository have?",
@@ -175,11 +168,15 @@ task2input = {
         }
     },
     "sentence-embeddings": {"inputs": "Lets create an embedding"},
-    "sentence-ranking": {
-        "inputs": ["Lets create an embedding", "Lets create an embedding"]
-    },
+    "sentence-ranking": {"inputs": ["Lets create an embedding", "Lets create an embedding"]},
     "text-to-image": {"inputs": "a man on a horse jumps over a broken down airplane."},
     "custom": {"inputs": "this is a test"},
+    "image-text-to-text": {
+        "inputs": {
+            "images": "https://huggingface.co/datasets/Narsil/image_dummy/raw/main/parrots.png",
+            "text": "A photo of",
+        }
+    },
 }
 
 task2output = {
@@ -213,15 +210,9 @@ task2output = {
         "end": 77,
         "answer": "sagemaker",
     },
-    "summarization": [
-        {"summary_text": " The A The The ANew York City has been installed in the US."}
-    ],
-    "translation_xx_to_yy": [
-        {"translation_text": "Mein Name ist Sarah und ich lebe in London"}
-    ],
-    "text2text-generation": [
-        {"generated_text": "42 is the answer to life, the universe and everything"}
-    ],
+    "summarization": [{"summary_text": " The A The The ANew York City has been installed in the US."}],
+    "translation_xx_to_yy": [{"translation_text": "Mein Name ist Sarah und ich lebe in London"}],
+    "text2text-generation": [{"generated_text": "42 is the answer to life, the universe and everything"}],
     "feature-extraction": None,
     "fill-mask": None,
     "text-generation": None,
@@ -269,6 +260,7 @@ task2output = {
     "sentence-embeddings": {"embeddings": ""},
     "sentence-ranking": {"scores": ""},
     "text-to-image": bytes,
+    "image-text-to-text": [{"input_text": "A photo of", "generated_text": "..."}],
     "custom": {"inputs": "this is a test"},
 }
 
@@ -296,5 +288,6 @@ task2validation = {
     "sentence-embeddings": validate_zero_shot_classification,
     "sentence-ranking": validate_zero_shot_classification,
     "text-to-image": validate_text_to_image,
+    "image-text-to-text": validate_image_text_to_text,
     "custom": validate_custom,
 }
