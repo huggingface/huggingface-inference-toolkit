@@ -6,6 +6,7 @@ def validate_classification(result=None, snapshot=None):
         assert result[idx].keys() == snapshot[idx].keys()
     return True
 
+
 def validate_conversational(result=None, snapshot=None):
     assert len(result[0]["generated_text"]) >= len(snapshot)
 
@@ -81,6 +82,13 @@ def validate_object_detection(result=None, snapshot=None):
 def validate_text_to_image(result=None, snapshot=None):
     assert isinstance(result, snapshot)
     return True
+
+
+def validate_image_text_to_text(result=None, snapshot=None):
+    assert isinstance(result, list)
+    assert all(isinstance(d, dict) and d.keys() == {"input_text", "generated_text"} for d in result)
+    return True
+
 
 def validate_custom(result=None, snapshot=None):
     logging.info(f"Validate custom task - result: {result}, snapshot: {snapshot}")

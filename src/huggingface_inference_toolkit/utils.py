@@ -237,7 +237,7 @@ def get_pipeline(
         "zero-shot-image-classification",
     }:
         kwargs["feature_extractor"] = model_dir
-    elif task not in {"image-to-text", "text-to-image"}:
+    elif task not in {"image-text-to-text", "image-to-text", "text-to-image"}:
         kwargs["tokenizer"] = model_dir
 
     if is_sentence_transformers_available() and task in [
