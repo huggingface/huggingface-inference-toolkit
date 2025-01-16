@@ -5,7 +5,7 @@ from setuptools import find_packages, setup
 # We don't declare our dependency on transformers here because we build with
 # different packages for different variants
 
-VERSION = "0.5.3"
+VERSION = "0.5.4"
 
 # Ubuntu packages
 # libsndfile1-dev: torchaudio requires the development version of the libsndfile package which can be installed via a system package manager. On Ubuntu it can be installed as follows: apt install libsndfile1-dev
@@ -13,8 +13,8 @@ VERSION = "0.5.3"
 # libavcodec-extra : libavcodec-extra  includes additional codecs for ffmpeg
 
 install_requires = [
-    "transformers[sklearn,sentencepiece,audio,vision]==4.47.0",
-    "huggingface_hub[hf_transfer]==0.26.2",
+    "transformers[sklearn,sentencepiece,audio,vision]==4.48.0",
+    "huggingface_hub[hf_transfer]==0.27.1",
     # vision
     "Pillow",
     "librosa",
@@ -32,7 +32,7 @@ install_requires = [
 extras = {}
 
 extras["st"] = ["sentence_transformers==3.3.1"]
-extras["diffusers"] = ["diffusers==0.31.0", "accelerate==1.1.0"]
+extras["diffusers"] = ["diffusers==0.32.1", "accelerate==1.2.1"]
 # Includes `peft` as PEFT requires `torch` so having `peft` as a core dependency
 # means that `torch` will be installed even if the `torch` extra is not specified.
 extras["torch"] = ["torch==2.3.1", "torchvision", "torchaudio", "peft==0.14.0"]
