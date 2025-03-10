@@ -50,9 +50,6 @@ class HuggingFaceHandler:
                 else self.pipeline(inputs, **parameters)
             )
 
-        if self.pipeline.task == "automatic-speech-recognition":
-            inputs["input_features"] = inputs.pop("inputs")
-
         if self.pipeline.task == "question-answering":
             if not isinstance(inputs, dict):
                 raise ValueError(f"inputs must be a dict, but a `{type(inputs)}` was provided instead.")
