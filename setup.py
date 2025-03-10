@@ -14,7 +14,7 @@ VERSION = "0.5.5"
 
 install_requires = [
     "transformers[sklearn,sentencepiece,audio,vision]==4.49.0",
-    "huggingface_hub[hf_transfer]==0.29.2",
+    "huggingface_hub[hf_transfer]==0.27.1",
     # vision
     "Pillow",
     "librosa",
@@ -31,8 +31,8 @@ install_requires = [
 
 extras = {}
 
-extras["st"] = ["sentence_transformers==3.4.1"]
-extras["diffusers"] = ["diffusers==0.32.1", "accelerate==1.4.0"]
+extras["st"] = ["sentence_transformers==3.3.1"]
+extras["diffusers"] = ["diffusers==0.32.1", "accelerate==1.2.1"]
 # Includes `peft` as PEFT requires `torch` so having `peft` as a core dependency
 # means that `torch` will be installed even if the `torch` extra is not specified.
 extras["torch"] = ["torch==2.3.1", "torchvision", "torchaudio", "peft==0.14.0"]
