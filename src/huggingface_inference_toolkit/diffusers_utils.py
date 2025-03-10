@@ -73,11 +73,7 @@ class IEAutoPipelineForText2Image:
             logger.warning("The `output_type` cannot be modified, and PIL will be used by default instead.")
 
         # Call pipeline with parameters
-        if self.pipeline.device.type == "cuda":
-            with torch.autocast("cuda", dtype=torch.bfloat16):
-                out = self.pipeline(prompt, num_images_per_prompt=1, **kwargs)
-        else:
-            out = self.pipeline(prompt, num_images_per_prompt=1, **kwargs)
+        out = self.pipeline(prompt, num_images_per_prompt=1, **kwargs)
 
         return out.images[0]
 
