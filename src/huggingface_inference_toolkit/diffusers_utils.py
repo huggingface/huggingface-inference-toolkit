@@ -74,8 +74,7 @@ class IEAutoPipelineForText2Image:
 
         # Call pipeline with parameters
         if self.pipeline.device.type == "cuda":
-            model_dtype = next(self.pipeline.parameters()).dtype
-            with torch.autocast("cuda", dtype=model_dtype):
+            with torch.autocast("cuda", dtype=torch.bfloat16):
                 out = self.pipeline(prompt, num_images_per_prompt=1, **kwargs)
         else:
             out = self.pipeline(prompt, num_images_per_prompt=1, **kwargs)
