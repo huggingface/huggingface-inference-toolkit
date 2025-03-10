@@ -60,6 +60,7 @@ curl --request POST \
 }'
 ```
 
+
 ### Custom Handler and dependency support
 
 The Hugging Face Inference Toolkit allows user to provide a custom inference through a `handler.py` file which is located in the repository.
