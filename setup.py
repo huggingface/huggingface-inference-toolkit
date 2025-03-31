@@ -5,7 +5,7 @@ from setuptools import find_packages, setup
 # We don't declare our dependency on transformers here because we build with
 # different packages for different variants
 
-VERSION = "0.5.4"
+VERSION = "0.5.5"
 
 # Ubuntu packages
 # libsndfile1-dev: torchaudio requires the development version of the libsndfile package which can be installed via a system package manager. On Ubuntu it can be installed as follows: apt install libsndfile1-dev
@@ -13,7 +13,7 @@ VERSION = "0.5.4"
 # libavcodec-extra : libavcodec-extra  includes additional codecs for ffmpeg
 
 install_requires = [
-    "transformers[sklearn,sentencepiece,audio,vision]==4.48.0",
+    "transformers[sklearn,sentencepiece,audio,vision]==4.49.0",
     "huggingface_hub[hf_transfer]==0.27.1",
     # vision
     "Pillow",
@@ -57,7 +57,7 @@ setup(
     version=VERSION,
     author="Hugging Face",
     description="Hugging Face Inference Toolkit is for serving 🤗 Transformers models in containers.",
-    url="",
+    url="https://github.com/huggingface/huggingface-inference-toolkit",
     package_dir={"": "src"},
     packages=find_packages(where="src"),
     install_requires=install_requires,
