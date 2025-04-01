@@ -50,7 +50,7 @@ def parse_cmdline_and_set_env(argv: List[str] = None) -> argparse.Namespace:
                           os.getenv("SEQUENCE_LENGTH", 0))
     )
 
-    parser.add_argument("--model-id", type=str, default=os.getenv("MODEL_ID", os.getenv("HF_MODEL_DIR")))
+    parser.add_argument("--model-id", type=str, default=os.getenv("HF_MODEL_ID", os.getenv("HF_MODEL_DIR")))
     parser.add_argument("--revision", type=str, default=os.getenv("REVISION"))
 
     args = parser.parse_known_args(argv)[0]
