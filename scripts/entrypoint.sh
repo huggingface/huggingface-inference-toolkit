@@ -19,32 +19,33 @@ fi
 
 # If HF_MODEL_ID is provided, download handler.py and requirements.txt if available
 if [[ ! -z "${HF_MODEL_ID}" ]]; then
-    filename = ${HF_DEFAULT_PIPELINE_NAME:-handler.py}
-    revision = ${HF_REVISION:-main}
-    echo "Downloading `$filename` for model `${HF_MODEL_ID}`"
-    huggingface-cli download ${HF_MODEL_ID} $filename --revision $revision --local-dir /app
+    filename=${HF_DEFAULT_PIPELINE_NAME:-handler.py}
+    revision=${HF_REVISION:-main}
+
+    echo "Downloading $filename for model ${HF_MODEL_ID}"
+    huggingface-cli download ${HF_MODEL_ID} "$filename" --revision "$revision" --local-dir /tmp
 
     # Check if handler.py was downloaded successfully
-    if [ -f "/app/$filename" ]; then
-        echo "$filename downloaded successfully, checking if there's a `requirements.txt` file..."
-        rm /app/$filename
+    if [ -f "/tmp/$filename" ]; then
+        echo "$filename downloaded successfully, checking if there's a requirements.txt file..."
+        rm /tmp/$filename
 
         # Attempt to download requirements.txt
-        echo "Downloading `requirements.txt` for model `${HF_MODEL_ID}`"
-        huggingface-cli download ${HF_MODEL_ID} requirements.txt --revision $revision --local-dir /app
+        echo "Downloading requirements.txt for model ${HF_MODEL_ID}"
+        huggingface-cli download "${HF_MODEL_ID}" requirements.txt --revision "$revision" --local-dir /tmp
 
         # Check if requirements.txt was downloaded successfully
-        if [ -f "/app/requirements.txt" ]; then
-            echo "`requirements.txt` downloaded successfully, now installing the dependencies..."
+        if [ -f "/tmp/requirements.txt" ]; then
+            echo "requirements.txt downloaded successfully, now installing the dependencies..."
             
             # Install dependencies
-            pip install -r /app/requirements.txt --no-cache-dir
-            rm /app/requirements.txt
+            pip install -r /tmp/requirements.txt --no-cache-dir
+            rm /tmp/requirements.txt
         else
-            echo "`${HF_MODEL_ID}` with revision $revision contains a custom handler at `$filename` but doesn't contain a `requirements.txt` file, so skipping downloading and installing extra requirements from it."
+            echo "${HF_MODEL_ID} with revision $revision contains a custom handler at $filename but doesn't contain a requirements.txt file, so skipping downloading and installing extra requirements from it."
         fi
     else
-        echo "`${HF_MODEL_ID}` with revision $revision doesn't contain a `$filename` file, so skipping download."
+        echo "${HF_MODEL_ID} with revision $revision doesn't contain a $filename file, so skipping download."
     fi
 fi
 
