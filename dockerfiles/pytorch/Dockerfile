@@ -47,10 +47,6 @@ RUN curl -O https://bootstrap.pypa.io/get-pip.py && \
 # Upgrade pip
 RUN pip install --no-cache-dir --upgrade pip
 
-# Due to an error affecting kenlm and cmake (see https://github.com/kpu/kenlm/pull/464)
-# Also see the transformers patch for it https://github.com/huggingface/transformers/pull/37091
-RUN pip install --no-cache-dir kenlm@git+https://github.com/kpu/kenlm@ba83eafdce6553addd885ed3da461bb0d60f8df7
-
 # Install wheel and setuptools
 RUN pip install --no-cache-dir --upgrade pip ".[torch,st,diffusers]"
 
