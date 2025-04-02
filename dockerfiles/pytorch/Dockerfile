@@ -16,13 +16,13 @@ RUN apt-get update && \
     apt-get install -y \
     build-essential \
     bzip2 \
+    cmake \
     curl \
     git \
     git-lfs \
     tar \
     gcc \
     g++ \
-    cmake \
     libprotobuf-dev \
     protobuf-compiler \
     python3.11 \
@@ -44,14 +44,17 @@ RUN curl -O https://bootstrap.pypa.io/get-pip.py && \
     python get-pip.py && \
     rm get-pip.py
 
-# install wheel and setuptools
+# Upgrade pip
+RUN pip install --no-cache-dir --upgrade pip
+
+# Install wheel and setuptools
 RUN pip install --no-cache-dir --upgrade pip ".[torch,st,diffusers]"
 
-# copy application
+# Copy application
 COPY src/huggingface_inference_toolkit huggingface_inference_toolkit
 COPY src/huggingface_inference_toolkit/webservice_starlette.py webservice_starlette.py
 
-# copy entrypoint and change permissions
+# Copy entrypoint and change permissions
 COPY --chmod=0755 scripts/entrypoint.sh entrypoint.sh
 
 ENTRYPOINT ["bash", "-c", "./entrypoint.sh"]

@@ -5,7 +5,7 @@ from setuptools import find_packages, setup
 # We don't declare our dependency on transformers here because we build with
 # different packages for different variants
 
-VERSION = "0.5.4"
+VERSION = "0.5.5"
 
 # Ubuntu packages
 # libsndfile1-dev: torchaudio requires the development version of the libsndfile package which can be installed via a system package manager. On Ubuntu it can be installed as follows: apt install libsndfile1-dev
@@ -13,6 +13,9 @@ VERSION = "0.5.4"
 # libavcodec-extra : libavcodec-extra  includes additional codecs for ffmpeg
 
 install_requires = [
+    # Due to an error affecting kenlm and cmake (see https://github.com/kpu/kenlm/pull/464)
+    # Also see the transformers patch for it https://github.com/huggingface/transformers/pull/37091
+    "kenlm@git+https://github.com/kpu/kenlm@ba83eafdce6553addd885ed3da461bb0d60f8df7",
     "transformers[sklearn,sentencepiece,audio,vision]==4.48.0",
     "huggingface_hub[hf_transfer]==0.27.1",
     # vision
