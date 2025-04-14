@@ -4,7 +4,7 @@ from huggingface_inference_toolkit.serialization.json_utils import Jsoner
 
 content_type_mapping = {
     "application/json": Jsoner,
-    "application/json; charset=UTF-8": Jsoner,
+    "application/json; charset=utf-8": Jsoner,
     "text/csv": None,
     "text/plain": None,
     # image types

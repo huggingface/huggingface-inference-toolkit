@@ -84,7 +84,7 @@ async def metrics(request):
 async def predict(request):
     try:
         # extracts content from request
-        content_type = request.headers.get("content-Type", os.environ.get("DEFAULT_CONTENT_TYPE"))
+        content_type = request.headers.get("content-Type", os.environ.get("DEFAULT_CONTENT_TYPE")).lower()
         # try to deserialize payload
         deserialized_body = ContentType.get_deserializer(content_type).deserialize(
             await request.body()
