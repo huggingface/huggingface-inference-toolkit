@@ -111,9 +111,10 @@ async def predict(request):
         )
 
         # response extracts content from request
-        accept = request.headers.get("accept", None)
+        accept = request.headers.get("accept")
         if accept is None or accept == "*/*":
-            accept = "application/json"
+            accept = os.environ.get("DEFAULT_ACCEPT", "application/json")
+        logger.info("Request accepts %s", accept)
         # deserialized and resonds with json
         serialized_response_body = ContentType.get_serializer(accept).serialize(
             pred, accept
