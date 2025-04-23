@@ -74,6 +74,7 @@ class IEAutoPipelineForText2Image:
 
         # Call pipeline with parameters
         out = self.pipeline(prompt, num_images_per_prompt=1, **kwargs)
+
         return out.images[0]
 
 
