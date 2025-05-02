@@ -1,4 +1,5 @@
 import os
+import threading
 from pathlib import Path
 from time import perf_counter
 
@@ -16,6 +17,7 @@ from huggingface_inference_toolkit.const import (
     HF_REVISION,
     HF_TASK,
 )
+from huggingface_inference_toolkit.env_utils import api_inference_compat
 from huggingface_inference_toolkit.handler import (
     get_inference_handler_either_custom_or_default_handler,
 )
@@ -28,9 +30,11 @@ from huggingface_inference_toolkit.utils import (
 )
 from huggingface_inference_toolkit.vertex_ai_utils import _load_repository_from_gcs
 
+INFERENCE_HANDLERS = {}
+INFERENCE_HANDLERS_LOCK = threading.Lock()
 
 async def prepare_model_artifacts():
-    global inference_handler
+    global INFERENCE_HANDLERS
     # 1. check if model artifacts available in HF_MODEL_DIR
     if len(list(Path(HF_MODEL_DIR).glob("**/*"))) <= 0:
         # 2. if not available, try to load from HF_MODEL_ID
@@ -62,6 +66,7 @@ async def prepare_model_artifacts():
     inference_handler = get_inference_handler_either_custom_or_default_handler(
         HF_MODEL_DIR, task=HF_TASK
     )
+    INFERENCE_HANDLERS[HF_TASK] = inference_handler
     logger.info("Model initialized successfully")
 
 
@@ -82,6 +87,7 @@ async def metrics(request):
 
 
 async def predict(request):
+    global INFERENCE_HANDLERS
     try:
         # extracts content from request
         content_type = request.headers.get("content-Type", os.environ.get("DEFAULT_CONTENT_TYPE")).lower()
@@ -101,6 +107,17 @@ async def predict(request):
                 dict(request.query_params)
             )
 
+        # We lazily load pipelines for alt tasks
+        task = request.path_params.get("task", HF_TASK)
+        inference_handler = INFERENCE_HANDLERS.get(task)
+        if not inference_handler:
+            with INFERENCE_HANDLERS_LOCK:
+                if task not in INFERENCE_HANDLERS:
+                    inference_handler = get_inference_handler_either_custom_or_default_handler(
+                        HF_MODEL_DIR, task=task)
+                    INFERENCE_HANDLERS[task] = inference_handler
+                else:
+                    inference_handler = INFERENCE_HANDLERS[task]
         # tracks request time
         start_time = perf_counter()
         # run async not blocking call
@@ -149,14 +166,19 @@ if os.getenv("AIP_MODE", None) == "PREDICTION":
         on_startup=[prepare_model_artifacts],
     )
 else:
+    routes = [
+        Route("/", health, methods=["GET"]),
+        Route("/health", health, methods=["GET"]),
+        Route("/", predict, methods=["POST"]),
+        Route("/predict", predict, methods=["POST"]),
+        Route("/metrics", metrics, methods=["GET"]),
+    ]
+    if api_inference_compat():
+        routes.append(
+            Route("/pipeline/{task:path}", predict, methods=["POST"])
+        )
     app = Starlette(
         debug=False,
-        routes=[
-            Route("/", health, methods=["GET"]),
-            Route("/health", health, methods=["GET"]),
-            Route("/", predict, methods=["POST"]),
-            Route("/predict", predict, methods=["POST"]),
-            Route("/metrics", metrics, methods=["GET"]),
-        ],
+        routes=routes,
         on_startup=[prepare_model_artifacts],
     )
