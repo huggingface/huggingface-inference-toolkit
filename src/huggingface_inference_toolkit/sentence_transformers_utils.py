@@ -1,5 +1,4 @@
 import importlib.util
-import os
 from typing import Any, Dict, List, Tuple, Union
 
 from huggingface_inference_toolkit.env_utils import api_inference_compat
