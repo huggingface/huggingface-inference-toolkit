@@ -3,7 +3,7 @@ from pathlib import Path
 
 def test__load_repository_from_gcs():
     """Tests the `_load_repository_from_gcs` function against a public artifact URI. But the
-    function is overriden since the client needs to be anonymous temporarily, as we're testing
+    function is overridden since the client needs to be anonymous temporarily, as we're testing
     against a publicly accessible artifact.
 
     References:
