@@ -1,3 +1,4 @@
+from huggingface_inference_toolkit.const import HF_TASK
 from huggingface_inference_toolkit.serialization.audio_utils import Audioer
 from huggingface_inference_toolkit.serialization.image_utils import Imager
 from huggingface_inference_toolkit.serialization.json_utils import Jsoner
@@ -38,7 +39,13 @@ content_type_mapping = {
 
 class ContentType:
     @staticmethod
-    def get_deserializer(content_type: str):
+    def get_deserializer(content_type: str, task: str):
+        if content_type.lower().startswith("application/octet-stream"):
+            if "audio" in task or "speech" in task:
+                return Audioer
+            elif "image" in task:
+                return Imager
+
         # Extract media type from content type
         extracted = content_type.split(";")[0]
         if extracted in content_type_mapping:
