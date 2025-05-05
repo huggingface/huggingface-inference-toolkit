@@ -89,10 +89,11 @@ async def metrics(request):
 async def predict(request):
     global INFERENCE_HANDLERS
     try:
+        task = request.path_params.get("task", HF_TASK)
         # extracts content from request
         content_type = request.headers.get("content-Type", os.environ.get("DEFAULT_CONTENT_TYPE")).lower()
         # try to deserialize payload
-        deserialized_body = ContentType.get_deserializer(content_type).deserialize(
+        deserialized_body = ContentType.get_deserializer(content_type, task).deserialize(
             await request.body()
         )
         # checks if input schema is correct
@@ -108,7 +109,7 @@ async def predict(request):
             )
 
         # We lazily load pipelines for alt tasks
-        task = request.path_params.get("task", HF_TASK)
+
         if task == "feature-extraction" and HF_TASK in [
             "sentence-similarity",
             "sentence-embeddings",
