@@ -109,6 +109,12 @@ async def predict(request):
 
         # We lazily load pipelines for alt tasks
         task = request.path_params.get("task", HF_TASK)
+        if task == "feature-extraction" and HF_TASK in [
+            "sentence-similarity",
+            "sentence-embeddings",
+            "sentence-ranking",
+        ]:
+            task = "sentence-embeddings"
         inference_handler = INFERENCE_HANDLERS.get(task)
         if not inference_handler:
             with INFERENCE_HANDLERS_LOCK:
