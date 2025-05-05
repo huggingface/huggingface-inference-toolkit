@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Any, Dict, Literal, Optional, Union
 
 from huggingface_inference_toolkit.const import HF_TRUST_REMOTE_CODE
+from huggingface_inference_toolkit.env_utils import api_inference_compat
 from huggingface_inference_toolkit.sentence_transformers_utils import SENTENCE_TRANSFORMERS_TASKS
 from huggingface_inference_toolkit.utils import (
     check_and_register_custom_pipeline_from_directory,
@@ -100,6 +101,22 @@ class HuggingFaceHandler:
                     "key `text` or `sequences`, and `parameters` to be a dict containing either `candidate_labels` "
                     "or `candidateLabels`."
                 )
+
+        if api_inference_compat() and self.pipeline.task in ["text-classification", "token-classification"] and \
+                isinstance(inputs, str):
+            inputs = [inputs]
+            if self.pipeline.task == "text-classification" and "top_k" not in parameters:
+                top_k = os.environ.get("DEFAULT_TOP_K", 5)
+                parameters["top_k"] = top_k
+            resp = self.pipeline(inputs, **parameters)
+            # # We don't want to return {}
+            if isinstance(resp, list) and len(resp) > 0:
+                if not isinstance(resp[0], list):
+                    return [resp]
+                else:
+                    return resp
+            else:
+                return resp
 
         return (
             self.pipeline(**inputs, **parameters) if isinstance(inputs, dict) else self.pipeline(inputs, **parameters)  # type: ignore
