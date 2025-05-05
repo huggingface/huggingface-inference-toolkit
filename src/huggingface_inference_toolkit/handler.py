@@ -38,7 +38,7 @@ class HuggingFaceHandler:
 
         # diffusers and sentence transformers pipelines do not have the `task` arg
         if not hasattr(self.pipeline, "task"):
-            # sentence transformers paramters not supported yet
+            # sentence transformers parameters not supported yet
             if any(isinstance(self.pipeline, v) for v in SENTENCE_TRANSFORMERS_TASKS.values()):
                 return (  # type: ignore
                     self.pipeline(**inputs) if isinstance(inputs, dict) else self.pipeline(inputs)

@@ -151,7 +151,7 @@ mkdir tmp2/
 HF_MODEL_ID="distilbert/distilbert-base-uncased-finetuned-sst-2-english" HF_TASK="text-classification" HF_OPTIMUM_BATCH_SIZE=1 HF_OPTIMUM_SEQUENCE_LENGTH=128  HF_MODEL_DIR=tmp2 uvicorn src.huggingface_inference_toolkit.webservice_starlette:app  --port 5000
 ```
 
-- sentence transformers `feature-extration` with `HF_OPTIMUM_BATCH_SIZE` and `HF_OPTIMUM_SEQUENCE_LENGTH`
+- sentence transformers `feature-extraction` with `HF_OPTIMUM_BATCH_SIZE` and `HF_OPTIMUM_SEQUENCE_LENGTH`
 
 ```bash
 HF_MODEL_ID="sentence-transformers/all-MiniLM-L6-v2" HF_TASK="feature-extraction" HF_OPTIMUM_BATCH_SIZE=1 HF_OPTIMUM_SEQUENCE_LENGTH=128 HF_MODEL_DIR=tmp2 uvicorn src.huggingface_inference_toolkit.webservice_starlette:app  --port 5000
@@ -203,7 +203,7 @@ The Hugging Face Inference Toolkit implements various additional environment var
 ### `HF_MODEL_DIR`
 
 The `HF_MODEL_DIR` environment variable defines the directory where your model is stored or will be stored.
-If `HF_MODEL_ID` is not set the toolkit expects a the model artifact at this directory. This value should be set to the value where you mount your model artifacts.
+If `HF_MODEL_ID` is not set the toolkit expects a model artifact at this directory. This value should be set to the value where you mount your model artifacts.
 If `HF_MODEL_ID` is set the toolkit and the directory where `HF_MODEL_DIR` is pointing to is empty. The toolkit will download the model from the Hub to this directory.
 
 The default value is `/opt/huggingface/model`
@@ -214,7 +214,7 @@ HF_MODEL_ID="/opt/mymodel"
 
 ### `HF_TASK`
 
-The `HF_TASK` environment variable defines the task for the used Transformers pipeline or Sentence Transformers. A full list of tasks can be find in [supported & tested task section](#supported--tested-tasks)
+The `HF_TASK` environment variable defines the task for the used Transformers pipeline or Sentence Transformers. A full list of tasks can be found in [supported & tested task section](#supported--tested-tasks)
 
 ```bash
 HF_TASK="question-answering"
@@ -238,7 +238,7 @@ HF_REVISION="03b4d196c19d0a73c7e0322684e97db1ec397613"
 
 ### `HF_HUB_TOKEN`
 
-The `HF_HUB_TOKEN` environment variable defines the your Hugging Face authorization token. The `HF_HUB_TOKEN` is used as a HTTP bearer authorization for remote files, like private models. You can find your token at your [settings page](https://huggingface.co/settings/token).
+The `HF_HUB_TOKEN` environment variable defines your Hugging Face authorization token. The `HF_HUB_TOKEN` is used as a HTTP bearer authorization for remote files, like private models. You can find your token at your [settings page](https://huggingface.co/settings/token).
 
 ```bash
 HF_HUB_TOKEN="api_XXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
@@ -254,7 +254,7 @@ HF_TRUST_REMOTE_CODE="0"
 
 ### `HF_FRAMEWORK`
 
-The `HF_FRAMEWORK` environment variable defines the base deep learning framework used in the container. This is important when loading large models from the Hugguing Face Hub to avoid extra file downloads.
+The `HF_FRAMEWORK` environment variable defines the base deep learning framework used in the container. This is important when loading large models from the Hugging Face Hub to avoid extra file downloads.
 
 ```bash
 HF_FRAMEWORK="pytorch"
