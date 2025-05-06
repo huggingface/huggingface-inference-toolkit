@@ -102,22 +102,18 @@ class HuggingFaceHandler:
                     "or `candidateLabels`."
                 )
 
-        if api_inference_compat() and self.pipeline.task in ["text-classification", "token-classification"] and \
-                isinstance(inputs, str):
-            inputs = [inputs]
-            if self.pipeline.task == "text-classification" and "top_k" not in parameters:
-                top_k = os.environ.get("DEFAULT_TOP_K", 5)
-                parameters["top_k"] = top_k
-            resp = self.pipeline(inputs, **parameters)
-            # # We don't want to return {}
-            if isinstance(resp, list) and len(resp) > 0:
-                if not isinstance(resp[0], list):
-                    return [resp]
-                else:
-                    return resp
-            else:
+        if api_inference_compat():
+            if self.pipeline.task == "text-classification" and isinstance(inputs, str):
+                inputs = [inputs]
+                parameters.setdefault("top_k", os.environ.get("DEFAULT_TOP_K", 5))
+                resp = self.pipeline(inputs, **parameters)
+                # # We don't want to return {}
+                if isinstance(resp, list) and len(resp) > 0:
+                    if not isinstance(resp[0], list):
+                        return [resp]
                 return resp
-
+            if self.pipeline.task == "token-classification":
+                parameters.setdefault("aggregation_strategy", os.environ.get("DEFAULT_AGGREGATION_STRATEGY", "simple"))
         return (
             self.pipeline(**inputs, **parameters) if isinstance(inputs, dict) else self.pipeline(inputs, **parameters)  # type: ignore
         )
