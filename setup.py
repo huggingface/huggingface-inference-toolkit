@@ -31,6 +31,7 @@ install_requires = [
     "pandas",
     "orjson",
     "einops",
+    "timm",
 ]
 
 extras = {}
