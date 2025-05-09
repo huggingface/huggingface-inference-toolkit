@@ -1,10 +1,10 @@
+from huggingface_inference_toolkit.const import HF_TASK
 from huggingface_inference_toolkit.serialization.audio_utils import Audioer
 from huggingface_inference_toolkit.serialization.image_utils import Imager
 from huggingface_inference_toolkit.serialization.json_utils import Jsoner
 
 content_type_mapping = {
     "application/json": Jsoner,
-    "application/json; charset=UTF-8": Jsoner,
     "text/csv": None,
     "text/plain": None,
     # image types
@@ -39,9 +39,17 @@ content_type_mapping = {
 
 class ContentType:
     @staticmethod
-    def get_deserializer(content_type):
-        if content_type in content_type_mapping:
-            return content_type_mapping[content_type]
+    def get_deserializer(content_type: str, task: str):
+        if content_type.lower().startswith("application/octet-stream"):
+            if "audio" in task or "speech" in task:
+                return Audioer
+            elif "image" in task:
+                return Imager
+
+        # Extract media type from content type
+        extracted = content_type.split(";")[0]
+        if extracted in content_type_mapping:
+            return content_type_mapping[extracted]
         else:
             message = f"""
                 Content type "{content_type}" not supported.
@@ -51,13 +59,15 @@ class ContentType:
             raise Exception(message)
 
     @staticmethod
-    def get_serializer(accept):
-        if accept in content_type_mapping:
-            return content_type_mapping[accept]
-        else:
-            message = f"""
-                Accept type "{accept}" not supported.
-                Supported accept types are:
-                {", ".join(list(content_type_mapping.keys()))}
-            """
-            raise Exception(message)
+    def get_serializer(accept: str):
+        extracts = accept.split(",")
+        for extract in extracts:
+            extracted = extract.split(";")[0]
+            if extracted in content_type_mapping:
+                return content_type_mapping[extracted]
+        message = f"""
+            Accept type "{accept}" not supported.
+            Supported accept types are:
+            {", ".join(list(content_type_mapping.keys()))}
+        """
+        raise Exception(message)
