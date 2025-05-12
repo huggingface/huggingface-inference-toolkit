@@ -1,4 +1,3 @@
-from huggingface_inference_toolkit.const import HF_TASK
 from huggingface_inference_toolkit.serialization.audio_utils import Audioer
 from huggingface_inference_toolkit.serialization.image_utils import Imager
 from huggingface_inference_toolkit.serialization.json_utils import Jsoner

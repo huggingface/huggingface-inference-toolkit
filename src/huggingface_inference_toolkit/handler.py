@@ -2,9 +2,9 @@ import os
 from pathlib import Path
 from typing import Any, Dict, Literal, Optional, Union
 
+from huggingface_inference_toolkit import logging
 from huggingface_inference_toolkit.const import HF_TRUST_REMOTE_CODE
 from huggingface_inference_toolkit.env_utils import api_inference_compat
-from huggingface_inference_toolkit import logging
 from huggingface_inference_toolkit.sentence_transformers_utils import SENTENCE_TRANSFORMERS_TASKS
 from huggingface_inference_toolkit.utils import (
     check_and_register_custom_pipeline_from_directory,
