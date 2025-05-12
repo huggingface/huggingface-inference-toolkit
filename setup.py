@@ -16,7 +16,7 @@ install_requires = [
     # Due to an error affecting kenlm and cmake (see https://github.com/kpu/kenlm/pull/464)
     # Also see the transformers patch for it https://github.com/huggingface/transformers/pull/37091
     "kenlm@git+https://github.com/kpu/kenlm@ba83eafdce6553addd885ed3da461bb0d60f8df7",
-    "transformers[sklearn,sentencepiece,audio,vision]==4.51.2",
+    "transformers[sklearn,sentencepiece,audio,vision]==4.51.3",
     "huggingface_hub[hf_transfer]==0.30.2",
     # vision
     "Pillow",
