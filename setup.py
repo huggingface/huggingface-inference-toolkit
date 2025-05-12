@@ -17,7 +17,7 @@ install_requires = [
     # Also see the transformers patch for it https://github.com/huggingface/transformers/pull/37091
     "kenlm@git+https://github.com/kpu/kenlm@ba83eafdce6553addd885ed3da461bb0d60f8df7",
     "transformers[sklearn,sentencepiece,audio,vision]==4.51.3",
-    "huggingface_hub[hf_transfer]==0.30.2",
+    "huggingface_hub[hf_transfer,hf_xet]==0.31.1",
     # vision
     "Pillow",
     "librosa",
