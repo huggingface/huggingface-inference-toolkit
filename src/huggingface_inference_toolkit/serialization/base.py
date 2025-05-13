@@ -44,6 +44,12 @@ class ContentType:
                 return Audioer
             elif "image" in task:
                 return Imager
+            message = f"""
+                Content type "{content_type}" not supported for task {task}.
+                Supported content types are:
+                {", ".join(list(content_type_mapping.keys()))}
+            """
+            raise Exception(message)
 
         # Extract media type from content type
         extracted = content_type.split(";")[0]
