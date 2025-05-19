@@ -1,3 +1,4 @@
+import asyncio
 import os
 import threading
 from pathlib import Path
@@ -8,6 +9,7 @@ from starlette.applications import Starlette
 from starlette.responses import PlainTextResponse, Response
 from starlette.routing import Route
 
+from huggingface_inference_toolkit import idle
 from huggingface_inference_toolkit.async_utils import MAX_CONCURRENT_THREADS, MAX_THREADS_GUARD, async_handler_call
 from huggingface_inference_toolkit.const import (
     HF_FRAMEWORK,
@@ -32,6 +34,7 @@ from huggingface_inference_toolkit.vertex_ai_utils import _load_repository_from_
 
 INFERENCE_HANDLERS = {}
 INFERENCE_HANDLERS_LOCK = threading.Lock()
+
 
 async def prepare_model_artifacts():
     global INFERENCE_HANDLERS
@@ -68,6 +71,9 @@ async def prepare_model_artifacts():
     )
     INFERENCE_HANDLERS[HF_TASK] = inference_handler
     logger.info("Model initialized successfully")
+
+    if idle.UNLOAD_IDLE:
+        asyncio.create_task(idle.live_check_loop(), name="live_check_loop")
 
 
 async def health(request):
@@ -127,8 +133,11 @@ async def predict(request):
                     inference_handler = INFERENCE_HANDLERS[task]
         # tracks request time
         start_time = perf_counter()
-        # run async not blocking call
-        pred = await async_handler_call(inference_handler, deserialized_body)
+
+        with idle.request_witnesses():
+            # run async not blocking call
+            pred = await async_handler_call(inference_handler, deserialized_body)
+
         # log request time
         logger.info(
             f"POST {request.url.path} | Duration: {(perf_counter()-start_time) *1000:.2f} ms"
