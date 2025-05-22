@@ -30,6 +30,7 @@ install_requires = [
     "uvicorn",
     "pandas",
     "orjson",
+    "einops",
 ]
 
 extras = {}
