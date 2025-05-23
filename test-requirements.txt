@@ -1,0 +1,12 @@
+isort
+ruff
+datasets
+docker
+mock==2.0.0
+parameterized
+psutil
+pytest-sugar
+pytest-xdist
+pytest==7.2.1
+requests
+tenacity
