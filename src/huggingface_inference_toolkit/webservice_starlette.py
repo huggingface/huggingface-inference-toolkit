@@ -26,53 +26,64 @@ from huggingface_inference_toolkit.handler import (
 from huggingface_inference_toolkit.logging import logger
 from huggingface_inference_toolkit.serialization.base import ContentType
 from huggingface_inference_toolkit.serialization.json_utils import Jsoner
-from huggingface_inference_toolkit.utils import (
-    _load_repository_from_hf,
-    convert_params_to_int_or_bool,
-)
+from huggingface_inference_toolkit.utils import convert_params_to_int_or_bool
+#     _load_repository_from_hf,
+#     convert_params_to_int_or_bool,
+# )
 from huggingface_inference_toolkit.vertex_ai_utils import _load_repository_from_gcs
 
 INFERENCE_HANDLERS = {}
 INFERENCE_HANDLERS_LOCK = threading.Lock()
+MODEL_DOWNLOADED = False
+MODEL_DL_LOCK = threading.Lock()
 
 
 async def prepare_model_artifacts():
     global INFERENCE_HANDLERS
+
     if idle.UNLOAD_IDLE:
         asyncio.create_task(idle.live_check_loop(), name="live_check_loop")
     else:
-        # 1. check if model artifacts available in HF_MODEL_DIR
-        if len(list(Path(HF_MODEL_DIR).glob("**/*"))) <= 0:
-            # 2. if not available, try to load from HF_MODEL_ID
-            if HF_MODEL_ID is not None:
-                _load_repository_from_hf(
-                    repository_id=HF_MODEL_ID,
-                    target_dir=HF_MODEL_DIR,
-                    framework=HF_FRAMEWORK,
-                    revision=HF_REVISION,
-                    hf_hub_token=HF_HUB_TOKEN,
-                )
-            # 3. check if in Vertex AI environment and load from GCS
-            # If artifactUri not on Model Creation not set returns an empty string
-            elif len(os.environ.get("AIP_STORAGE_URI", "")) > 0:
-                _load_repository_from_gcs(
-                    os.environ["AIP_STORAGE_URI"], target_dir=HF_MODEL_DIR
-                )
-            # 4. if not available, raise error
-            else:
-                raise ValueError(
-                    f"""Can't initialize model.
-                    Please set env HF_MODEL_DIR or provider a HF_MODEL_ID.
-                    Provided values are:
-                    HF_MODEL_DIR: {HF_MODEL_DIR} and HF_MODEL_ID:{HF_MODEL_ID}"""
-                )
+        _eager_model_dl()
         logger.info(f"Initializing model from directory:{HF_MODEL_DIR}")
         # 2. determine correct inference handler
         inference_handler = get_inference_handler_either_custom_or_default_handler(
             HF_MODEL_DIR, task=HF_TASK
         )
         INFERENCE_HANDLERS[HF_TASK] = inference_handler
-        logger.info("Model initialized successfully")
+    logger.info("Model initialized successfully")
+
+
+def _eager_model_dl():
+    global MODEL_DOWNLOADED
+    from huggingface_inference_toolkit.heavy_utils import load_repository_from_hf
+    # 1. check if model artifacts available in HF_MODEL_DIR
+    if len(list(Path(HF_MODEL_DIR).glob("**/*"))) <= 0:
+        # 2. if not available, try to load from HF_MODEL_ID
+        if HF_MODEL_ID is not None:
+            load_repository_from_hf(
+                repository_id=HF_MODEL_ID,
+                target_dir=HF_MODEL_DIR,
+                framework=HF_FRAMEWORK,
+                revision=HF_REVISION,
+                hf_hub_token=HF_HUB_TOKEN,
+            )
+        # 3. check if in Vertex AI environment and load from GCS
+        # If artifactUri not on Model Creation not set returns an empty string
+        elif len(os.environ.get("AIP_STORAGE_URI", "")) > 0:
+            _load_repository_from_gcs(
+                os.environ["AIP_STORAGE_URI"], target_dir=HF_MODEL_DIR
+            )
+        # 4. if not available, raise error
+        else:
+            raise ValueError(
+                f"""Can't initialize model.
+                    Please set env HF_MODEL_DIR or provider a HF_MODEL_ID.
+                    Provided values are:
+                    HF_MODEL_DIR: {HF_MODEL_DIR} and HF_MODEL_ID:{HF_MODEL_ID}"""
+            )
+    MODEL_DOWNLOADED = True
+
 
 async def health(request):
     return PlainTextResponse("Ok")
@@ -92,6 +103,9 @@ async def metrics(request):
 
 async def predict(request):
     global INFERENCE_HANDLERS
+    if not MODEL_DOWNLOADED:
+        with MODEL_DL_LOCK:
+            _eager_model_dl()
     try:
         task = request.path_params.get("task", HF_TASK)
         # extracts content from request
