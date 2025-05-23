@@ -28,6 +28,7 @@ install_requires = [
     # web api
     "starlette",
     "uvicorn",
+    "gunicorn",
     "pandas",
     "orjson",
     "einops",

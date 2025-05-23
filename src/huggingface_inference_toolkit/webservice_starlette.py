@@ -1,3 +1,4 @@
+import asyncio
 import os
 import threading
 from pathlib import Path
@@ -8,6 +9,7 @@ from starlette.applications import Starlette
 from starlette.responses import PlainTextResponse, Response
 from starlette.routing import Route
 
+from huggingface_inference_toolkit import idle
 from huggingface_inference_toolkit.async_utils import MAX_CONCURRENT_THREADS, MAX_THREADS_GUARD, async_handler_call
 from huggingface_inference_toolkit.const import (
     HF_FRAMEWORK,
@@ -24,22 +26,42 @@ from huggingface_inference_toolkit.handler import (
 from huggingface_inference_toolkit.logging import logger
 from huggingface_inference_toolkit.serialization.base import ContentType
 from huggingface_inference_toolkit.serialization.json_utils import Jsoner
-from huggingface_inference_toolkit.utils import (
-    _load_repository_from_hf,
-    convert_params_to_int_or_bool,
-)
+from huggingface_inference_toolkit.utils import convert_params_to_int_or_bool
+#     _load_repository_from_hf,
+#     convert_params_to_int_or_bool,
+# )
 from huggingface_inference_toolkit.vertex_ai_utils import _load_repository_from_gcs
 
 INFERENCE_HANDLERS = {}
 INFERENCE_HANDLERS_LOCK = threading.Lock()
+MODEL_DOWNLOADED = False
+MODEL_DL_LOCK = threading.Lock()
+
 
 async def prepare_model_artifacts():
     global INFERENCE_HANDLERS
+
+    if idle.UNLOAD_IDLE:
+        asyncio.create_task(idle.live_check_loop(), name="live_check_loop")
+    else:
+        _eager_model_dl()
+        logger.info(f"Initializing model from directory:{HF_MODEL_DIR}")
+        # 2. determine correct inference handler
+        inference_handler = get_inference_handler_either_custom_or_default_handler(
+            HF_MODEL_DIR, task=HF_TASK
+        )
+        INFERENCE_HANDLERS[HF_TASK] = inference_handler
+    logger.info("Model initialized successfully")
+
+
+def _eager_model_dl():
+    global MODEL_DOWNLOADED
+    from huggingface_inference_toolkit.heavy_utils import load_repository_from_hf
     # 1. check if model artifacts available in HF_MODEL_DIR
     if len(list(Path(HF_MODEL_DIR).glob("**/*"))) <= 0:
         # 2. if not available, try to load from HF_MODEL_ID
         if HF_MODEL_ID is not None:
-            _load_repository_from_hf(
+            load_repository_from_hf(
                 repository_id=HF_MODEL_ID,
                 target_dir=HF_MODEL_DIR,
                 framework=HF_FRAMEWORK,
@@ -56,18 +78,11 @@ async def prepare_model_artifacts():
         else:
             raise ValueError(
                 f"""Can't initialize model.
-                Please set env HF_MODEL_DIR or provider a HF_MODEL_ID.
-                Provided values are:
-                HF_MODEL_DIR: {HF_MODEL_DIR} and HF_MODEL_ID:{HF_MODEL_ID}"""
+                    Please set env HF_MODEL_DIR or provider a HF_MODEL_ID.
+                    Provided values are:
+                    HF_MODEL_DIR: {HF_MODEL_DIR} and HF_MODEL_ID:{HF_MODEL_ID}"""
             )
-
-    logger.info(f"Initializing model from directory:{HF_MODEL_DIR}")
-    # 2. determine correct inference handler
-    inference_handler = get_inference_handler_either_custom_or_default_handler(
-        HF_MODEL_DIR, task=HF_TASK
-    )
-    INFERENCE_HANDLERS[HF_TASK] = inference_handler
-    logger.info("Model initialized successfully")
+    MODEL_DOWNLOADED = True
 
 
 async def health(request):
@@ -88,6 +103,9 @@ async def metrics(request):
 
 async def predict(request):
     global INFERENCE_HANDLERS
+    if not MODEL_DOWNLOADED:
+        with MODEL_DL_LOCK:
+            _eager_model_dl()
     try:
         task = request.path_params.get("task", HF_TASK)
         # extracts content from request
@@ -127,8 +145,11 @@ async def predict(request):
                     inference_handler = INFERENCE_HANDLERS[task]
         # tracks request time
         start_time = perf_counter()
-        # run async not blocking call
-        pred = await async_handler_call(inference_handler, deserialized_body)
+
+        with idle.request_witnesses():
+            # run async not blocking call
+            pred = await async_handler_call(inference_handler, deserialized_body)
+
         # log request time
         logger.info(
             f"POST {request.url.path} | Duration: {(perf_counter()-start_time) *1000:.2f} ms"
