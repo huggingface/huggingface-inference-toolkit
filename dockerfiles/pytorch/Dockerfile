@@ -48,14 +48,12 @@ RUN pip install --no-cache-dir --upgrade pip
 
 # Optim: install requirements first will avoid full reinstall on simple source code change
 COPY requirements.txt .
-
 RUN pip install -r requirements.txt
 
 # Copying only necessary files as filtered by .dockerignore
 COPY . .
-
 # Install wheel and setuptools
-# RUN pip install --no-cache-dir --upgrade pip ".[torch,st,diffusers]"
+RUN pip install --no-cache-dir --upgrade pip ".[torch,st,diffusers]"
 
 # Copy application
 COPY src/huggingface_inference_toolkit huggingface_inference_toolkit
