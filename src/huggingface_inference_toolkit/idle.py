@@ -21,9 +21,10 @@ async def live_check_loop():
     pid = os.getpid()
 
     LOG.debug("Starting live check loop")
+    sleep_time = max(int(IDLE_TIMEOUT // 5), 1)
 
     while True:
-        await asyncio.sleep(IDLE_TIMEOUT)
+        await asyncio.sleep(sleep_time)
         LOG.debug("Checking whether we should unload anything from gpu")
 
         last_start = LAST_START
