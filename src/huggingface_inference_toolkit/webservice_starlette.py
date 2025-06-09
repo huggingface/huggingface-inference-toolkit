@@ -166,7 +166,7 @@ async def predict(request):
         )
         return Response(serialized_response_body, media_type=accept)
     except Exception as e:
-        logger.error(e)
+        logger.exception(e)
         return Response(
             Jsoner.serialize({"error": str(e)}),
             status_code=400,

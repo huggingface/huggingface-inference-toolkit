@@ -27,3 +27,7 @@ def strtobool(val: str) -> bool:
 
 def api_inference_compat():
     return strtobool(os.getenv("API_INFERENCE_COMPAT", "false"))
+
+
+def ignore_custom_handler():
+    return strtobool(os.getenv("IGNORE_CUSTOM_HANDLER", "false"))
