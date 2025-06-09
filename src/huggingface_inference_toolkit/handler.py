@@ -152,7 +152,14 @@ class HuggingFaceHandler:
                 else:
                     logging.logger.warning("Output unexpected type %s", type(resp))
                     return resp
-
+            if self.pipeline.task == "image-segmentation":
+                if isinstance(resp, list):
+                    new_resp = []
+                    for el in resp:
+                        if isinstance(el, dict) and el.get("score") is None:
+                            el["score"] = 1
+                        new_resp.append(el)
+                    resp = new_resp
         return resp
 
 
