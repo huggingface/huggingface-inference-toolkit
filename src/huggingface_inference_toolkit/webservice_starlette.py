@@ -27,10 +27,6 @@ from huggingface_inference_toolkit.logging import logger
 from huggingface_inference_toolkit.serialization.base import ContentType
 from huggingface_inference_toolkit.serialization.json_utils import Jsoner
 from huggingface_inference_toolkit.utils import convert_params_to_int_or_bool
-
-#     _load_repository_from_hf,
-#     convert_params_to_int_or_bool,
-# )
 from huggingface_inference_toolkit.vertex_ai_utils import _load_repository_from_gcs
 
 INFERENCE_HANDLERS = {}

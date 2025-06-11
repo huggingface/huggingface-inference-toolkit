@@ -3,20 +3,20 @@ import tempfile
 import pytest
 from transformers.testing_utils import require_torch
 
+from huggingface_inference_toolkit.heavy_utils import (
+    get_pipeline,
+    load_repository_from_hf,
+)
 from huggingface_inference_toolkit.sentence_transformers_utils import (
     SentenceEmbeddingPipeline,
     get_sentence_transformers_pipeline,
-)
-from huggingface_inference_toolkit.utils import (
-    _load_repository_from_hf,
-    get_pipeline,
 )
 
 
 @require_torch
 def test_get_sentence_transformers_pipeline():
     with tempfile.TemporaryDirectory() as tmpdirname:
-        storage_dir = _load_repository_from_hf("sentence-transformers/all-MiniLM-L6-v2", tmpdirname)
+        storage_dir = load_repository_from_hf("sentence-transformers/all-MiniLM-L6-v2", tmpdirname)
         pipe = get_pipeline("sentence-embeddings", storage_dir.as_posix())
         assert isinstance(pipe, SentenceEmbeddingPipeline)
 
@@ -24,7 +24,7 @@ def test_get_sentence_transformers_pipeline():
 @require_torch
 def test_sentence_embedding_task():
     with tempfile.TemporaryDirectory() as tmpdirname:
-        storage_dir = _load_repository_from_hf("sentence-transformers/all-MiniLM-L6-v2", tmpdirname)
+        storage_dir = load_repository_from_hf("sentence-transformers/all-MiniLM-L6-v2", tmpdirname)
         pipe = get_sentence_transformers_pipeline("sentence-embeddings", storage_dir.as_posix())
         res = pipe(sentences="Lets create an embedding")
         assert isinstance(res["embeddings"], list)
@@ -36,7 +36,7 @@ def test_sentence_embedding_task():
 @require_torch
 def test_sentence_similarity():
     with tempfile.TemporaryDirectory() as tmpdirname:
-        storage_dir = _load_repository_from_hf("sentence-transformers/all-MiniLM-L6-v2", tmpdirname)
+        storage_dir = load_repository_from_hf("sentence-transformers/all-MiniLM-L6-v2", tmpdirname)
         pipe = get_sentence_transformers_pipeline("sentence-similarity", storage_dir.as_posix())
         res = pipe(source_sentence="Lets create an embedding", sentences=["Lets create an embedding"])
         assert isinstance(res["similarities"], list)
@@ -45,7 +45,7 @@ def test_sentence_similarity():
 @require_torch
 def test_sentence_ranking():
     with tempfile.TemporaryDirectory() as tmpdirname:
-        storage_dir = _load_repository_from_hf("cross-encoder/ms-marco-MiniLM-L-6-v2", tmpdirname)
+        storage_dir = load_repository_from_hf("cross-encoder/ms-marco-MiniLM-L-6-v2", tmpdirname)
         pipe = get_sentence_transformers_pipeline("sentence-ranking", storage_dir.as_posix())
         res = pipe(
             sentences=[
@@ -61,7 +61,7 @@ def test_sentence_ranking():
 @require_torch
 def test_sentence_ranking_tei():
     with tempfile.TemporaryDirectory() as tmpdirname:
-        storage_dir = _load_repository_from_hf("cross-encoder/ms-marco-MiniLM-L-6-v2", tmpdirname, framework="pytorch")
+        storage_dir = load_repository_from_hf("cross-encoder/ms-marco-MiniLM-L-6-v2", tmpdirname, framework="pytorch")
         pipe = get_sentence_transformers_pipeline("sentence-ranking", storage_dir.as_posix())
         res = pipe(
             query="Lets create an embedding",
@@ -82,7 +82,7 @@ def test_sentence_ranking_tei():
 @require_torch
 def test_sentence_ranking_validation_errors():
     with tempfile.TemporaryDirectory() as tmpdirname:
-        storage_dir = _load_repository_from_hf("cross-encoder/ms-marco-MiniLM-L-6-v2", tmpdirname, framework="pytorch")
+        storage_dir = load_repository_from_hf("cross-encoder/ms-marco-MiniLM-L-6-v2", tmpdirname, framework="pytorch")
         pipe = get_sentence_transformers_pipeline("sentence-ranking", storage_dir.as_posix())
 
         with pytest.raises(
