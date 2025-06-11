@@ -58,8 +58,6 @@ RUN pip install --no-cache-dir --upgrade pip ".[torch,st,diffusers]"
 COPY src/huggingface_inference_toolkit huggingface_inference_toolkit
 COPY src/huggingface_inference_toolkit/webservice_starlette.py webservice_starlette.py
 
-RUN rm -rf src/
-
 # Copy entrypoint and change permissions
 COPY --chmod=0755 scripts/entrypoint.sh entrypoint.sh
 
