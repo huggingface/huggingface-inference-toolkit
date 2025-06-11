@@ -1,6 +1,8 @@
 import importlib.util
 from typing import Any, Dict, List, Tuple, Union
 
+from huggingface_inference_toolkit.env_utils import api_inference_compat
+
 try:
     from typing import Literal
 except ImportError:
@@ -26,7 +28,10 @@ class SentenceSimilarityPipeline:
         embeddings1 = self.model.encode(source_sentence, convert_to_tensor=True)
         embeddings2 = self.model.encode(sentences, convert_to_tensor=True)
         similarities = util.pytorch_cos_sim(embeddings1, embeddings2).tolist()[0]
-        return {"similarities": similarities}
+        if api_inference_compat():
+            return similarities
+        else:
+            return {"similarities": similarities}
 
 
 class SentenceEmbeddingPipeline:
@@ -36,7 +41,10 @@ class SentenceEmbeddingPipeline:
 
     def __call__(self, sentences: Union[str, List[str]]) -> Dict[str, List[float]]:
         embeddings = self.model.encode(sentences).tolist()
-        return {"embeddings": embeddings}
+        if api_inference_compat():
+            return embeddings
+        else:
+            return {"embeddings": embeddings}
 
 
 class SentenceRankingPipeline:

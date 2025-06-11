@@ -1,6 +1,18 @@
 from __future__ import absolute_import
-
+import os
 from setuptools import find_packages, setup
+
+lib_folder = os.path.dirname(os.path.realpath(__file__))
+requirements_path = f"{lib_folder}/requirements.txt"
+install_requires = [] # Here we'll add: ["gunicorn", "docutils>=0.3", "lxml==0.5a7"]
+if os.path.isfile(requirements_path):
+    with open(requirements_path) as f:
+        install_requires = f.read().splitlines()
+
+test_requirements_path =  f"{lib_folder}/test-requirements.txt"
+if os.path.isfile(test_requirements_path):
+    with open(test_requirements_path) as f:
+        test_requirements = f.read().splitlines()
 
 # We don't declare our dependency on transformers here because we build with
 # different packages for different variants
@@ -12,47 +24,14 @@ VERSION = "0.5.5"
 # ffmpeg: ffmpeg is required for audio processing. On Ubuntu it can be installed as follows: apt install ffmpeg
 # libavcodec-extra : libavcodec-extra  includes additional codecs for ffmpeg
 
-install_requires = [
-    # Due to an error affecting kenlm and cmake (see https://github.com/kpu/kenlm/pull/464)
-    # Also see the transformers patch for it https://github.com/huggingface/transformers/pull/37091
-    "kenlm@git+https://github.com/kpu/kenlm@ba83eafdce6553addd885ed3da461bb0d60f8df7",
-    "transformers[sklearn,sentencepiece,audio,vision]==4.51.3",
-    "huggingface_hub[hf_transfer]==0.30.2",
-    # vision
-    "Pillow",
-    "librosa",
-    # speech + torchaudio
-    "pyctcdecode>=0.3.0",
-    "phonemizer",
-    "ffmpeg",
-    # web api
-    "starlette",
-    "uvicorn",
-    "pandas",
-    "orjson",
-    "einops",
-]
-
 extras = {}
-
 extras["st"] = ["sentence_transformers==4.0.2"]
 extras["diffusers"] = ["diffusers==0.33.1", "accelerate==1.6.0"]
 # Includes `peft` as PEFT requires `torch` so having `peft` as a core dependency
 # means that `torch` will be installed even if the `torch` extra is not specified.
 extras["torch"] = ["torch==2.5.1", "torchvision", "torchaudio", "peft==0.15.1"]
-extras["test"] = [
-    "pytest==7.2.1",
-    "pytest-xdist",
-    "parameterized",
-    "psutil",
-    "datasets",
-    "pytest-sugar",
-    "mock==2.0.0",
-    "docker",
-    "requests",
-    "tenacity",
-]
 extras["quality"] = ["isort", "ruff"]
+extras["test"] = test_requirements
 extras["inf2"] = ["optimum-neuron"]
 extras["google"] = ["google-cloud-storage", "crcmod==1.7"]
 

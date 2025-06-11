@@ -32,8 +32,7 @@ RUN apt-get update && \
     && apt-get clean autoremove --yes \
     && rm -rf /var/lib/{apt,dpkg,cache,log}
 
-# Copying only necessary files as filtered by .dockerignore
-COPY . .
+RUN mkdir -p /var/lib/dpkg && touch /var/lib/dpkg/status
 
 # Set Python 3.11 as the default python version
 RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1 && \
@@ -47,6 +46,11 @@ RUN curl -O https://bootstrap.pypa.io/get-pip.py && \
 # Upgrade pip
 RUN pip install --no-cache-dir --upgrade pip
 
+COPY requirements.txt .
+RUN pip install -r requirements.txt && rm -rf /root/.cache
+
+# Copying only necessary files as filtered by .dockerignore
+COPY . .
 # Install wheel and setuptools
 RUN pip install --no-cache-dir --upgrade pip ".[torch,st,diffusers]"
 

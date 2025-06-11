@@ -1,3 +1,6 @@
+import os
+
+
 def strtobool(val: str) -> bool:
     """Convert a string representation of truth to True or False booleans.
     True values are 'y', 'yes', 't', 'true', 'on', and '1'; false values
@@ -20,3 +23,11 @@ def strtobool(val: str) -> bool:
     raise ValueError(
         f"Invalid truth value, it should be a string but {val} was provided instead."
     )
+
+
+def api_inference_compat():
+    return strtobool(os.getenv("API_INFERENCE_COMPAT", "false"))
+
+
+def ignore_custom_handler():
+    return strtobool(os.getenv("IGNORE_CUSTOM_HANDLER", "false"))

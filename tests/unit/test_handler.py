@@ -8,9 +8,9 @@ from huggingface_inference_toolkit.handler import (
     HuggingFaceHandler,
     get_inference_handler_either_custom_or_default_handler,
 )
-from huggingface_inference_toolkit.utils import (
+from huggingface_inference_toolkit.heavy_utils import (
     _is_gpu_available,
-    _load_repository_from_hf,
+    load_repository_from_hf,
 )
 
 TASK = "text-classification"
@@ -29,7 +29,7 @@ def test_pt_get_device() -> None:
 
     with tempfile.TemporaryDirectory() as tmpdirname:
         # https://github.com/huggingface/infinity/blob/test-ovh/test/integ/utils.py
-        storage_dir = _load_repository_from_hf(MODEL, tmpdirname, framework="pytorch")
+        storage_dir = load_repository_from_hf(MODEL, tmpdirname, framework="pytorch")
         h = HuggingFaceHandler(model_dir=str(storage_dir), task=TASK)
         if torch.cuda.is_available():
             assert h.pipeline.model.device == torch.device(type="cuda", index=0)
@@ -41,7 +41,7 @@ def test_pt_get_device() -> None:
 def test_pt_predict_call(input_data: Dict[str, str]) -> None:
     with tempfile.TemporaryDirectory() as tmpdirname:
         # https://github.com/huggingface/infinity/blob/test-ovh/test/integ/utils.py
-        storage_dir = _load_repository_from_hf(MODEL, tmpdirname, framework="pytorch")
+        storage_dir = load_repository_from_hf(MODEL, tmpdirname, framework="pytorch")
         h = HuggingFaceHandler(model_dir=str(storage_dir), task=TASK)
 
         prediction = h(input_data)
@@ -52,7 +52,7 @@ def test_pt_predict_call(input_data: Dict[str, str]) -> None:
 @require_torch
 def test_pt_custom_pipeline(input_data: Dict[str, str]) -> None:
     with tempfile.TemporaryDirectory() as tmpdirname:
-        storage_dir = _load_repository_from_hf(
+        storage_dir = load_repository_from_hf(
             "philschmid/custom-pipeline-text-classification",
             tmpdirname,
             framework="pytorch",
@@ -64,7 +64,7 @@ def test_pt_custom_pipeline(input_data: Dict[str, str]) -> None:
 @require_torch
 def test_pt_sentence_transformers_pipeline(input_data: Dict[str, str]) -> None:
     with tempfile.TemporaryDirectory() as tmpdirname:
-        storage_dir = _load_repository_from_hf(
+        storage_dir = load_repository_from_hf(
             "sentence-transformers/all-MiniLM-L6-v2", tmpdirname, framework="pytorch"
         )
         h = get_inference_handler_either_custom_or_default_handler(str(storage_dir), task="sentence-embeddings")
@@ -76,7 +76,7 @@ def test_pt_sentence_transformers_pipeline(input_data: Dict[str, str]) -> None:
 def test_tf_get_device():
     with tempfile.TemporaryDirectory() as tmpdirname:
         # https://github.com/huggingface/infinity/blob/test-ovh/test/integ/utils.py
-        storage_dir = _load_repository_from_hf(MODEL, tmpdirname, framework="tensorflow")
+        storage_dir = load_repository_from_hf(MODEL, tmpdirname, framework="tensorflow")
         h = HuggingFaceHandler(model_dir=str(storage_dir), task=TASK)
         if _is_gpu_available():
             assert h.pipeline.device == 0
@@ -88,7 +88,7 @@ def test_tf_get_device():
 def test_tf_predict_call(input_data: Dict[str, str]) -> None:
     with tempfile.TemporaryDirectory() as tmpdirname:
         # https://github.com/huggingface/infinity/blob/test-ovh/test/integ/utils.py
-        storage_dir = _load_repository_from_hf(MODEL, tmpdirname, framework="tensorflow")
+        storage_dir = load_repository_from_hf(MODEL, tmpdirname, framework="tensorflow")
         handler = HuggingFaceHandler(model_dir=str(storage_dir), task=TASK, framework="tf")
 
         prediction = handler(input_data)
@@ -99,7 +99,7 @@ def test_tf_predict_call(input_data: Dict[str, str]) -> None:
 @require_tf
 def test_tf_custom_pipeline(input_data: Dict[str, str]) -> None:
     with tempfile.TemporaryDirectory() as tmpdirname:
-        storage_dir = _load_repository_from_hf(
+        storage_dir = load_repository_from_hf(
             "philschmid/custom-pipeline-text-classification",
             tmpdirname,
             framework="tensorflow",
@@ -112,7 +112,7 @@ def test_tf_custom_pipeline(input_data: Dict[str, str]) -> None:
 def test_tf_sentence_transformers_pipeline():
     # TODO should fail! because TF is not supported yet
     with tempfile.TemporaryDirectory() as tmpdirname:
-        storage_dir = _load_repository_from_hf(
+        storage_dir = load_repository_from_hf(
             "sentence-transformers/all-MiniLM-L6-v2", tmpdirname, framework="tensorflow"
         )
         with pytest.raises(Exception) as _exc_info:

@@ -7,13 +7,13 @@ from transformers.file_utils import is_torch_available
 from transformers.testing_utils import require_tf, require_torch, slow
 
 from huggingface_inference_toolkit.handler import get_inference_handler_either_custom_or_default_handler
-from huggingface_inference_toolkit.utils import (
+from huggingface_inference_toolkit.heavy_utils import (
     _get_framework,
     _is_gpu_available,
-    _load_repository_from_hf,
-    check_and_register_custom_pipeline_from_directory,
     get_pipeline,
+    load_repository_from_hf,
 )
+from huggingface_inference_toolkit.utils import check_and_register_custom_pipeline_from_directory
 
 TASK_MODEL = "sshleifer/tiny-dbmdz-bert-large-cased-finetuned-conll03-english"
 
@@ -22,7 +22,7 @@ def test_load_revision_repository_from_hf():
     MODEL = "lysandre/tiny-bert-random"
     REVISION = "eb4c77816edd604d0318f8e748a1c606a2888493"
     with tempfile.TemporaryDirectory() as tmpdirname:
-        storage_folder = _load_repository_from_hf(MODEL, tmpdirname, revision=REVISION)
+        storage_folder = load_repository_from_hf(MODEL, tmpdirname, revision=REVISION)
         # folder contains all config files and pytorch_model.bin
         folder_contents = os.listdir(storage_folder)
         # revision doesn't have tokenizer
@@ -36,7 +36,7 @@ def test_load_tensorflow_repository_from_hf():
         tf_tmp = Path(tmpdirname).joinpath("tf")
         tf_tmp.mkdir(parents=True, exist_ok=True)
 
-        storage_folder = _load_repository_from_hf(MODEL, tf_tmp, framework="tensorflow")
+        storage_folder = load_repository_from_hf(MODEL, tf_tmp, framework="tensorflow")
         # folder contains all config files and pytorch_model.bin
         folder_contents = os.listdir(storage_folder)
         assert "pytorch_model.bin" not in folder_contents
@@ -52,7 +52,7 @@ def test_load_onnx_repository_from_hf():
         ox_tmp = Path(tmpdirname).joinpath("onnx")
         ox_tmp.mkdir(parents=True, exist_ok=True)
 
-        storage_folder = _load_repository_from_hf(MODEL, ox_tmp, framework="onnx")
+        storage_folder = load_repository_from_hf(MODEL, ox_tmp, framework="onnx")
         # folder contains all config files and pytorch_model.bin
         folder_contents = os.listdir(storage_folder)
         assert "pytorch_model.bin" not in folder_contents
@@ -73,7 +73,7 @@ def test_load_pytorch_repository_from_hf():
         pt_tmp = Path(tmpdirname).joinpath("pt")
         pt_tmp.mkdir(parents=True, exist_ok=True)
 
-        storage_folder = _load_repository_from_hf(MODEL, pt_tmp, framework="pytorch")
+        storage_folder = load_repository_from_hf(MODEL, pt_tmp, framework="pytorch")
         # folder contains all config files and pytorch_model.bin
         folder_contents = os.listdir(storage_folder)
         assert "pytorch_model.bin" in folder_contents
@@ -109,7 +109,7 @@ def test_get_pipeline():
     MODEL = "hf-internal-testing/tiny-random-BertForSequenceClassification"
     TASK = "text-classification"
     with tempfile.TemporaryDirectory() as tmpdirname:
-        storage_dir = _load_repository_from_hf(MODEL, tmpdirname, framework="pytorch")
+        storage_dir = load_repository_from_hf(MODEL, tmpdirname, framework="pytorch")
         pipe = get_pipeline(
             task = TASK,
             model_dir = storage_dir.as_posix(),
@@ -121,7 +121,7 @@ def test_get_pipeline():
 @require_torch
 def test_whisper_long_audio(cache_test_dir):
     with tempfile.TemporaryDirectory() as tmpdirname:
-        storage_dir = _load_repository_from_hf(
+        storage_dir = load_repository_from_hf(
             repository_id = "openai/whisper-tiny",
             target_dir = tmpdirname,
         )
@@ -139,7 +139,7 @@ def test_whisper_long_audio(cache_test_dir):
 @require_torch
 def test_wrapped_pipeline():
     with tempfile.TemporaryDirectory() as tmpdirname:
-        storage_dir = _load_repository_from_hf(
+        storage_dir = load_repository_from_hf(
             repository_id = "microsoft/DialoGPT-small",
             target_dir = tmpdirname,
             framework="pytorch"
@@ -175,7 +175,7 @@ def test_local_custom_pipeline(cache_test_dir):
 
 def test_remote_custom_pipeline():
     with tempfile.TemporaryDirectory() as tmpdirname:
-        storage_dir = _load_repository_from_hf(
+        storage_dir = load_repository_from_hf(
             "philschmid/custom-pipeline-text-classification",
             tmpdirname,
             framework="pytorch"
@@ -188,7 +188,7 @@ def test_remote_custom_pipeline():
 
 def test_get_inference_handler_either_custom_or_default_pipeline():
     with tempfile.TemporaryDirectory() as tmpdirname:
-        storage_dir = _load_repository_from_hf(
+        storage_dir = load_repository_from_hf(
             "philschmid/custom-pipeline-text-classification",
             tmpdirname,
             framework="pytorch"

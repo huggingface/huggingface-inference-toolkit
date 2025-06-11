@@ -1,4 +1,6 @@
+import asyncio
 import os
+import threading
 from pathlib import Path
 from time import perf_counter
 
@@ -7,6 +9,7 @@ from starlette.applications import Starlette
 from starlette.responses import PlainTextResponse, Response
 from starlette.routing import Route
 
+from huggingface_inference_toolkit import idle
 from huggingface_inference_toolkit.async_utils import MAX_CONCURRENT_THREADS, MAX_THREADS_GUARD, async_handler_call
 from huggingface_inference_toolkit.const import (
     HF_FRAMEWORK,
@@ -16,26 +19,46 @@ from huggingface_inference_toolkit.const import (
     HF_REVISION,
     HF_TASK,
 )
+from huggingface_inference_toolkit.env_utils import api_inference_compat
 from huggingface_inference_toolkit.handler import (
     get_inference_handler_either_custom_or_default_handler,
 )
 from huggingface_inference_toolkit.logging import logger
 from huggingface_inference_toolkit.serialization.base import ContentType
 from huggingface_inference_toolkit.serialization.json_utils import Jsoner
-from huggingface_inference_toolkit.utils import (
-    _load_repository_from_hf,
-    convert_params_to_int_or_bool,
-)
+from huggingface_inference_toolkit.utils import convert_params_to_int_or_bool
 from huggingface_inference_toolkit.vertex_ai_utils import _load_repository_from_gcs
+
+INFERENCE_HANDLERS = {}
+INFERENCE_HANDLERS_LOCK = threading.Lock()
+MODEL_DOWNLOADED = False
+MODEL_DL_LOCK = threading.Lock()
 
 
 async def prepare_model_artifacts():
-    global inference_handler
+    global INFERENCE_HANDLERS
+
+    if idle.UNLOAD_IDLE:
+        asyncio.create_task(idle.live_check_loop(), name="live_check_loop")
+    else:
+        _eager_model_dl()
+        logger.info(f"Initializing model from directory:{HF_MODEL_DIR}")
+        # 2. determine correct inference handler
+        inference_handler = get_inference_handler_either_custom_or_default_handler(
+            HF_MODEL_DIR, task=HF_TASK
+        )
+        INFERENCE_HANDLERS[HF_TASK] = inference_handler
+    logger.info("Model initialized successfully")
+
+
+def _eager_model_dl():
+    global MODEL_DOWNLOADED
+    from huggingface_inference_toolkit.heavy_utils import load_repository_from_hf
     # 1. check if model artifacts available in HF_MODEL_DIR
     if len(list(Path(HF_MODEL_DIR).glob("**/*"))) <= 0:
         # 2. if not available, try to load from HF_MODEL_ID
         if HF_MODEL_ID is not None:
-            _load_repository_from_hf(
+            load_repository_from_hf(
                 repository_id=HF_MODEL_ID,
                 target_dir=HF_MODEL_DIR,
                 framework=HF_FRAMEWORK,
@@ -52,17 +75,11 @@ async def prepare_model_artifacts():
         else:
             raise ValueError(
                 f"""Can't initialize model.
-                Please set env HF_MODEL_DIR or provider a HF_MODEL_ID.
-                Provided values are:
-                HF_MODEL_DIR: {HF_MODEL_DIR} and HF_MODEL_ID:{HF_MODEL_ID}"""
+                    Please set env HF_MODEL_DIR or provider a HF_MODEL_ID.
+                    Provided values are:
+                    HF_MODEL_DIR: {HF_MODEL_DIR} and HF_MODEL_ID:{HF_MODEL_ID}"""
             )
-
-    logger.info(f"Initializing model from directory:{HF_MODEL_DIR}")
-    # 2. determine correct inference handler
-    inference_handler = get_inference_handler_either_custom_or_default_handler(
-        HF_MODEL_DIR, task=HF_TASK
-    )
-    logger.info("Model initialized successfully")
+    MODEL_DOWNLOADED = True
 
 
 async def health(request):
@@ -82,11 +99,16 @@ async def metrics(request):
 
 
 async def predict(request):
+    global INFERENCE_HANDLERS
+    if not MODEL_DOWNLOADED:
+        with MODEL_DL_LOCK:
+            _eager_model_dl()
     try:
+        task = request.path_params.get("task", HF_TASK)
         # extracts content from request
-        content_type = request.headers.get("content-Type", None)
+        content_type = request.headers.get("content-Type", os.environ.get("DEFAULT_CONTENT_TYPE")).lower()
         # try to deserialize payload
-        deserialized_body = ContentType.get_deserializer(content_type).deserialize(
+        deserialized_body = ContentType.get_deserializer(content_type, task).deserialize(
             await request.body()
         )
         # checks if input schema is correct
@@ -101,26 +123,47 @@ async def predict(request):
                 dict(request.query_params)
             )
 
+        # We lazily load pipelines for alt tasks
+
+        if task == "feature-extraction" and HF_TASK in [
+            "sentence-similarity",
+            "sentence-embeddings",
+            "sentence-ranking",
+        ]:
+            task = "sentence-embeddings"
+        inference_handler = INFERENCE_HANDLERS.get(task)
+        if not inference_handler:
+            with INFERENCE_HANDLERS_LOCK:
+                if task not in INFERENCE_HANDLERS:
+                    inference_handler = get_inference_handler_either_custom_or_default_handler(
+                        HF_MODEL_DIR, task=task)
+                    INFERENCE_HANDLERS[task] = inference_handler
+                else:
+                    inference_handler = INFERENCE_HANDLERS[task]
         # tracks request time
         start_time = perf_counter()
-        # run async not blocking call
-        pred = await async_handler_call(inference_handler, deserialized_body)
+
+        with idle.request_witnesses():
+            # run async not blocking call
+            pred = await async_handler_call(inference_handler, deserialized_body)
+
         # log request time
         logger.info(
             f"POST {request.url.path} | Duration: {(perf_counter()-start_time) *1000:.2f} ms"
         )
 
         # response extracts content from request
-        accept = request.headers.get("accept", None)
+        accept = request.headers.get("accept")
         if accept is None or accept == "*/*":
-            accept = "application/json"
+            accept = os.environ.get("DEFAULT_ACCEPT", "application/json")
+        logger.info("Request accepts %s", accept)
         # deserialized and resonds with json
         serialized_response_body = ContentType.get_serializer(accept).serialize(
             pred, accept
         )
         return Response(serialized_response_body, media_type=accept)
     except Exception as e:
-        logger.error(e)
+        logger.exception(e)
         return Response(
             Jsoner.serialize({"error": str(e)}),
             status_code=400,
@@ -148,14 +191,19 @@ if os.getenv("AIP_MODE", None) == "PREDICTION":
         on_startup=[prepare_model_artifacts],
     )
 else:
+    routes = [
+        Route("/", health, methods=["GET"]),
+        Route("/health", health, methods=["GET"]),
+        Route("/", predict, methods=["POST"]),
+        Route("/predict", predict, methods=["POST"]),
+        Route("/metrics", metrics, methods=["GET"]),
+    ]
+    if api_inference_compat():
+        routes.append(
+            Route("/pipeline/{task:path}", predict, methods=["POST"])
+        )
     app = Starlette(
         debug=False,
-        routes=[
-            Route("/", health, methods=["GET"]),
-            Route("/health", health, methods=["GET"]),
-            Route("/", predict, methods=["POST"]),
-            Route("/predict", predict, methods=["POST"]),
-            Route("/metrics", metrics, methods=["GET"]),
-        ],
+        routes=routes,
         on_startup=[prepare_model_artifacts],
     )

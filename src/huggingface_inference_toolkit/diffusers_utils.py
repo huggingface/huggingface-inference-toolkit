@@ -1,4 +1,5 @@
 import importlib.util
+import os
 from typing import Union
 
 from transformers.utils.import_utils import is_torch_bf16_gpu_available
@@ -62,6 +63,16 @@ class IEAutoPipelineForText2Image:
         if "num_images_per_prompt" in kwargs:
             kwargs.pop("num_images_per_prompt")
             logger.warning("Sending num_images_per_prompt > 1 to pipeline is not supported. Using default value 1.")
+
+        if "num_inference_steps" not in kwargs:
+            default_num_steps = os.environ.get("DEFAULT_NUM_INFERENCE_STEPS")
+            if default_num_steps:
+                kwargs["num_inference_steps"] = int(default_num_steps)
+
+        if "guidance_scale" not in kwargs:
+            guidance_scale = os.environ.get("DEFAULT_GUIDANCE_SCALE")
+            if guidance_scale is not None:
+                kwargs["guidance_scale"] = float(guidance_scale)
 
         if "target_size" in kwargs:
             kwargs["height"] = kwargs["target_size"].pop("height", None)
