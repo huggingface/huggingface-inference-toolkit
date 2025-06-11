@@ -5,7 +5,6 @@ from pathlib import Path
 from huggingface_inference_toolkit.const import HF_DEFAULT_PIPELINE_NAME, HF_MODULE_NAME
 from huggingface_inference_toolkit.logging import logger
 
-
 _optimum_available = importlib.util.find_spec("optimum") is not None
 
 

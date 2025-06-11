@@ -5,7 +5,6 @@ import os
 import signal
 import time
 
-
 LOG = logging.getLogger(__name__)
 
 LAST_START = None

@@ -7,7 +7,6 @@ from pathlib import Path
 from typing import Optional, Union
 
 from huggingface_hub import HfApi, login, snapshot_download
-
 from transformers import WhisperForConditionalGeneration, pipeline
 from transformers.file_utils import is_tf_available, is_torch_available
 from transformers.pipelines import Pipeline
@@ -17,15 +16,15 @@ from huggingface_inference_toolkit.diffusers_utils import (
     is_diffusers_available,
 )
 from huggingface_inference_toolkit.logging import logger
+from huggingface_inference_toolkit.optimum_utils import (
+    get_optimum_neuron_pipeline,
+    is_optimum_neuron_available,
+)
 from huggingface_inference_toolkit.sentence_transformers_utils import (
     get_sentence_transformers_pipeline,
     is_sentence_transformers_available,
 )
 from huggingface_inference_toolkit.utils import create_artifact_filter
-from huggingface_inference_toolkit.optimum_utils import (
-    get_optimum_neuron_pipeline,
-    is_optimum_neuron_available,
-)
 
 
 def load_repository_from_hf(
