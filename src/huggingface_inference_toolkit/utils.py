@@ -134,7 +134,7 @@ def _load_repository_from_hf(
 
     # create regex to only include the framework specific weights
     ignore_regex = create_artifact_filter(framework)
-    logger.info(f"Ignore regex pattern for files, which are not downloaded: { ', '.join(ignore_regex) }")
+    logger.info(f"Ignore regex pattern for files, which are not downloaded: {', '.join(ignore_regex)}")
 
     # Download the repository to the workdir and filter out non-framework
     # specific weights
@@ -244,7 +244,10 @@ def get_pipeline(
         "sentence-similarity",
         "sentence-embeddings",
         "sentence-ranking",
+        "text-ranking",
     ]:
+        if task == "text-ranking":
+            task = "sentence-ranking"
         hf_pipeline = get_sentence_transformers_pipeline(task=task, model_dir=model_dir, device=device, **kwargs)
     elif is_diffusers_available() and task == "text-to-image":
         hf_pipeline = get_diffusers_pipeline(task=task, model_dir=model_dir, device=device, **kwargs)
