@@ -25,7 +25,7 @@ class HuggingFaceHandler:
             trust_remote_code=HF_TRUST_REMOTE_CODE,
         )
 
-    def __call__(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def __call__(self, data: Dict[str, Any]):
         """
         Handles an inference request with input data and makes a prediction.
         Args:
@@ -132,7 +132,7 @@ class HuggingFaceHandler:
                 if isinstance(inputs, list):
                     if isinstance(resp, list) and len(resp) == len(inputs):
                         for it in resp:
-                            # Batch size dim is the first it level, dicard it
+                            # Batch size dim is the first it level, discard it
                             if isinstance(it, list) and len(it) == 1:
                                 new_resp.append(it[0])
                             else:
@@ -160,6 +160,25 @@ class HuggingFaceHandler:
                             el["score"] = 1
                         new_resp.append(el)
                     resp = new_resp
+            if self.pipeline.task == "zero-shot-classification":
+                try:
+                    if isinstance(resp, dict):
+                        if 'labels' in resp and 'scores' in resp:
+                            labels = resp['labels']
+                            scores = resp['scores']
+                            if len(labels) == len(scores):
+                                new_resp = []
+                                for label, score in zip(labels, scores):
+                                    new_resp.append({"label": label, "score": score})
+                                resp = new_resp
+                            else:
+                                raise Exception("labels and scores do not have the same len, {} != {}".format(
+                                    len(labels), len(scores)))
+                        else:
+                            raise Exception("Missing labels or scores key in response dict {}".format(resp))
+                except Exception as e:
+                    logging.logger.warning("Unable to remap response for api inference compat")
+                    logging.logger.exception(e)
         return resp
 
 
