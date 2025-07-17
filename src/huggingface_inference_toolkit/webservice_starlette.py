@@ -96,9 +96,10 @@ async def predict(request):
                 f"Body needs to provide a inputs key, received: {orjson.dumps(deserialized_body)}"
             )
 
-        # Decode inputs conditioned on the task.
+        # Decode base64 audio inputs before running inference
         if "parameters" in deserialized_body and HF_TASK in {
-            "automatic-speech-recognition"
+            "automatic-speech-recognition",
+            "audio-classification",
         }:
             deserialized_body["inputs"] = base64.b64decode(
                 deserialized_body["inputs"]
