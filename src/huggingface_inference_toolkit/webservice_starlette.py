@@ -97,7 +97,7 @@ async def predict(request):
             )
 
         # Decode base64 audio inputs before running inference
-        if "inputs" in deserialized_body and HF_TASK in {
+        if "parameters" in deserialized_body and HF_TASK in {
             "automatic-speech-recognition",
             "audio-classification",
         }:
