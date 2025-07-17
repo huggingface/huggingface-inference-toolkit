@@ -1,3 +1,4 @@
+import base64
 import os
 from pathlib import Path
 from time import perf_counter
@@ -93,6 +94,14 @@ async def predict(request):
         if "inputs" not in deserialized_body and "instances" not in deserialized_body:
             raise ValueError(
                 f"Body needs to provide a inputs key, received: {orjson.dumps(deserialized_body)}"
+            )
+
+        # Decode inputs conditioned on the task.
+        if "parameters" in deserialized_body and HF_TASK in {
+            "automatic-speech-recognition"
+        }:
+            deserialized_body["inputs"] = base64.b64decode(
+                deserialized_body["inputs"]
             )
 
         # check for query parameter and add them to the body
