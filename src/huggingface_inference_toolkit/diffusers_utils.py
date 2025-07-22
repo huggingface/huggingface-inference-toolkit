@@ -64,9 +64,14 @@ class IEAutoPipelineForText2Image:
             logger.warning("Sending num_images_per_prompt > 1 to pipeline is not supported. Using default value 1.")
 
         if "target_size" in kwargs:
-            kwargs["height"] = kwargs["target_size"].pop("height", None)
-            kwargs["width"] = kwargs["target_size"].pop("width", None)
+            kwargs["height"] = kwargs["target_size"].pop("height")
+            kwargs["width"] = kwargs["target_size"].pop("width")
             kwargs.pop("target_size")
+
+        if kwargs.get("height") != kwargs.get("width"):
+            raise ValueError(
+                f"Provided `height={kwargs.get('height')}` and `width={kwargs.get('width')}`, but either both must have a value or both must be None (or not provided)."
+            )
 
         if "output_type" in kwargs and kwargs["output_type"] != "pil":
             kwargs.pop("output_type")
