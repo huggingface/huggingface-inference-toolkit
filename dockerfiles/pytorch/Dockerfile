@@ -49,6 +49,8 @@ RUN pip install --no-cache-dir --upgrade pip
 
 # Install wheel and setuptools
 RUN pip install --no-cache-dir --upgrade pip ".[torch,st,diffusers]"
+RUN pip install flash-attn --no-build-isolation
+RUN pip install "mamba-ssm[causal-conv1d]" --no-build-isolation
 
 # Copy application
 COPY src/huggingface_inference_toolkit huggingface_inference_toolkit
@@ -56,5 +58,7 @@ COPY src/huggingface_inference_toolkit/webservice_starlette.py webservice_starle
 
 # Copy entrypoint and change permissions
 COPY --chmod=0755 scripts/entrypoint.sh entrypoint.sh
+
+ENV HF_HUB_USER_AGENT_ORIGIN=azure:maap:gpu-cuda:inference:huggingface-inference-toolkit
 
 ENTRYPOINT ["bash", "-c", "./entrypoint.sh"]
