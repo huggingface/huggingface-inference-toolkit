@@ -22,6 +22,13 @@ if [[ ! -z "${HF_MODEL_ID}" ]]; then
     filename=${HF_DEFAULT_PIPELINE_NAME:-handler.py}
     revision=${HF_REVISION:-main}
 
+    if [[ ! -z "${HF_HUB_TOKEN}" ]]; then
+        echo "Attempting HuggingFace CLI login"
+        huggingface-cli login --token $HF_HUB_TOKEN
+    else
+        echo "HF_HUB_TOKEN not provided"
+    fi
+
     echo "Downloading $filename for model ${HF_MODEL_ID}"
     huggingface-cli download ${HF_MODEL_ID} "$filename" --revision "$revision" --local-dir /tmp
 
