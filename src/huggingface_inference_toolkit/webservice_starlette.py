@@ -101,8 +101,9 @@ async def predict(request):
             "automatic-speech-recognition",
             "audio-classification",
         }:
+            # Be more strict on base64 decoding, the provided string should valid base64 encoded data
             deserialized_body["inputs"] = base64.b64decode(
-                deserialized_body["inputs"]
+                deserialized_body["inputs"], validate=True
             )
 
         # check for query parameter and add them to the body
