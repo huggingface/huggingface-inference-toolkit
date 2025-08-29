@@ -106,7 +106,7 @@ async def predict(request):
     try:
         task = request.path_params.get("task", HF_TASK)
         # extracts content from request
-        content_type = request.headers.get("content-Type", os.environ.get("DEFAULT_CONTENT_TYPE")).lower()
+        content_type = request.headers.get("content-Type", os.environ.get("DEFAULT_CONTENT_TYPE", "")).lower()
         # try to deserialize payload
         deserialized_body = ContentType.get_deserializer(content_type, task).deserialize(
             await request.body()

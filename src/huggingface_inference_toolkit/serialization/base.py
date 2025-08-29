@@ -37,6 +37,9 @@ content_type_mapping = {
 class ContentType:
     @staticmethod
     def get_deserializer(content_type: str, task: str):
+        if not content_type:
+            message = f"No content type provided and no default one configured."
+            raise Exception(message)
         if content_type.lower().startswith("application/octet-stream"):
             if "audio" in task or "speech" in task:
                 return Audioer
