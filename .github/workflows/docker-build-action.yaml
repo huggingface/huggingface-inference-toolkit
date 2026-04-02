@@ -32,25 +32,25 @@ jobs:
       group: aws-highmemory-32-plus-priv
     steps:
       - name: Check out
-        uses: actions/checkout@v3
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2.0.0
+        uses: docker/setup-buildx-action@dc7b9719a96d48369863986a06765841d7ea23f6  # v2.0.0
         with:
           install: true
 
       - name: Login to container registry
-        uses: docker/login-action@v2.0.0
+        uses: docker/login-action@49ed152c8eca782a232dede0303416e8f356c37b  # v2.0.0
         with:
           registry: ${{ inputs.repository }}
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
 
       - name: Inject slug/short variables
-        uses: rlespinasse/github-slug-action@v4
+        uses: rlespinasse/github-slug-action@797d68864753cbceedc271349d402da4590e6302  # v4
 
       - name: Build and push image to container registry
-        uses: docker/build-push-action@v3.0.0
+        uses: docker/build-push-action@e551b19e49efd4e98792db7592c17c09b89db8d8  # v3.0.0
         with:
           push: true
           context: ${{ inputs.context }}
