@@ -26,7 +26,9 @@ install_requires = [
     "phonemizer",
     "ffmpeg",
     # web api
-    "starlette",
+    # Pin >= 1.0.1 to address CVE-2026-48710 (GHSA-86qp-5c8j-p5mr):
+    # Host header poisons request.url.path; path-based middleware can be bypassed.
+    "starlette>=1.0.1",
     "uvicorn",
     "pandas",
     "orjson",
