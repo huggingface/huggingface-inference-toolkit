@@ -1,5 +1,6 @@
 import base64
 import os
+from contextlib import asynccontextmanager
 from pathlib import Path
 from time import perf_counter
 
@@ -64,6 +65,15 @@ async def prepare_model_artifacts():
         HF_MODEL_DIR, task=HF_TASK
     )
     logger.info("Model initialized successfully")
+
+
+@asynccontextmanager
+async def lifespan(app):
+    # Starlette 1.0 removed `on_startup` / `on_shutdown` in favor of the
+    # ASGI lifespan protocol. We run the model-artifact preparation once at
+    # startup; there is no per-process shutdown work to do.
+    await prepare_model_artifacts()
+    yield
 
 
 async def health(request):
@@ -156,7 +166,7 @@ if os.getenv("AIP_MODE", None) == "PREDICTION":
             Route(_health_route, health, methods=["GET"]),
             Route(_predict_route, predict, methods=["POST"]),
         ],
-        on_startup=[prepare_model_artifacts],
+        lifespan=lifespan,
     )
 else:
     app = Starlette(
@@ -168,5 +178,5 @@ else:
             Route("/predict", predict, methods=["POST"]),
             Route("/metrics", metrics, methods=["GET"]),
         ],
-        on_startup=[prepare_model_artifacts],
+        lifespan=lifespan,
     )
