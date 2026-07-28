@@ -23,16 +23,12 @@ jobs:
       group: aws-g4dn-2xlarge-cache
     env:
       AWS_REGION: us-east-1
-      CACHE_TEST_DIR: /mnt/hf_cache/hf-inference-toolkit-tests
+      # Only ever used as a bind-mount target inside the test container, so it does not need
+      # to point anywhere outside the job.
+      CACHE_TEST_DIR: /opt/hf-inference-toolkit-tests
       RUN_SLOW: True
     steps:
     - uses: actions/checkout@v4.1.1
-    - name: Copy unit tests to cache mount
-      run: |
-        sudo rm -rf ${{ env.CACHE_TEST_DIR }} && \
-        sudo mkdir ${{ env.CACHE_TEST_DIR }} && \
-        sudo chown -R runner ${{ env.CACHE_TEST_DIR }}
-        cp -r tests ${{ env.CACHE_TEST_DIR }}
     - name: Docker Setup Buildx
       uses: docker/setup-buildx-action@v3.0.0
     - name: Docker Build
