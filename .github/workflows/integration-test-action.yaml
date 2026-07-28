@@ -5,14 +5,6 @@ on:
         type: string
         required: false
         default: "us-east-1"
-      hf_home:
-        required: false
-        type: string
-        default: "/mnt/hf_cache/"
-      hf_hub_cache:
-        required: false
-        type: string
-        default: "/mnt/hf_cache/hub"
       run_slow:
         required: false
         type: string
@@ -47,8 +39,13 @@ jobs:
       group: ${{ inputs.runs_on }}
     env:
       AWS_REGION: ${{ inputs.region }}
-      HF_HOME: ${{ inputs.hf_home }}
-      HF_HUB_CACHE: ${{ inputs.hf_hub_cache }}
+      # Keep the model cache inside the job's own workspace, so a run never depends on state
+      # shared with anything else. Models are re-downloaded every run; the integ test fixtures
+      # are tiny on purpose. It has to be the workspace rather than somewhere under $HOME
+      # because conftest bind-mounts the downloaded model dir into the test container, so the
+      # docker daemon has to be able to resolve the path as well.
+      HF_HOME: ${{ github.workspace }}/.hf_cache
+      HF_HUB_CACHE: ${{ github.workspace }}/.hf_cache/hub
       RUN_SLOW: ${{ inputs.run_slow }}
     steps:
     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
