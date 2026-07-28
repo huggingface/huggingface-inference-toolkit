@@ -1,8 +1,12 @@
 import logging
 import os
 import tempfile
+from collections import namedtuple
 from pathlib import Path
+from types import SimpleNamespace
 
+import psutil
+import pytest
 from transformers.file_utils import is_torch_available
 from transformers.testing_utils import require_tf, require_torch, slow
 
@@ -11,8 +15,10 @@ from huggingface_inference_toolkit.utils import (
     _get_framework,
     _is_gpu_available,
     _load_repository_from_hf,
+    already_left,
     check_and_register_custom_pipeline_from_directory,
     get_pipeline,
+    should_discard_left,
 )
 
 TASK_MODEL = "sshleifer/tiny-dbmdz-bert-large-cased-finetuned-conll03-english"
@@ -204,3 +210,64 @@ def test_get_inference_handler_either_custom_or_default_pipeline():
         pipeline = get_inference_handler_either_custom_or_default_handler(MODEL, TASK)
         res = pipeline({"inputs": "Life is good, Life is bad"})
         assert "score" in res[0]
+
+
+def _fake_conn(status, ip, port):
+    raddr = namedtuple("addr", ["ip", "port"])(ip, port)
+    return namedtuple("sconn", ["status", "raddr"])(status, raddr)
+
+
+def _fake_request(host, port):
+    return SimpleNamespace(client=namedtuple("Address", ["host", "port"])(host, port))
+
+
+@pytest.mark.parametrize(
+    "value,expected",
+    [(None, False), ("0", False), ("no", False), ("", False), ("1", True), ("true", True), ("YES", True)],
+)
+def test_should_discard_left(monkeypatch, value, expected):
+    if value is None:
+        monkeypatch.delenv("DISCARD_LEFT", raising=False)
+    else:
+        monkeypatch.setenv("DISCARD_LEFT", value)
+    assert should_discard_left() is expected
+
+
+def test_already_left_false_when_connection_still_established(monkeypatch):
+    monkeypatch.setattr(
+        psutil,
+        "net_connections",
+        lambda kind: [
+            _fake_conn("ESTABLISHED", "10.0.0.9", 4242),
+            _fake_conn("ESTABLISHED", "10.0.0.1", 1234),
+        ],
+    )
+    assert already_left(_fake_request("10.0.0.1", 1234)) is False
+
+
+def test_already_left_true_when_no_matching_connection(monkeypatch):
+    monkeypatch.setattr(
+        psutil,
+        "net_connections",
+        lambda kind: [
+            # right peer, but the connection is on its way out
+            _fake_conn("CLOSE_WAIT", "10.0.0.1", 1234),
+            # right port, other host
+            _fake_conn("ESTABLISHED", "10.0.0.2", 1234),
+            # right host, other port
+            _fake_conn("ESTABLISHED", "10.0.0.1", 1235),
+        ],
+    )
+    assert already_left(_fake_request("10.0.0.1", 1234)) is True
+
+
+def test_already_left_assumes_caller_present_when_check_fails(monkeypatch):
+    # A broken check must never discard a request the caller is waiting for
+    def boom(kind):
+        raise RuntimeError("no permission to read the TCP table")
+
+    monkeypatch.setattr(psutil, "net_connections", boom)
+    assert already_left(_fake_request("10.0.0.1", 1234)) is False
+    # unparseable client address
+    assert already_left(_fake_request("not-an-ip", 1234)) is False
+    assert already_left(_fake_request(None, 1234)) is False
