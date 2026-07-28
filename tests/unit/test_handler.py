@@ -38,6 +38,31 @@ def test_pt_get_device() -> None:
 
 
 @require_torch
+def test_pt_predict_call_discarded_when_caller_left(input_data: Dict[str, str], monkeypatch) -> None:
+    monkeypatch.setenv("DISCARD_LEFT", "1")
+    monkeypatch.setattr("huggingface_inference_toolkit.handler.already_left", lambda request: True)
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        storage_dir = _load_repository_from_hf(MODEL, tmpdirname, framework="pytorch")
+        h = HuggingFaceHandler(model_dir=str(storage_dir), task=TASK)
+
+        input_data["handler_params"] = {"request": object()}
+        assert h(input_data) is None
+
+
+@require_torch
+def test_pt_predict_call_ignores_handler_params_when_disabled(input_data: Dict[str, str], monkeypatch) -> None:
+    monkeypatch.delenv("DISCARD_LEFT", raising=False)
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        storage_dir = _load_repository_from_hf(MODEL, tmpdirname, framework="pytorch")
+        h = HuggingFaceHandler(model_dir=str(storage_dir), task=TASK)
+
+        input_data["handler_params"] = {"request": object()}
+        prediction = h(input_data)
+        assert "label" in prediction[0]
+        assert "score" in prediction[0]
+
+
+@require_torch
 def test_pt_predict_call(input_data: Dict[str, str]) -> None:
     with tempfile.TemporaryDirectory() as tmpdirname:
         # https://github.com/huggingface/infinity/blob/test-ovh/test/integ/utils.py

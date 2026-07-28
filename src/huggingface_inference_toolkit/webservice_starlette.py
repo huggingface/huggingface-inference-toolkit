@@ -19,6 +19,7 @@ from huggingface_inference_toolkit.const import (
     HF_TASK,
 )
 from huggingface_inference_toolkit.handler import (
+    HuggingFaceHandler,
     get_inference_handler_either_custom_or_default_handler,
 )
 from huggingface_inference_toolkit.logging import logger
@@ -27,6 +28,7 @@ from huggingface_inference_toolkit.serialization.json_utils import Jsoner
 from huggingface_inference_toolkit.utils import (
     _load_repository_from_hf,
     convert_params_to_int_or_bool,
+    should_discard_left,
 )
 from huggingface_inference_toolkit.vertex_ai_utils import _load_repository_from_gcs
 
@@ -122,6 +124,11 @@ async def predict(request):
                 dict(request.query_params)
             )
 
+        if should_discard_left() and isinstance(inference_handler, HuggingFaceHandler):
+            deserialized_body["handler_params"] = {
+                "request": request
+            }
+
         # tracks request time
         start_time = perf_counter()
         # run async not blocking call
@@ -130,6 +137,10 @@ async def predict(request):
         logger.info(
             f"POST {request.url.path} | Duration: {(perf_counter()-start_time) *1000:.2f} ms"
         )
+
+        if should_discard_left() and pred is None:
+            logger.info("No content returned as caller already left")
+            return Response(status_code=204)
 
         # response extracts content from request
         accept = request.headers.get("accept", None)
