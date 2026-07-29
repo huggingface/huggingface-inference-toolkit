@@ -7,6 +7,7 @@ import pytest
 from transformers.file_utils import is_torch_available
 from transformers.testing_utils import require_tf, require_torch, slow
 
+from huggingface_inference_toolkit import utils as hf_utils
 from huggingface_inference_toolkit.handler import get_inference_handler_either_custom_or_default_handler
 from huggingface_inference_toolkit.utils import (
     _get_framework,
@@ -218,3 +219,56 @@ def test_should_discard_left(monkeypatch, value, expected):
     else:
         monkeypatch.setenv("DISCARD_LEFT", value)
     assert should_discard_left() is expected
+
+
+class _Sibling:
+    def __init__(self, rfilename):
+        self.rfilename = rfilename
+
+
+@pytest.mark.parametrize("revision", ["eb4c77816edd604d0318f8e748a1c606a2888493", None])
+def test_safetensors_probe_asks_about_the_revision_being_downloaded(monkeypatch, tmp_path, revision):
+    # The probe's answer selects the download ignore-patterns, so it has to describe the same
+    # commit snapshot_download will fetch. Querying the default branch instead can filter out the
+    # only weights the requested revision actually has.
+    seen = {}
+
+    class _Info:
+        siblings = [_Sibling("config.json"), _Sibling("model.safetensors")]
+
+    def fake_model_info(self, repo_id, **kwargs):
+        seen["probe_revision"] = kwargs.get("revision")
+        return _Info()
+
+    def fake_snapshot_download(**kwargs):
+        seen["download_revision"] = kwargs.get("revision")
+        seen["ignore_patterns"] = kwargs.get("ignore_patterns")
+
+    monkeypatch.setattr(hf_utils.HfApi, "model_info", fake_model_info)
+    monkeypatch.setattr(hf_utils, "snapshot_download", fake_snapshot_download)
+
+    hf_utils._load_repository_from_hf("some/model", tmp_path, framework="pytorch", revision=revision)
+
+    assert seen["probe_revision"] == revision
+    assert seen["probe_revision"] == seen["download_revision"]
+    # safetensors found at that revision, so the *safetensors filter must not be applied
+    assert "*safetensors" not in seen["ignore_patterns"]
+    assert "pytorch*" in seen["ignore_patterns"]
+
+
+def test_safetensors_probe_keeps_bin_weights_when_the_revision_has_no_safetensors(monkeypatch, tmp_path):
+    seen = {}
+
+    class _Info:
+        siblings = [_Sibling("config.json"), _Sibling("pytorch_model.bin")]
+
+    monkeypatch.setattr(hf_utils.HfApi, "model_info", lambda self, repo_id, **kw: _Info())
+    monkeypatch.setattr(
+        hf_utils, "snapshot_download", lambda **kw: seen.update(ignore_patterns=kw.get("ignore_patterns"))
+    )
+
+    hf_utils._load_repository_from_hf("some/model", tmp_path, framework="pytorch", revision="abc123")
+
+    # no safetensors at this revision, so the .bin weights are the ones that must survive
+    assert "pytorch*" not in seen["ignore_patterns"]
+    assert "*safetensors" in seen["ignore_patterns"]
