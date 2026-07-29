@@ -40,3 +40,20 @@ def ignore_custom_handler() -> bool:
     default pipeline instead.
     """
     return strtobool(os.getenv("IGNORE_CUSTOM_HANDLER", "false"))
+
+
+def task_route_enabled() -> bool:
+    """
+    Whether to expose /pipeline/{task}, letting a caller name the pipeline to serve a request with.
+
+    Defaults to api_inference_compat(): the Inference API needs the route, so defaulting to it means
+    adopting this code takes no deployment change. It is a separate variable because the two are
+    orthogonal — one picks a pipeline, the other reshapes responses — and because the route lets a
+    caller cause a pipeline to be built per task, each with its own copy of the weights, so it is
+    worth being able to say no to independently.
+
+    Set ENABLE_TASK_ROUTE to have the route without the compat response shapes, or to keep it off
+    while they are on.
+    """
+    value = os.getenv("ENABLE_TASK_ROUTE")
+    return api_inference_compat() if value is None else strtobool(value)
