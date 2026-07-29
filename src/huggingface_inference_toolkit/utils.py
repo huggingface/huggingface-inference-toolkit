@@ -1,4 +1,5 @@
 import importlib.util
+import math
 import os
 import sys
 from pathlib import Path
@@ -267,16 +268,36 @@ def get_pipeline(
     return hf_pipeline  # type: ignore
 
 
+def _coerce_query_param(value: str):
+    """
+    Coerce one query-string value to the type a pipeline expects, leaving it a string when it is
+    not a number or a boolean.
+
+    `str.isnumeric()` is the wrong test for "is this an int": it is False for `-1` and for any
+    float, so those reached the pipeline as strings, and it is True for characters like `²` and
+    `½`, which `int()` then refuses. Asking `int()` and `float()` directly answers exactly the
+    question we care about.
+    """
+    if value == "true":
+        return True
+    if value == "false":
+        return False
+    try:
+        return int(value)
+    except ValueError:
+        pass
+    try:
+        number = float(value)
+    except ValueError:
+        return value
+    # `float` also accepts "nan", "inf" and "infinity". None of them is a meaningful pipeline
+    # parameter and JSON cannot represent them, so keep those as strings.
+    return number if math.isfinite(number) else value
+
+
 def convert_params_to_int_or_bool(params):
-    """Converts query params to int or bool if possible"""
-    for k, v in params.items():
-        if v.isnumeric():
-            params[k] = int(v)
-        if v == "false":
-            params[k] = False
-        if v == "true":
-            params[k] = True
-    return params
+    """Converts query params to int, float or bool if possible"""
+    return {k: _coerce_query_param(v) for k, v in params.items()}
 
 
 def should_discard_left() -> bool:

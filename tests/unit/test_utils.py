@@ -14,6 +14,7 @@ from huggingface_inference_toolkit.utils import (
     _is_gpu_available,
     _load_repository_from_hf,
     check_and_register_custom_pipeline_from_directory,
+    convert_params_to_int_or_bool,
     get_pipeline,
     should_discard_left,
 )
@@ -272,3 +273,49 @@ def test_safetensors_probe_keeps_bin_weights_when_the_revision_has_no_safetensor
     # no safetensors at this revision, so the .bin weights are the ones that must survive
     assert "pytorch*" not in seen["ignore_patterns"]
     assert "*safetensors" in seen["ignore_patterns"]
+
+
+@pytest.mark.parametrize(
+    "raw,expected",
+    [
+        # ints, including the signs `str.isnumeric()` rejects
+        ("5", 5),
+        ("-1", -1),
+        ("+3", 3),
+        ("0", 0),
+        # floats, none of which `str.isnumeric()` accepts
+        ("0.5", 0.5),
+        ("-0.5", -0.5),
+        ("1e3", 1000.0),
+        # booleans
+        ("true", True),
+        ("false", False),
+        # left alone
+        ("hello", "hello"),
+        ("", ""),
+        ("True", "True"),
+        ("1,2", "1,2"),
+        # `str.isnumeric()` is True for these but `int()` refuses them
+        ("\u00b2", "\u00b2"),
+        ("\u00bd", "\u00bd"),
+        # `float()` accepts these; JSON cannot represent them and no pipeline wants them
+        ("nan", "nan"),
+        ("inf", "inf"),
+        ("-infinity", "-infinity"),
+    ],
+)
+def test_convert_params_coerces_query_values(raw, expected):
+    converted = convert_params_to_int_or_bool({"p": raw})["p"]
+    assert converted == expected
+    assert type(converted) is type(expected)
+
+
+def test_convert_params_keeps_every_key():
+    params = {"top_k": "5", "temperature": "0.5", "seed": "-1", "do_sample": "true", "prompt": "hi"}
+    assert convert_params_to_int_or_bool(params) == {
+        "top_k": 5,
+        "temperature": 0.5,
+        "seed": -1,
+        "do_sample": True,
+        "prompt": "hi",
+    }
