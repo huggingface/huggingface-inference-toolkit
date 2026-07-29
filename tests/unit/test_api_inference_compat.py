@@ -19,10 +19,7 @@ class FakePipeline:
 
 
 def handler_for(task, returns=None):
-    # bypass __init__, which would load a model
-    handler = HuggingFaceHandler.__new__(HuggingFaceHandler)
-    handler.pipeline = FakePipeline(task, returns)
-    return handler
+    return HuggingFaceHandler(FakePipeline(task, returns))
 
 
 @pytest.fixture

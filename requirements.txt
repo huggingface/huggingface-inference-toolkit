@@ -22,6 +22,8 @@ ffmpeg
 # Host header poisons request.url.path; path-based middleware can be bypassed.
 starlette>=1.0.1
 uvicorn
+# serves the app; WORKERS relies on it, see scripts/entrypoint.sh
+gunicorn
 pandas
 # Direct import in src/ (embedding serialization), not just a transitive dep
 numpy

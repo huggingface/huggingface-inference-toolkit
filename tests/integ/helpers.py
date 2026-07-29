@@ -10,7 +10,7 @@ import requests
 from docker import DockerClient
 from transformers.testing_utils import _run_slow_tests, require_tf, require_torch
 
-from huggingface_inference_toolkit.utils import _load_repository_from_hf
+from huggingface_inference_toolkit.heavy_utils import load_repository_from_hf
 from tests.integ.config import task2input, task2model, task2output, task2validation
 
 IS_GPU = _run_slow_tests
@@ -207,7 +207,7 @@ def test_pt_container_local_model(task: str) -> None:
     make_sure_other_containers_are_stopped(client, container_name)
     with tempfile.TemporaryDirectory() as tmpdirname:
         # https://github.com/huggingface/infinity/blob/test-ovh/test/integ/utils.py
-        _load_repository_from_hf(model, tmpdirname, framework="pytorch")
+        load_repository_from_hf(model, tmpdirname, framework="pytorch")
         container = client.containers.run(
             container_image,
             name=container_name,
@@ -238,7 +238,7 @@ def test_pt_container_custom_handler(repository_id) -> None:
     make_sure_other_containers_are_stopped(client, container_name)
     with tempfile.TemporaryDirectory() as tmpdirname:
         # https://github.com/huggingface/infinity/blob/test-ovh/test/integ/utils.py
-        _storage_dir = _load_repository_from_hf(repository_id, tmpdirname)
+        _storage_dir = load_repository_from_hf(repository_id, tmpdirname)
         container = client.containers.run(
             container_image,
             name=container_name,
@@ -275,7 +275,7 @@ def test_pt_container_legacy_custom_pipeline(repository_id: str) -> None:
     make_sure_other_containers_are_stopped(client, container_name)
     with tempfile.TemporaryDirectory() as tmpdirname:
         # https://github.com/huggingface/infinity/blob/test-ovh/test/integ/utils.py
-        _storage_dir = _load_repository_from_hf(repository_id, tmpdirname)
+        _storage_dir = load_repository_from_hf(repository_id, tmpdirname)
         container = client.containers.run(
             container_image,
             name=container_name,
@@ -393,7 +393,7 @@ def test_tf_container_local_model(task) -> None:
     make_sure_other_containers_are_stopped(client, container_name)
     with tempfile.TemporaryDirectory() as tmpdirname:
         # https://github.com/huggingface/infinity/blob/test-ovh/test/integ/utils.py
-        _storage_dir = _load_repository_from_hf(model, tmpdirname, framework=framework)
+        _storage_dir = load_repository_from_hf(model, tmpdirname, framework=framework)
         container = client.containers.run(
             container_image,
             name=container_name,
@@ -421,7 +421,7 @@ def test_tf_container_local_model(task) -> None:
 #     make_sure_other_containers_are_stopped(client, container_name)
 #     with tempfile.TemporaryDirectory() as tmpdirname:
 #         # https://github.com/huggingface/infinity/blob/test-ovh/test/integ/utils.py
-#         storage_dir = _load_repository_from_hf("philschmid/custom-pipeline-text-classification", tmpdirname)
+#         storage_dir = load_repository_from_hf("philschmid/custom-pipeline-text-classification", tmpdirname)
 #         container = client.containers.run(
 #             container_image,
 #             name=container_name,

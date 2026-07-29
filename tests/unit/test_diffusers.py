@@ -5,14 +5,14 @@ from PIL import Image
 from transformers.testing_utils import require_torch, slow
 
 from huggingface_inference_toolkit.diffusers_utils import IEAutoPipelineForText2Image
-from huggingface_inference_toolkit.utils import _load_repository_from_hf, get_pipeline
+from huggingface_inference_toolkit.heavy_utils import get_pipeline, load_repository_from_hf
 
 logging.basicConfig(level="DEBUG")
 
 @require_torch
 def test_get_diffusers_pipeline():
     with tempfile.TemporaryDirectory() as tmpdirname:
-        storage_dir = _load_repository_from_hf(
+        storage_dir = load_repository_from_hf(
             "echarlaix/tiny-random-stable-diffusion-xl",
             tmpdirname,
             framework="pytorch"
@@ -25,7 +25,7 @@ def test_get_diffusers_pipeline():
 @require_torch
 def test_pipe_on_gpu():
     with tempfile.TemporaryDirectory() as tmpdirname:
-        storage_dir = _load_repository_from_hf(
+        storage_dir = load_repository_from_hf(
             "echarlaix/tiny-random-stable-diffusion-xl",
             tmpdirname,
             framework="pytorch"
@@ -41,7 +41,7 @@ def test_pipe_on_gpu():
 @require_torch
 def test_text_to_image_task():
     with tempfile.TemporaryDirectory() as tmpdirname:
-        storage_dir = _load_repository_from_hf(
+        storage_dir = load_repository_from_hf(
             "echarlaix/tiny-random-stable-diffusion-xl",
             tmpdirname,
             framework="pytorch"

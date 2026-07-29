@@ -1,5 +1,7 @@
+from functools import partial
 from types import SimpleNamespace
 
+import anyio
 import pytest
 
 from huggingface_inference_toolkit import diffusers_utils
@@ -31,7 +33,12 @@ def repo_with_a_custom_handler(monkeypatch):
         return "custom handler"
 
     monkeypatch.setattr(handler_module, "check_and_register_custom_pipeline_from_directory", register)
-    monkeypatch.setattr(handler_module, "HuggingFaceHandler", lambda model_dir, task: "default handler")
+    class FakeDefaultHandler:
+        @staticmethod
+        async def create(model_dir, task):
+            return "default handler"
+
+    monkeypatch.setattr(handler_module, "HuggingFaceHandler", FakeDefaultHandler)
     monkeypatch.delenv("AIP_MODE", raising=False)
     return looked
 
@@ -39,18 +46,16 @@ def repo_with_a_custom_handler(monkeypatch):
 def test_custom_handler_is_used_by_default(monkeypatch, repo_with_a_custom_handler):
     monkeypatch.delenv("IGNORE_CUSTOM_HANDLER", raising=False)
 
-    assert get_inference_handler_either_custom_or_default_handler("/model", task="text-classification") == (
-        "custom handler"
-    )
+    resolve = partial(get_inference_handler_either_custom_or_default_handler, "/model", task="text-classification")
+    assert anyio.run(resolve) == "custom handler"
     assert repo_with_a_custom_handler == ["/model"]
 
 
 def test_custom_handler_is_skipped_when_ignored(monkeypatch, repo_with_a_custom_handler):
     monkeypatch.setenv("IGNORE_CUSTOM_HANDLER", "1")
 
-    assert get_inference_handler_either_custom_or_default_handler("/model", task="text-classification") == (
-        "default handler"
-    )
+    resolve = partial(get_inference_handler_either_custom_or_default_handler, "/model", task="text-classification")
+    assert anyio.run(resolve) == "default handler"
     # not even looked for: importing a repo's handler.py executes its module-level code
     assert repo_with_a_custom_handler == []
 

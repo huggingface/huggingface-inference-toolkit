@@ -9,7 +9,7 @@ import pytest
 import tenacity
 from transformers.testing_utils import _run_slow_tests
 
-from huggingface_inference_toolkit.utils import _load_repository_from_hf
+from huggingface_inference_toolkit.heavy_utils import load_repository_from_hf
 from tests.integ.config import task2model
 
 HF_HUB_CACHE = os.environ.get("HF_HUB_CACHE", "/home/ubuntu/.cache/huggingface/hub")
@@ -124,7 +124,7 @@ def local_container(device, task, repository_id, framework):
         object_id = model.replace("/", "--")
         model_dir = f"{HF_HUB_CACHE}/{object_id}"
 
-        _storage_dir = _load_repository_from_hf(
+        _storage_dir = load_repository_from_hf(
             repository_id=model, target_dir=model_dir
         )
 

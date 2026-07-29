@@ -4,12 +4,12 @@ import tempfile
 import pytest
 from transformers.testing_utils import require_torch
 
+from huggingface_inference_toolkit.heavy_utils import load_repository_from_hf
 from huggingface_inference_toolkit.optimum_utils import (
     get_input_shapes,
     get_optimum_neuron_pipeline,
     is_optimum_neuron_available,
 )
-from huggingface_inference_toolkit.utils import _load_repository_from_hf
 
 require_inferentia = pytest.mark.skipif(
     not is_optimum_neuron_available(),
@@ -34,7 +34,7 @@ def test_not_supported_task():
 @require_inferentia
 def test_get_input_shapes_from_file():
     with tempfile.TemporaryDirectory() as tmpdirname:
-        storage_folder = _load_repository_from_hf(
+        storage_folder = load_repository_from_hf(
             repository_id=REMOTE_CONVERTED_MODEL,
             target_dir=tmpdirname,
         )
@@ -49,7 +49,7 @@ def test_get_input_shapes_from_env():
     os.environ["HF_OPTIMUM_BATCH_SIZE"] = "4"
     os.environ["HF_OPTIMUM_SEQUENCE_LENGTH"] = "32"
     with tempfile.TemporaryDirectory() as tmpdirname:
-        storage_folder = _load_repository_from_hf(
+        storage_folder = load_repository_from_hf(
             repository_id=REMOTE_NOT_CONVERTED_MODEL,
             target_dir=tmpdirname,
         )
@@ -77,7 +77,7 @@ def test_get_optimum_neuron_pipeline_from_converted_model():
 def test_get_optimum_neuron_pipeline_from_non_converted_model():
     os.environ["HF_OPTIMUM_SEQUENCE_LENGTH"] = "32"
     with tempfile.TemporaryDirectory() as tmpdirname:
-        storage_folder = _load_repository_from_hf(
+        storage_folder = load_repository_from_hf(
             repository_id=REMOTE_NOT_CONVERTED_MODEL,
             target_dir=tmpdirname,
         )
