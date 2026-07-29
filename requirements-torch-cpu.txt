@@ -1,0 +1,12 @@
+# CPU flavour of requirements-torch.txt, selected with
+# --build-arg TORCH_REQUIREMENTS=requirements-torch-cpu.txt. The default wheels bundle the CUDA
+# runtime and account for most of the image size.
+#
+# torchvision / torchaudio are pinned here, unlike in requirements-torch.txt: the +cpu builds have
+# to match torch exactly, and this index would otherwise resolve a pair built against another one.
+--extra-index-url https://download.pytorch.org/whl/cpu
+
+torch==2.5.1+cpu
+torchvision==0.20.1+cpu
+torchaudio==2.5.1+cpu
+peft==0.15.1

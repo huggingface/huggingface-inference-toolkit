@@ -24,7 +24,7 @@ inference-pytorch-gpu:
 
 # Build Docker image for PyTorch on CPU
 inference-pytorch-cpu:
-	docker build --build-arg="BASE_IMAGE=ubuntu:22.04" -f dockerfiles/pytorch/Dockerfile -t integration-test-pytorch:cpu .
+	docker build --build-arg="BASE_IMAGE=ubuntu:22.04" --build-arg="RUNTIME_IMAGE=ubuntu:22.04" --build-arg="TORCH_REQUIREMENTS=requirements-torch-cpu.txt" -f dockerfiles/pytorch/Dockerfile -t integration-test-pytorch:cpu .
 
 # Build Docker image for PyTorch on AWS Inferentia2
 inference-pytorch-inf2:

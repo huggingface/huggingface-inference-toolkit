@@ -1,0 +1,12 @@
+# The `test` extra, in a file so the unit-test job can install it inside the runtime image, which
+# ships no setup.py. setup.py reads this file, so this is the single source for those pins.
+pytest==7.2.1
+pytest-xdist
+pytest-sugar
+parameterized
+mock==2.0.0
+psutil
+datasets
+docker
+requests
+tenacity

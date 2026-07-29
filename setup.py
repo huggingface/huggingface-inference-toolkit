@@ -1,6 +1,23 @@
 from __future__ import absolute_import
 
+from pathlib import Path
+
 from setuptools import find_packages, setup
+
+HERE = Path(__file__).parent
+
+
+def requirements(filename):
+    """
+    Read a pinned requirements file.
+
+    Those files are the single home for the pins: the image builder installs them directly, before
+    the sources are copied, so the heavy downloads sit in a docker layer that a source change does
+    not invalidate. Restating the same pins here would give us two places to keep in sync.
+    """
+    lines = HERE.joinpath(filename).read_text().splitlines()
+    return [line.strip() for line in lines if line.strip() and not line.startswith(("#", "-"))]
+
 
 # We don't declare our dependency on transformers here because we build with
 # different packages for different variants
@@ -12,48 +29,14 @@ VERSION = "0.5.6"
 # ffmpeg: ffmpeg is required for audio processing. On Ubuntu it can be installed as follows: apt install ffmpeg
 # libavcodec-extra : libavcodec-extra  includes additional codecs for ffmpeg
 
-install_requires = [
-    # Due to an error affecting kenlm and cmake (see https://github.com/kpu/kenlm/pull/464)
-    # Also see the transformers patch for it https://github.com/huggingface/transformers/pull/37091
-    "kenlm@git+https://github.com/kpu/kenlm@ba83eafdce6553addd885ed3da461bb0d60f8df7",
-    "transformers[sklearn,sentencepiece,audio,vision]==4.51.3",
-    "huggingface_hub[hf_transfer]==0.30.2",
-    # vision
-    "Pillow",
-    "librosa",
-    # speech + torchaudio
-    "pyctcdecode>=0.3.0",
-    "phonemizer",
-    "ffmpeg",
-    # web api
-    # Pin >= 1.0.1 to address CVE-2026-48710 (GHSA-86qp-5c8j-p5mr):
-    # Host header poisons request.url.path; path-based middleware can be bypassed.
-    "starlette>=1.0.1",
-    "uvicorn",
-    "pandas",
-    "orjson",
-    "einops",
-]
+install_requires = requirements("requirements.txt")
 
 extras = {}
 
 extras["st"] = ["sentence_transformers==4.0.2"]
 extras["diffusers"] = ["diffusers==0.33.1", "accelerate==1.6.0"]
-# Includes `peft` as PEFT requires `torch` so having `peft` as a core dependency
-# means that `torch` will be installed even if the `torch` extra is not specified.
-extras["torch"] = ["torch==2.5.1", "torchvision", "torchaudio", "peft==0.15.1"]
-extras["test"] = [
-    "pytest==7.2.1",
-    "pytest-xdist",
-    "parameterized",
-    "psutil",
-    "datasets",
-    "pytest-sugar",
-    "mock==2.0.0",
-    "docker",
-    "requests",
-    "tenacity",
-]
+extras["torch"] = requirements("requirements-torch.txt")
+extras["test"] = requirements("test-requirements.txt")
 extras["quality"] = ["isort", "ruff"]
 extras["inf2"] = ["optimum-neuron"]
 extras["google"] = ["google-cloud-storage", "crcmod==1.7"]

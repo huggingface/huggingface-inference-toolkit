@@ -1,0 +1,9 @@
+# The `torch` extra. Single source: setup.py reads this into extras["torch"], and the image builder
+# installs it directly. Select the CPU flavour with --build-arg TORCH_REQUIREMENTS=requirements-torch-cpu.txt.
+#
+# Includes `peft` because PEFT requires torch: keeping it here rather than in the core set means
+# torch is not installed unless this extra is asked for.
+torch==2.5.1
+torchvision
+torchaudio
+peft==0.15.1

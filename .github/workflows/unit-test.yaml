@@ -34,12 +34,17 @@ jobs:
     - name: Docker Build
       run: make inference-pytorch-gpu
     - name: Run unit tests
+      # The runtime image ships the venv and the package sources only, no setup.py, so we cannot
+      # `pip install '.[test,...]'` from the workdir. The toolkit and the st/diffusers extras are
+      # already in the image; only the test deps are missing. test-requirements.txt is the `test`
+      # extra, and the two packages next to it are the `google` one.
       run: |
         docker run \
           -e RUN_SLOW='${{ env.RUN_SLOW }}' \
           --gpus all \
           -e CACHE_TEST_DIR='${{ env.CACHE_TEST_DIR }}' \
           -v ./tests:${{ env.CACHE_TEST_DIR }} \
+          -v ./test-requirements.txt:/tmp/test-requirements.txt \
           --entrypoint /bin/bash \
           integration-test-pytorch:gpu \
-          -c "pip install '.[test,st,diffusers,google]' && pytest ${{ env.CACHE_TEST_DIR }}/unit"
+          -c "pip install -r /tmp/test-requirements.txt google-cloud-storage 'crcmod==1.7' && pytest ${{ env.CACHE_TEST_DIR }}/unit"
