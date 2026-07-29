@@ -129,7 +129,10 @@ def _load_repository_from_hf(
 
     # check if safetensors weights are available
     if framework == "pytorch":
-        files = HfApi().model_info(repository_id).siblings
+        # Probe the revision we are about to download, not the default branch: this answer picks
+        # the ignore-patterns below, so asking about a different commit can filter out the only
+        # weights the requested one has.
+        files = HfApi().model_info(repository_id, revision=revision).siblings
         if any(f.rfilename.endswith("safetensors") for f in files):
             framework = "safetensors"
 
