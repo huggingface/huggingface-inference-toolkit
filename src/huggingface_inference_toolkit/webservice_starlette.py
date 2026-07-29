@@ -21,6 +21,7 @@ from huggingface_inference_toolkit.const import (
 from huggingface_inference_toolkit.handler import (
     get_inference_handler_either_custom_or_default_handler,
 )
+from huggingface_inference_toolkit.latency_guard import latency_guard
 from huggingface_inference_toolkit.logging import logger
 from huggingface_inference_toolkit.serialization.base import ContentType
 from huggingface_inference_toolkit.serialization.json_utils import Jsoner
@@ -84,16 +85,29 @@ async def health(request):
 # Report Prometheus metrics
 # inf_batch_current_size: Current number of requests being processed
 # inf_queue_size: Number of requests waiting in the queue
+# inf_accepting: Whether new requests are being accepted (0 while shedding load)
+# inf_auto_frozen: Whether the latency guard considers this worker overloaded
 async def metrics(request):
     batch_current_size = MAX_CONCURRENT_THREADS - MAX_THREADS_GUARD.value
     queue_size = MAX_THREADS_GUARD.statistics().tasks_waiting
     return PlainTextResponse(
         f"inf_batch_current_size {batch_current_size}\n" +
         f"inf_queue_size {queue_size}\n"
+        f"inf_accepting {int(latency_guard.accepting)}\n"
+        f"inf_auto_frozen {int(latency_guard.auto_frozen)}\n"
     )
 
 
 async def predict(request):
+    # Shed load before reading the body: a worker whose latency has drifted far above its baseline
+    # is better off refusing quickly than queueing work its callers will time out on.
+    if not latency_guard.accepting:
+        return Response(
+            Jsoner.serialize({"error": "Service temporarily unavailable, overload detected"}),
+            status_code=503,
+            media_type="application/json",
+        )
+
     try:
         # extracts content from request
         content_type = request.headers.get("content-Type", os.environ.get("DEFAULT_CONTENT_TYPE", ""))
