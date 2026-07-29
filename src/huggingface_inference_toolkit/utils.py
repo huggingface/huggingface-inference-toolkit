@@ -1,4 +1,5 @@
 import importlib.util
+import os
 import sys
 from pathlib import Path
 from typing import Optional, Union
@@ -273,3 +274,7 @@ def convert_params_to_int_or_bool(params):
         if v == "true":
             params[k] = True
     return params
+
+
+def should_discard_left() -> bool:
+    return os.getenv("DISCARD_LEFT", "0").lower() in ["true", "yes", "1"]

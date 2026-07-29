@@ -27,6 +27,7 @@ from huggingface_inference_toolkit.serialization.json_utils import Jsoner
 from huggingface_inference_toolkit.utils import (
     _load_repository_from_hf,
     convert_params_to_int_or_bool,
+    should_discard_left,
 )
 from huggingface_inference_toolkit.vertex_ai_utils import _load_repository_from_gcs
 
@@ -124,12 +125,18 @@ async def predict(request):
 
         # tracks request time
         start_time = perf_counter()
-        # run async not blocking call
-        pred = await async_handler_call(inference_handler, deserialized_body)
+        # run async not blocking call, skipping it if the caller is gone by the time a slot frees
+        pred = await async_handler_call(
+            inference_handler, deserialized_body, request if should_discard_left() else None
+        )
         # log request time
         logger.info(
             f"POST {request.url.path} | Duration: {(perf_counter()-start_time) *1000:.2f} ms"
         )
+
+        if pred is None:
+            logger.info("No content returned as caller already left")
+            return Response(status_code=204)
 
         # response extracts content from request
         accept = request.headers.get("accept", None)

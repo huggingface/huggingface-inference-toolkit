@@ -3,6 +3,7 @@ import os
 import tempfile
 from pathlib import Path
 
+import pytest
 from transformers.file_utils import is_torch_available
 from transformers.testing_utils import require_tf, require_torch, slow
 
@@ -13,6 +14,7 @@ from huggingface_inference_toolkit.utils import (
     _load_repository_from_hf,
     check_and_register_custom_pipeline_from_directory,
     get_pipeline,
+    should_discard_left,
 )
 
 TASK_MODEL = "sshleifer/tiny-dbmdz-bert-large-cased-finetuned-conll03-english"
@@ -204,3 +206,15 @@ def test_get_inference_handler_either_custom_or_default_pipeline():
         pipeline = get_inference_handler_either_custom_or_default_handler(MODEL, TASK)
         res = pipeline({"inputs": "Life is good, Life is bad"})
         assert "score" in res[0]
+
+
+@pytest.mark.parametrize(
+    "value,expected",
+    [(None, False), ("0", False), ("no", False), ("", False), ("1", True), ("true", True), ("YES", True)],
+)
+def test_should_discard_left(monkeypatch, value, expected):
+    if value is None:
+        monkeypatch.delenv("DISCARD_LEFT", raising=False)
+    else:
+        monkeypatch.setenv("DISCARD_LEFT", value)
+    assert should_discard_left() is expected

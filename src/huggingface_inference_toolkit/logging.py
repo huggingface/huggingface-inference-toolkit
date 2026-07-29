@@ -1,4 +1,5 @@
 import logging
+import os
 import sys
 
 
@@ -9,7 +10,7 @@ def setup_logging():
 
     # Configure the root logger
     logging.basicConfig(
-        level=logging.INFO,
+        level=getattr(logging, os.environ.get("LOG_LEVEL", "INFO")),
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
         stream=sys.stdout,
