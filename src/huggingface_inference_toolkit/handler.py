@@ -3,13 +3,10 @@ from pathlib import Path
 from typing import Any, Dict, Literal, Optional, Union
 
 from huggingface_inference_toolkit.const import HF_TRUST_REMOTE_CODE
-from huggingface_inference_toolkit.logging import logger
 from huggingface_inference_toolkit.sentence_transformers_utils import SENTENCE_TRANSFORMERS_TASKS
 from huggingface_inference_toolkit.utils import (
-    already_left,
     check_and_register_custom_pipeline_from_directory,
     get_pipeline,
-    should_discard_left,
 )
 
 
@@ -29,25 +26,15 @@ class HuggingFaceHandler:
             trust_remote_code=HF_TRUST_REMOTE_CODE,
         )
 
-    def __call__(self, data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def __call__(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Handles an inference request with input data and makes a prediction.
         Args:
             :data: (obj): the raw request body data.
-        :return: prediction output, or None if the request was discarded because its caller left
+        :return: prediction output
         """
         inputs = data.pop("inputs", data)
         parameters = data.pop("parameters", {})
-
-        if "handler_params" in data:
-            handler_params = data.pop("handler_params")
-            if should_discard_left():
-                request = handler_params.get("request")
-                if not request:
-                    logger.warning("Cannot know if request caller already left, missing request handler param")
-                elif already_left(request):
-                    logger.info("Discarding request as the caller already left")
-                    return None
 
         # diffusers and sentence transformers pipelines do not have the `task` arg
         if not hasattr(self.pipeline, "task"):

@@ -33,8 +33,6 @@ install_requires = [
     "pandas",
     "orjson",
     "einops",
-    # Runtime dependency of the DISCARD_LEFT check (inspects the TCP table)
-    "psutil>=6.0.0",
 ]
 
 extras = {}
