@@ -35,7 +35,7 @@ from huggingface_inference_toolkit.vertex_ai_utils import _load_repository_from_
 async def prepare_model_artifacts():
     global inference_handler
     # 1. check if model artifacts available in HF_MODEL_DIR
-    if len(list(Path(HF_MODEL_DIR).glob("**/*"))) <= 0:
+    if next(Path(HF_MODEL_DIR).glob("**/*"), None) is None:
         # 2. if not available, try to load from HF_MODEL_ID
         if HF_MODEL_ID is not None:
             _load_repository_from_hf(

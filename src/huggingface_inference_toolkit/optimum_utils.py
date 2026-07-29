@@ -95,7 +95,7 @@ def get_optimum_neuron_pipeline(task, model_dir):
 
     # check if model is already converted and has input shapes available
     export = True
-    if NEURON_FILE_NAME in os.listdir(model_dir):
+    if os.path.exists(os.path.join(model_dir, NEURON_FILE_NAME)):
         export = False
     if export:
         logger.info(
