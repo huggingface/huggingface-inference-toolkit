@@ -1,8 +1,11 @@
+from io import BytesIO
+
 import pytest
+from PIL import Image
 
 from huggingface_inference_toolkit.serialization.audio_utils import Audioer
-from huggingface_inference_toolkit.serialization.base import ContentType
-from huggingface_inference_toolkit.serialization.image_utils import Imager
+from huggingface_inference_toolkit.serialization.base import ContentType, content_type_mapping
+from huggingface_inference_toolkit.serialization.image_utils import MEDIA_TYPE_TO_PIL_FORMAT, Imager
 from huggingface_inference_toolkit.serialization.json_utils import Jsoner
 
 
@@ -98,3 +101,56 @@ def test_resolve_accept_returns_a_bare_media_type(accept, expected):
 def test_resolve_accept_rejects_when_nothing_is_producible():
     with pytest.raises(Exception, match="not supported"):
         ContentType.resolve_accept("text/html")
+
+
+@pytest.mark.parametrize(
+    "accept,expected_format",
+    [
+        ("image/png", "PNG"),
+        # PIL registers "JPEG", so deriving the format from the subtype raised a KeyError here
+        ("image/jpg", "JPEG"),
+        ("image/jpeg", "JPEG"),
+        ("image/tiff", "TIFF"),
+        ("image/bmp", "BMP"),
+        ("image/gif", "GIF"),
+        ("image/webp", "WEBP"),
+        # Names no format at all: answer with the lossless one
+        ("image/x-image", "PNG"),
+    ],
+)
+def test_imager_serializes_every_supported_accept(accept, expected_format):
+    body = Imager.serialize(Image.new("RGB", (8, 8), "red"), accept)
+    assert Image.open(BytesIO(body)).format == expected_format
+
+
+@pytest.mark.parametrize("accept", ["image/JPG", "image/jpeg;q=0.8", None])
+def test_imager_tolerates_unresolved_accept_values(accept):
+    # `resolve_accept` normally normalizes this, but a direct caller should not get a wrong format
+    assert Image.open(BytesIO(Imager.serialize(Image.new("RGB", (8, 8)), accept))).format in {
+        "JPEG",
+        "PNG",
+    }
+
+
+@pytest.mark.parametrize("mode", ["RGBA", "P", "L"])
+def test_imager_flattens_modes_jpeg_cannot_hold(mode):
+    # Masks arrive as "P" and generated images can carry alpha; JPEG accepts neither
+    body = Imager.serialize(Image.new(mode, (8, 8)), "image/jpeg")
+    assert Image.open(BytesIO(body)).format == "JPEG"
+
+
+def test_imager_rejects_types_it_cannot_produce():
+    with pytest.raises(ValueError, match="Cannot serialize an image"):
+        Imager.serialize(Image.new("RGB", (8, 8)), "application/json")
+
+
+def test_imager_rejects_non_images():
+    with pytest.raises(ValueError, match="Can only serialize"):
+        Imager.serialize({"not": "an image"}, "image/png")
+
+
+def test_every_advertised_image_type_can_be_serialized():
+    # Guard against drift: a new image/* row in `content_type_mapping` that has no PIL format
+    # would only fail at response time, on the accept path
+    advertised = {media_type for media_type in content_type_mapping if media_type.startswith("image/")}
+    assert advertised == set(MEDIA_TYPE_TO_PIL_FORMAT)
