@@ -96,9 +96,9 @@ async def metrics(request):
 async def predict(request):
     try:
         # extracts content from request
-        content_type = request.headers.get("content-Type", None)
+        content_type = request.headers.get("content-Type", os.environ.get("DEFAULT_CONTENT_TYPE", ""))
         # try to deserialize payload
-        deserialized_body = ContentType.get_deserializer(content_type).deserialize(
+        deserialized_body = ContentType.get_deserializer(content_type, HF_TASK).deserialize(
             await request.body()
         )
         # checks if input schema is correct
@@ -141,7 +141,10 @@ async def predict(request):
         # response extracts content from request
         accept = request.headers.get("accept", None)
         if accept is None or accept == "*/*":
-            accept = "application/json"
+            accept = os.environ.get("DEFAULT_ACCEPT", "application/json")
+        # An Accept header may list several types and carry parameters: resolve it to the single
+        # media type we answer with, and serialize / label the response with that one.
+        accept = ContentType.resolve_accept(accept)
         # deserialized and resonds with json
         serialized_response_body = ContentType.get_serializer(accept).serialize(
             pred, accept
