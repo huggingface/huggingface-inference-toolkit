@@ -1,4 +1,5 @@
 import importlib.util
+import os
 from typing import Union
 
 from transformers.utils.import_utils import is_torch_bf16_gpu_available
@@ -10,6 +11,24 @@ _diffusers = importlib.util.find_spec("diffusers") is not None
 
 def is_diffusers_available():
     return _diffusers
+
+
+def _generation_default(name, cast):
+    """
+    Read a deployment-wide default for a generation parameter, once, at import.
+
+    Parsing here rather than per request means a meaningless value fails the worker at startup,
+    where it is attributable to the rollout that introduced it. Deferring it to `__call__` would
+    turn a configuration mistake into a 400 on every generation instead. `const.py` parses
+    HF_TRUST_REMOTE_CODE the same way.
+    """
+    value = os.environ.get(name)
+    return None if value is None else cast(value)
+
+
+# Both decide how long a generation takes, for deployments that need a predictable cost per request
+DEFAULT_NUM_INFERENCE_STEPS = _generation_default("DEFAULT_NUM_INFERENCE_STEPS", int)
+DEFAULT_GUIDANCE_SCALE = _generation_default("DEFAULT_GUIDANCE_SCALE", float)
 
 
 if is_diffusers_available():
@@ -62,6 +81,13 @@ class IEAutoPipelineForText2Image:
         if "num_images_per_prompt" in kwargs:
             kwargs.pop("num_images_per_prompt")
             logger.warning("Sending num_images_per_prompt > 1 to pipeline is not supported. Using default value 1.")
+
+        # Only when the request does not carry them, so an explicit parameter always wins
+        if "num_inference_steps" not in kwargs and DEFAULT_NUM_INFERENCE_STEPS is not None:
+            kwargs["num_inference_steps"] = DEFAULT_NUM_INFERENCE_STEPS
+
+        if "guidance_scale" not in kwargs and DEFAULT_GUIDANCE_SCALE is not None:
+            kwargs["guidance_scale"] = DEFAULT_GUIDANCE_SCALE
 
         if "target_size" in kwargs:
             kwargs["height"] = kwargs["target_size"].pop("height")

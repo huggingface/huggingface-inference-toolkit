@@ -32,3 +32,11 @@ def api_inference_compat() -> bool:
     Read on every call rather than cached at import: tests toggle it, and it costs nothing.
     """
     return strtobool(os.getenv("API_INFERENCE_COMPAT", "false"))
+
+
+def ignore_custom_handler() -> bool:
+    """
+    Whether to ignore a `handler.py` shipped in the model repository and serve the model with the
+    default pipeline instead.
+    """
+    return strtobool(os.getenv("IGNORE_CUSTOM_HANDLER", "false"))
