@@ -1,6 +1,7 @@
 import tempfile
 from typing import Dict
 
+import numpy as np
 import pytest
 from transformers.testing_utils import require_tf, require_torch
 
@@ -69,7 +70,7 @@ def test_pt_sentence_transformers_pipeline(input_data: Dict[str, str]) -> None:
         )
         h = get_inference_handler_either_custom_or_default_handler(str(storage_dir), task="sentence-embeddings")
         pred = h(input_data)
-        assert isinstance(pred["embeddings"], list)
+        assert isinstance(pred["embeddings"], np.ndarray)
 
 
 @require_tf

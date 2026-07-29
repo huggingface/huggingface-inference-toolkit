@@ -1,5 +1,6 @@
 import tempfile
 
+import numpy as np
 import pytest
 from transformers.testing_utils import require_torch
 
@@ -27,9 +28,9 @@ def test_sentence_embedding_task():
         storage_dir = _load_repository_from_hf("sentence-transformers/all-MiniLM-L6-v2", tmpdirname)
         pipe = get_sentence_transformers_pipeline("sentence-embeddings", storage_dir.as_posix())
         res = pipe(sentences="Lets create an embedding")
-        assert isinstance(res["embeddings"], list)
+        assert isinstance(res["embeddings"], np.ndarray)
         res = pipe(sentences=["Lets create an embedding", "Lets create another embedding"])
-        assert isinstance(res["embeddings"], list)
+        assert isinstance(res["embeddings"], np.ndarray)
         assert len(res["embeddings"]) == 2
 
 

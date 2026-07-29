@@ -1,6 +1,7 @@
 import base64
 from io import BytesIO
 
+import numpy as np
 import orjson
 from PIL import Image
 
@@ -11,6 +12,9 @@ def default(obj):
             obj.save(out, format="PNG")
             png_string = out.getvalue()
             return base64.b64encode(png_string).decode("utf-8")
+    if isinstance(obj, np.ndarray):
+        # `OPT_SERIALIZE_NUMPY` rejects non-C-contiguous arrays and defers them here.
+        return obj.tolist()
     raise TypeError
 
 
