@@ -8,7 +8,6 @@ from huggingface_inference_toolkit.const import HF_TRUST_REMOTE_CODE
 from huggingface_inference_toolkit.env_utils import api_inference_compat, ignore_custom_handler
 from huggingface_inference_toolkit.latency_guard import latency_guard
 from huggingface_inference_toolkit.logging import logger
-from huggingface_inference_toolkit.sentence_transformers_utils import SENTENCE_TRANSFORMERS_TASKS
 from huggingface_inference_toolkit.utils import check_and_register_custom_pipeline_from_directory
 
 
@@ -65,6 +64,12 @@ class HuggingFaceHandler:
         return pred
 
     def _timed_call(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        # Imported here, not at module level: sentence_transformers_utils imports
+        # sentence-transformers eagerly when it is installed, and this module is reachable from
+        # webservice_starlette, so importing it up there makes every worker carry the library —
+        # and, through it, torch and transformers — before it has been asked to serve anything.
+        from huggingface_inference_toolkit.sentence_transformers_utils import SENTENCE_TRANSFORMERS_TASKS
+
         inputs = data.pop("inputs", data)
         parameters = data.pop("parameters", {})
 
