@@ -1,4 +1,5 @@
 import asyncio
+import importlib.util
 import logging
 import os
 import tempfile
@@ -322,3 +323,20 @@ def test_convert_params_keeps_every_key():
         "do_sample": True,
         "prompt": "hi",
     }
+
+
+@pytest.mark.parametrize("handler_file", ["handler.py", "pipeline.py"])
+def test_an_unimportable_custom_handler_is_ignored_rather_than_crashing(monkeypatch, tmp_path, handler_file):
+    """
+    A handler file that exists but yields no import spec used to raise UnboundLocalError on the way
+    out of the function, which said nothing about the actual problem. Reachable by pointing
+    HF_DEFAULT_PIPELINE_NAME at a file Python cannot build a loader for.
+    """
+    (tmp_path / handler_file).write_text("class EndpointHandler:\n    def __init__(self, p): pass\n")
+    monkeypatch.setattr(importlib.util, "spec_from_file_location", lambda *a, **k: None)
+
+    assert check_and_register_custom_pipeline_from_directory(str(tmp_path)) is None
+
+
+def test_no_custom_handler_is_still_none(tmp_path):
+    assert check_and_register_custom_pipeline_from_directory(str(tmp_path)) is None

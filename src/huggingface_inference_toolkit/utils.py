@@ -51,6 +51,9 @@ def check_and_register_custom_pipeline_from_directory(model_dir):
     """
     Checks if a custom pipeline is available and registers it if so.
     """
+    # Bound up front: a handler file that exists but yields no import spec would otherwise leave
+    # this unset and raise UnboundLocalError on the way out, hiding the actual problem.
+    custom_pipeline = None
     # path to custom handler
     custom_module = Path(model_dir).joinpath(HF_DEFAULT_PIPELINE_NAME)
     legacy_module = Path(model_dir).joinpath("pipeline.py")
@@ -66,6 +69,8 @@ def check_and_register_custom_pipeline_from_directory(model_dir):
             spec.loader.exec_module(handler)
             # init custom handler with model_dir
             custom_pipeline = handler.EndpointHandler(model_dir)
+        else:
+            logger.warning("Found %s but could not build an import spec for it, ignoring it", custom_module)
 
     elif legacy_module.is_file():
         logger.warning(
@@ -83,9 +88,10 @@ def check_and_register_custom_pipeline_from_directory(model_dir):
             spec.loader.exec_module(pipeline)
             # init custom handler with model_dir
             custom_pipeline = pipeline.PreTrainedPipeline(model_dir)
+        else:
+            logger.warning("Found %s but could not build an import spec for it, ignoring it", legacy_module)
     else:
         logger.info(f"No custom pipeline found at {custom_module}")
-        custom_pipeline = None
     return custom_pipeline
 
 
