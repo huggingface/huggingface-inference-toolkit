@@ -1,6 +1,7 @@
 import base64
 from io import BytesIO
 
+import numpy as np
 import orjson
 from PIL import Image
 
@@ -11,6 +12,16 @@ def default(obj):
             obj.save(out, format="PNG")
             png_string = out.getvalue()
             return base64.b64encode(png_string).decode("utf-8")
+    if isinstance(obj, np.ndarray):
+        # `OPT_SERIALIZE_NUMPY` defers an array here for one of two reasons.
+        if not obj.flags["C_CONTIGUOUS"]:
+            # Not C-contiguous, e.g. a truncated embedding (`a[:, :256]`). Copy into a
+            # contiguous buffer so it goes back through orjson's native path, which keeps the
+            # float32 formatting; `.tolist()` would widen to float64 and undo the size win.
+            return np.ascontiguousarray(obj)
+        # Contiguous, so the dtype is one orjson cannot handle. Hand back the elements and let
+        # them be serialized individually, or fail here if they cannot be.
+        return obj.tolist()
     raise TypeError
 
 

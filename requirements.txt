@@ -23,5 +23,7 @@ ffmpeg
 starlette>=1.0.1
 uvicorn
 pandas
+# Direct import in src/ (embedding serialization), not just a transitive dep
+numpy
 orjson
 einops

@@ -1,6 +1,8 @@
 import importlib.util
 from typing import Any, Dict, List, Tuple, Union
 
+import numpy as np
+
 from huggingface_inference_toolkit.env_utils import api_inference_compat
 
 try:
@@ -37,9 +39,11 @@ class SentenceEmbeddingPipeline:
         # `device` needs to be set to "cuda" for GPU
         self.model = SentenceTransformer(model_dir, device=device, **kwargs)
 
-    def __call__(self, sentences: Union[str, List[str]]) -> Dict[str, List[float]]:
-        embeddings = self.model.encode(sentences).tolist()
-        # The widgets expect the bare list, not a wrapper object
+    def __call__(self, sentences: Union[str, List[str]]) -> Union[np.ndarray, Dict[str, np.ndarray]]:
+        # Deliberately not `.tolist()`: it widens float32 to float64 and serializes
+        # 0.1 as 0.10000000149011612.
+        embeddings = self.model.encode(sentences)
+        # The widgets expect the bare array, not a wrapper object
         return embeddings if api_inference_compat() else {"embeddings": embeddings}
 
 
