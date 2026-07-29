@@ -8,7 +8,7 @@ import docker
 import pytest
 import requests
 from docker import DockerClient
-from transformers.testing_utils import _run_slow_tests, require_tf, require_torch
+from transformers.testing_utils import _run_slow_tests, require_torch
 
 from huggingface_inference_toolkit.heavy_utils import load_repository_from_hf
 from tests.integ.config import task2input, task2model, task2output, task2validation
@@ -294,118 +294,6 @@ def test_pt_container_legacy_custom_pipeline(repository_id: str) -> None:
         prediction = requests.post(f"{BASE_URL}", json=payload).json()
         assert prediction == payload
         # time.sleep(5)
-        container.stop()
-        container.remove()
-
-
-@require_tf
-@pytest.mark.parametrize(
-    "task",
-    [
-        "text-classification",
-        "zero-shot-classification",
-        "token-classification",
-        "question-answering",
-        "fill-mask",
-        "summarization",
-        "translation_xx_to_yy",
-        "text2text-generation",
-        "text-generation",
-        "feature-extraction",
-        "image-classification",
-        "automatic-speech-recognition",
-        "audio-classification",
-        "object-detection",
-        "image-segmentation",
-        "table-question-answering",
-        "conversational",
-        # TODO currently not supported due to multimodality input
-        # "visual-question-answering",
-        # "zero-shot-image-classification",
-        "sentence-similarity",
-        "sentence-embeddings",
-        "sentence-ranking",
-    ],
-)
-def test_tf_container_remote_model(task) -> None:
-    container_name = f"integration-test-{task}"
-    container_image = f"starlette-transformers:{DEVICE}"
-    framework = "tensorflow"
-    model = task2model[task][framework]
-    device_request = [docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])] if IS_GPU else []
-    if model is None:
-        pytest.skip("no supported TF model")
-    port = random.randint(5000, 6000)
-    make_sure_other_containers_are_stopped(client, container_name)
-    container = client.containers.run(
-        container_image,
-        name=container_name,
-        ports={"5000": port},
-        environment={"HF_MODEL_ID": model, "HF_TASK": task},
-        detach=True,
-        # GPU
-        device_requests=device_request,
-    )
-    # time.sleep(5)
-    verify_task(container, task, port)
-    container.stop()
-    container.remove()
-
-
-@require_tf
-@pytest.mark.parametrize(
-    "task",
-    [
-        "text-classification",
-        "zero-shot-classification",
-        "token-classification",
-        "question-answering",
-        "fill-mask",
-        "summarization",
-        "translation_xx_to_yy",
-        "text2text-generation",
-        "text-generation",
-        "feature-extraction",
-        "image-classification",
-        "automatic-speech-recognition",
-        "audio-classification",
-        "object-detection",
-        "image-segmentation",
-        "table-question-answering",
-        "conversational",
-        # TODO currently not supported due to multimodality input
-        # "visual-question-answering",
-        # "zero-shot-image-classification",
-        "sentence-similarity",
-        "sentence-embeddings",
-        "sentence-ranking",
-    ],
-)
-def test_tf_container_local_model(task) -> None:
-    container_name = f"integration-test-{task}"
-    container_image = f"starlette-transformers:{DEVICE}"
-    framework = "tensorflow"
-    model = task2model[task][framework]
-    device_request = [docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])] if IS_GPU else []
-    if model is None:
-        pytest.skip("no supported TF model")
-    port = random.randint(5000, 6000)
-    make_sure_other_containers_are_stopped(client, container_name)
-    with tempfile.TemporaryDirectory() as tmpdirname:
-        # https://github.com/huggingface/infinity/blob/test-ovh/test/integ/utils.py
-        _storage_dir = load_repository_from_hf(model, tmpdirname, framework=framework)
-        container = client.containers.run(
-            container_image,
-            name=container_name,
-            ports={"5000": port},
-            environment={"HF_MODEL_DIR": "/opt/huggingface/model", "HF_TASK": task},
-            volumes={tmpdirname: {"bind": "/opt/huggingface/model", "mode": "ro"}},
-            detach=True,
-            # GPU
-            device_requests=device_request,
-        )
-        # time.sleep(5)
-        verify_task(container, task, port)
         container.stop()
         container.remove()
 
