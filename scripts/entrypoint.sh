@@ -58,5 +58,13 @@ if [[ ! -z "${HF_MODEL_DIR}" ]]; then
     fi
 fi
 
-# Start the server
-exec uvicorn webservice_starlette:app --host 0.0.0.0 --port ${PORT}
+# Start the server.
+# gunicorn rather than uvicorn directly: WORKERS lets a node host several workers per GPU, which is
+# what makes idle unloading worth it, and --graceful-timeout gives a worker time to finish the
+# inference it is running instead of being killed mid-request (gunicorn's own default is 30s).
+exec gunicorn webservice_starlette:app \
+  -k uvicorn.workers.UvicornWorker \
+  --workers ${WORKERS:-1} \
+  --bind 0.0.0.0:${PORT} \
+  --timeout ${TIMEOUT:-30} \
+  --graceful-timeout ${GRACEFUL_TIMEOUT:-300}

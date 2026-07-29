@@ -1,5 +1,4 @@
-import functools
-from typing import Any, Callable, Dict, Optional, TypeVar
+from typing import Callable, Optional, TypeVar
 
 import anyio
 from anyio import Semaphore
@@ -18,11 +17,11 @@ P = ParamSpec("P")
 
 # moves blocking call to asyncio threadpool limited to 1 to not overload the system
 # REF: https://stackoverflow.com/a/70929141
-async def async_handler_call(
-    handler: Callable[P, T], body: Dict[str, Any], request: Optional[Request] = None
+async def async_call(
+    handler: Callable[P, T], *args, request: Optional[Request] = None, **kwargs
 ) -> Optional[T]:
     """
-    Run `handler` in the inference threadpool, once a slot is free.
+    Run `handler` in the threadpool, once a slot is free.
 
     When `request` is given, the caller is checked for having left just after the slot is
     acquired, and the call is skipped if it has: under a burst, requests queue here while their
@@ -33,11 +32,13 @@ async def async_handler_call(
     A missed detection only costs us an inference we could have skipped; it never discards a
     request whose caller is still waiting.
     """
+    logger.info("Setting blocking call to async handler")
     async with MAX_THREADS_GUARD:
+        logger.info("Async call semaphore passed")
         if request is not None and await _caller_left(request):
             logger.info("Discarding request as the caller already left")
             return None
-        return await anyio.to_thread.run_sync(functools.partial(handler, body))
+        return await anyio.to_thread.run_sync(handler, *args, **kwargs)
 
 
 async def _caller_left(request: Request) -> bool:

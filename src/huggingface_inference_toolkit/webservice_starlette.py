@@ -1,3 +1,4 @@
+import asyncio
 import base64
 import os
 from contextlib import asynccontextmanager
@@ -5,11 +6,13 @@ from pathlib import Path
 from time import perf_counter
 
 import orjson
+from anyio import Semaphore
 from starlette.applications import Starlette
 from starlette.responses import PlainTextResponse, Response
 from starlette.routing import Route
 
-from huggingface_inference_toolkit.async_utils import MAX_CONCURRENT_THREADS, MAX_THREADS_GUARD, async_handler_call
+from huggingface_inference_toolkit import idle
+from huggingface_inference_toolkit.async_utils import MAX_CONCURRENT_THREADS, MAX_THREADS_GUARD, async_call
 from huggingface_inference_toolkit.const import (
     HF_FRAMEWORK,
     HF_HUB_TOKEN,
@@ -26,20 +29,28 @@ from huggingface_inference_toolkit.logging import logger
 from huggingface_inference_toolkit.serialization.base import ContentType
 from huggingface_inference_toolkit.serialization.json_utils import Jsoner
 from huggingface_inference_toolkit.utils import (
-    _load_repository_from_hf,
     convert_params_to_int_or_bool,
     should_discard_left,
 )
 from huggingface_inference_toolkit.vertex_ai_utils import _load_repository_from_gcs
 
+INFERENCE_HANDLER = None
+INFERENCE_HANDLER_SEMAPHORE = Semaphore(1)
+MODEL_DOWNLOADED = False
+MODEL_DL_SEMAPHORE = Semaphore(1)
 
-async def prepare_model_artifacts():
-    global inference_handler
+
+def download_model():
+    """Fetch the model artifacts if they are not on disk yet. Blocking, so run it in a thread."""
+    global MODEL_DOWNLOADED
+    # imported late: pulling in the hub client drags transformers with it
+    from huggingface_inference_toolkit.heavy_utils import load_repository_from_hf
+
     # 1. check if model artifacts available in HF_MODEL_DIR
     if next(Path(HF_MODEL_DIR).glob("**/*"), None) is None:
         # 2. if not available, try to load from HF_MODEL_ID
         if HF_MODEL_ID is not None:
-            _load_repository_from_hf(
+            load_repository_from_hf(
                 repository_id=HF_MODEL_ID,
                 target_dir=HF_MODEL_DIR,
                 framework=HF_FRAMEWORK,
@@ -60,20 +71,51 @@ async def prepare_model_artifacts():
                 Provided values are:
                 HF_MODEL_DIR: {HF_MODEL_DIR} and HF_MODEL_ID:{HF_MODEL_ID}"""
             )
+    else:
+        logger.info("Model already present in %s", HF_MODEL_DIR)
+    MODEL_DOWNLOADED = True
 
-    logger.info(f"Initializing model from directory:{HF_MODEL_DIR}")
-    # 2. determine correct inference handler
-    inference_handler = get_inference_handler_either_custom_or_default_handler(
-        HF_MODEL_DIR, task=HF_TASK
-    )
-    logger.info("Model initialized successfully")
+
+async def ensure_model_downloaded():
+    if not MODEL_DOWNLOADED:
+        async with MODEL_DL_SEMAPHORE:
+            if not MODEL_DOWNLOADED:
+                await async_call(download_model)
+
+
+async def ensure_handler_loaded():
+    """Load the model on first use, once, even if several requests race for it."""
+    global INFERENCE_HANDLER
+    if INFERENCE_HANDLER is None:
+        async with INFERENCE_HANDLER_SEMAPHORE:
+            if INFERENCE_HANDLER is None:
+                logger.info(f"Initializing model from directory:{HF_MODEL_DIR}")
+                INFERENCE_HANDLER = await get_inference_handler_either_custom_or_default_handler(
+                    HF_MODEL_DIR, task=HF_TASK
+                )
+                logger.info("Model initialized successfully")
+    return INFERENCE_HANDLER
+
+
+async def prepare_model_artifacts():
+    if idle.UNLOAD_IDLE:
+        # Nothing is loaded up front: the worker stays cheap until a request arrives, and the idle
+        # checker terminates it once it goes quiet again, releasing the memory for good.
+        asyncio.create_task(idle.live_check_loop(), name="live_check_loop")
+        logger.info("Idle unloading enabled, deferring model load to the first request")
+        return
+    await ensure_model_downloaded()
+    await ensure_handler_loaded()
 
 
 @asynccontextmanager
 async def lifespan(app):
-    # Starlette 1.0 removed `on_startup` / `on_shutdown` in favor of the
-    # ASGI lifespan protocol. We run the model-artifact preparation once at
-    # startup; there is no per-process shutdown work to do.
+    # Starlette 1.0 removed `on_startup` / `on_shutdown` in favor of the ASGI lifespan protocol.
+    #
+    # There is no shutdown work to do: uvicorn stops accepting, waits for in-flight request
+    # handlers, and only then runs this hook — a request queued on the inference semaphore is
+    # inside its handler too, so it is waited on as well. What keeps a long inference from being
+    # cut off is gunicorn's --graceful-timeout, set in scripts/entrypoint.sh.
     await prepare_model_artifacts()
     yield
 
@@ -100,7 +142,9 @@ async def metrics(request):
 
 async def predict(request):
     # Shed load before reading the body: a worker whose latency has drifted far above its baseline
-    # is better off refusing quickly than queueing work its callers will time out on.
+    # is better off refusing quickly than queueing work its callers will time out on. Deliberately
+    # outside the idle witness below: a request we refuse is not activity, and must not keep an
+    # otherwise idle worker alive.
     if not latency_guard.accepting:
         return Response(
             Jsoner.serialize({"error": "Service temporarily unavailable, overload detected"}),
@@ -108,7 +152,19 @@ async def predict(request):
             media_type="application/json",
         )
 
+    # The idle checker must see this request: it counts what is in flight, so it cannot terminate
+    # the worker between the moment we start and the moment we answer.
+    async with idle.request_witnesses():
+        return await _predict(request)
+
+
+async def _predict(request):
     try:
+        # With idle unloading the model is not loaded at startup, so the first request pays for it.
+        # No-ops once loaded.
+        await ensure_model_downloaded()
+        inference_handler = await ensure_handler_loaded()
+
         # extracts content from request
         content_type = request.headers.get("content-Type", os.environ.get("DEFAULT_CONTENT_TYPE", ""))
         # try to deserialize payload
@@ -140,8 +196,8 @@ async def predict(request):
         # tracks request time
         start_time = perf_counter()
         # run async not blocking call, skipping it if the caller is gone by the time a slot frees
-        pred = await async_handler_call(
-            inference_handler, deserialized_body, request if should_discard_left() else None
+        pred = await async_call(
+            inference_handler, deserialized_body, request=request if should_discard_left() else None
         )
         # log request time
         logger.info(
