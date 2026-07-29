@@ -8,13 +8,16 @@ from time import perf_counter
 from typing import Any, Dict, Optional, Union
 
 from huggingface_hub import HfApi, login, snapshot_download
-from transformers import WhisperForConditionalGeneration, pipeline
-from transformers.file_utils import is_tf_available, is_torch_available
+from transformers import WhisperForConditionalGeneration, is_torch_available, pipeline
 from transformers.pipelines import Pipeline
 
 from huggingface_inference_toolkit.diffusers_utils import (
     get_diffusers_pipeline,
     is_diffusers_available,
+)
+from huggingface_inference_toolkit.legacy_transformers_utils import (
+    get_legacy_transformers_pipeline,
+    is_legacy_transformers_task,
 )
 from huggingface_inference_toolkit.logging import logger
 from huggingface_inference_toolkit.optimum_utils import (
@@ -90,43 +93,35 @@ def get_device():
         return -1
 
 
-if is_tf_available():
-    import tensorflow as tf
-
-
 if is_torch_available():
     import torch
 
 
+# TensorFlow support was removed in transformers v5 and this image is PyTorch-only, so PyTorch is
+# the only framework we can run inference with.
 def _is_gpu_available():
     """
     checks if a gpu is available.
     """
-    if is_tf_available():
-        return True if len(tf.config.list_physical_devices("GPU")) > 0 else False
-    elif is_torch_available():
+    if is_torch_available():
         return torch.cuda.is_available()
     else:
         raise RuntimeError(
-            "At least one of TensorFlow 2.0 or PyTorch should be installed. "
-            "To install TensorFlow 2.0, read the instructions at https://www.tensorflow.org/install/ "
+            "PyTorch should be installed. "
             "To install PyTorch, read the instructions at https://pytorch.org/."
         )
 
 
 def _get_framework():
     """
-    extracts which DL framework is used for inference, if both are installed use pytorch
+    extracts which DL framework is used for inference
     """
 
     if is_torch_available():
         return "pytorch"
-    elif is_tf_available():
-        return "tensorflow"
     else:
         raise RuntimeError(
-            "At least one of TensorFlow 2.0 or PyTorch should be installed. "
-            "To install TensorFlow 2.0, read the instructions at https://www.tensorflow.org/install/ "
+            "PyTorch should be installed. "
             "To install PyTorch, read the instructions at https://pytorch.org/."
         )
 
@@ -185,6 +180,9 @@ def get_pipeline(
         hf_pipeline = get_sentence_transformers_pipeline(task=task, model_dir=model_dir, device=device, **kwargs)
     elif is_diffusers_available() and task == "text-to-image":
         hf_pipeline = get_diffusers_pipeline(task=task, model_dir=model_dir, device=device, **kwargs)
+    elif is_legacy_transformers_task(task):
+        # Pipelines transformers v5 deleted; vendored under vendor/, see legacy_transformers_utils
+        hf_pipeline = get_legacy_transformers_pipeline(task=task, model_dir=model_dir, device=device, **kwargs)
     else:
         hf_pipeline = pipeline(task=task, model=model_dir, device=device, **kwargs)
 

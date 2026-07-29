@@ -4,14 +4,13 @@ from typing import Dict
 
 import numpy as np
 import pytest
-from transformers.testing_utils import require_tf, require_torch
+from transformers.testing_utils import require_torch
 
 from huggingface_inference_toolkit.handler import (
     HuggingFaceHandler,
     get_inference_handler_either_custom_or_default_handler,
 )
 from huggingface_inference_toolkit.heavy_utils import (
-    _is_gpu_available,
     load_repository_from_hf,
 )
 
@@ -74,48 +73,3 @@ def test_pt_sentence_transformers_pipeline(input_data: Dict[str, str]) -> None:
         assert isinstance(pred["embeddings"], np.ndarray)
 
 
-@require_tf
-def test_tf_get_device():
-    with tempfile.TemporaryDirectory() as tmpdirname:
-        # https://github.com/huggingface/infinity/blob/test-ovh/test/integ/utils.py
-        storage_dir = load_repository_from_hf(MODEL, tmpdirname, framework="tensorflow")
-        h = asyncio.run(HuggingFaceHandler.create(str(storage_dir), task=TASK))
-        if _is_gpu_available():
-            assert h.pipeline.device == 0
-        else:
-            assert h.pipeline.device == -1
-
-
-@require_tf
-def test_tf_predict_call(input_data: Dict[str, str]) -> None:
-    with tempfile.TemporaryDirectory() as tmpdirname:
-        # https://github.com/huggingface/infinity/blob/test-ovh/test/integ/utils.py
-        storage_dir = load_repository_from_hf(MODEL, tmpdirname, framework="tensorflow")
-        handler = asyncio.run(HuggingFaceHandler.create(str(storage_dir), task=TASK, framework="tf"))
-
-        prediction = handler(input_data)
-        assert "label" in prediction[0]
-        assert "score" in prediction[0]
-
-
-@require_tf
-def test_tf_custom_pipeline(input_data: Dict[str, str]) -> None:
-    with tempfile.TemporaryDirectory() as tmpdirname:
-        storage_dir = load_repository_from_hf(
-            "philschmid/custom-pipeline-text-classification",
-            tmpdirname,
-            framework="tensorflow",
-        )
-        h = asyncio.run(get_inference_handler_either_custom_or_default_handler(str(storage_dir), task="custom"))
-        assert h(input_data) == input_data
-
-
-@require_tf
-def test_tf_sentence_transformers_pipeline():
-    # TODO should fail! because TF is not supported yet
-    with tempfile.TemporaryDirectory() as tmpdirname:
-        storage_dir = load_repository_from_hf(
-            "sentence-transformers/all-MiniLM-L6-v2", tmpdirname, framework="tensorflow"
-        )
-        with pytest.raises(Exception) as _exc_info:
-            asyncio.run(get_inference_handler_either_custom_or_default_handler(str(storage_dir), task="sentence-embeddings"))
