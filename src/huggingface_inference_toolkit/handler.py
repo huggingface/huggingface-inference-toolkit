@@ -1,9 +1,11 @@
 import os
 from pathlib import Path
+from time import perf_counter
 from typing import Any, Dict, Literal, Optional, Union
 
 from huggingface_inference_toolkit.const import HF_TRUST_REMOTE_CODE
 from huggingface_inference_toolkit.env_utils import api_inference_compat, ignore_custom_handler
+from huggingface_inference_toolkit.latency_guard import latency_guard
 from huggingface_inference_toolkit.logging import logger
 from huggingface_inference_toolkit.sentence_transformers_utils import SENTENCE_TRANSFORMERS_TASKS
 from huggingface_inference_toolkit.utils import (
@@ -35,6 +37,16 @@ class HuggingFaceHandler:
             :data: (obj): the raw request body data.
         :return: prediction output
         """
+        start = perf_counter()
+        pred = self._timed_call(data)
+        duration = perf_counter() - start
+        logger.info("Inference duration: %.2f ms", duration * 1000)
+        # Only the model call is timed, so the guard's baseline does not move with deserialization,
+        # queueing or serialization
+        latency_guard.record(duration)
+        return pred
+
+    def _timed_call(self, data: Dict[str, Any]) -> Dict[str, Any]:
         inputs = data.pop("inputs", data)
         parameters = data.pop("parameters", {})
 
