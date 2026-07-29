@@ -39,15 +39,18 @@ jobs:
       group: ${{ inputs.runs_on }}
     env:
       AWS_REGION: ${{ inputs.region }}
-      # Keep the model cache in the job's own scratch dir, so a run never depends on cache state
-      # it does not own. runner.temp is emptied by the runner at the start and end of every job,
-      # unlike $HOME, which on these long-lived self-hosted runners survives across jobs and would
-      # reintroduce exactly the shared state we are removing here.
+      # Keep the model cache in the job's own workspace, so a run never depends on cache state it
+      # does not own: actions/checkout runs `git clean -ffdx` below, so every job starts from an
+      # empty cache instead of inheriting whatever the previous job on this long-lived self-hosted
+      # runner left under $HOME.
+      # It has to be the workspace rather than runner.temp, tempting as that is: the `runner`
+      # context is not available in a job-level `env:` block, only inside steps, so ${{ runner.temp }}
+      # here makes the whole workflow file invalid.
       # It also has to stay a real path on the runner host: conftest hands the downloaded model dir
       # straight to `docker run -v`, so the docker daemon has to resolve it, not just pytest.
       # Models are re-downloaded every run; the integ fixtures are tiny on purpose.
-      HF_HOME: ${{ runner.temp }}/hf_cache
-      HF_HUB_CACHE: ${{ runner.temp }}/hf_cache/hub
+      HF_HOME: ${{ github.workspace }}/.hf_cache
+      HF_HUB_CACHE: ${{ github.workspace }}/.hf_cache/hub
       RUN_SLOW: ${{ inputs.run_slow }}
     steps:
     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
