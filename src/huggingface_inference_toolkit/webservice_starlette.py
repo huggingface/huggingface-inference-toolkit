@@ -21,6 +21,7 @@ from huggingface_inference_toolkit.const import (
     HF_REVISION,
     HF_TASK,
 )
+from huggingface_inference_toolkit.env_utils import task_route_enabled
 from huggingface_inference_toolkit.handler import (
     get_inference_handler_either_custom_or_default_handler,
 )
@@ -34,8 +35,8 @@ from huggingface_inference_toolkit.utils import (
 )
 from huggingface_inference_toolkit.vertex_ai_utils import _load_repository_from_gcs
 
-INFERENCE_HANDLER = None
-INFERENCE_HANDLER_SEMAPHORE = Semaphore(1)
+INFERENCE_HANDLERS = {}
+INFERENCE_HANDLERS_SEMAPHORE = Semaphore(1)
 MODEL_DOWNLOADED = False
 MODEL_DL_SEMAPHORE = Semaphore(1)
 
@@ -83,18 +84,42 @@ async def ensure_model_downloaded():
                 await async_call(download_model)
 
 
-async def ensure_handler_loaded():
-    """Load the model on first use, once, even if several requests race for it."""
-    global INFERENCE_HANDLER
-    if INFERENCE_HANDLER is None:
-        async with INFERENCE_HANDLER_SEMAPHORE:
-            if INFERENCE_HANDLER is None:
-                logger.info(f"Initializing model from directory:{HF_MODEL_DIR}")
-                INFERENCE_HANDLER = await get_inference_handler_either_custom_or_default_handler(
-                    HF_MODEL_DIR, task=HF_TASK
+def resolve_task(requested_task):
+    """
+    The task to serve a request with.
+
+    A repository serves one model, but not always through one pipeline: the sentence-transformers
+    tasks all answer `feature-extraction` requests with embeddings, which is what a caller asking
+    that route for such a repository means.
+    """
+    if requested_task == "feature-extraction" and HF_TASK in {
+        "sentence-similarity",
+        "sentence-embeddings",
+        "sentence-ranking",
+    }:
+        return "sentence-embeddings"
+    return requested_task
+
+
+async def ensure_handler_loaded(task):
+    """
+    Load the pipeline for `task` on first use, once, even if several requests race for it.
+
+    Handlers are kept per task rather than one per worker: the same model directory can be served
+    through more than one pipeline, and each is built on demand the first time it is asked for.
+    """
+    handler = INFERENCE_HANDLERS.get(task)
+    if handler is None:
+        async with INFERENCE_HANDLERS_SEMAPHORE:
+            handler = INFERENCE_HANDLERS.get(task)
+            if handler is None:
+                logger.info("Initializing %s from directory: %s", task, HF_MODEL_DIR)
+                handler = await get_inference_handler_either_custom_or_default_handler(
+                    HF_MODEL_DIR, task=task
                 )
+                INFERENCE_HANDLERS[task] = handler
                 logger.info("Model initialized successfully")
-    return INFERENCE_HANDLER
+    return handler
 
 
 async def prepare_model_artifacts():
@@ -105,7 +130,7 @@ async def prepare_model_artifacts():
         logger.info("Idle unloading enabled, deferring model load to the first request")
         return
     await ensure_model_downloaded()
-    await ensure_handler_loaded()
+    await ensure_handler_loaded(HF_TASK)
 
 
 @asynccontextmanager
@@ -160,15 +185,19 @@ async def predict(request):
 
 async def _predict(request):
     try:
+        # The route may name the task (/pipeline/{task}); otherwise it is the one this repository
+        # was deployed for.
+        task = resolve_task(request.path_params.get("task", HF_TASK))
+
         # With idle unloading the model is not loaded at startup, so the first request pays for it.
         # No-ops once loaded.
         await ensure_model_downloaded()
-        inference_handler = await ensure_handler_loaded()
+        inference_handler = await ensure_handler_loaded(task)
 
         # extracts content from request
         content_type = request.headers.get("content-Type", os.environ.get("DEFAULT_CONTENT_TYPE", ""))
         # try to deserialize payload
-        deserialized_body = ContentType.get_deserializer(content_type, HF_TASK).deserialize(
+        deserialized_body = ContentType.get_deserializer(content_type, task).deserialize(
             await request.body()
         )
         # checks if input schema is correct
@@ -178,7 +207,7 @@ async def _predict(request):
             )
 
         # Decode base64 audio inputs before running inference
-        if "parameters" in deserialized_body and HF_TASK in {
+        if "parameters" in deserialized_body and task in {
             "automatic-speech-recognition",
             "audio-classification",
         }:
@@ -249,14 +278,20 @@ if os.getenv("AIP_MODE", None) == "PREDICTION":
         lifespan=lifespan,
     )
 else:
+    routes = [
+        Route("/", health, methods=["GET"]),
+        Route("/health", health, methods=["GET"]),
+        Route("/", predict, methods=["POST"]),
+        Route("/predict", predict, methods=["POST"]),
+        Route("/metrics", metrics, methods=["GET"]),
+    ]
+    if task_route_enabled():
+        # Lets a caller ask this repository for a specific pipeline, which is how the Inference API
+        # addresses a model that serves more than one task. Opt-in: each task asked for builds its
+        # own pipeline, with its own copy of the weights, kept for the life of the worker.
+        routes.append(Route("/pipeline/{task:path}", predict, methods=["POST"]))
     app = Starlette(
         debug=False,
-        routes=[
-            Route("/", health, methods=["GET"]),
-            Route("/health", health, methods=["GET"]),
-            Route("/", predict, methods=["POST"]),
-            Route("/predict", predict, methods=["POST"]),
-            Route("/metrics", metrics, methods=["GET"]),
-        ],
+        routes=routes,
         lifespan=lifespan,
     )
