@@ -198,7 +198,7 @@ curl --request POST \
 
 ## 🛠️ Environment variables
 
-The Hugging Face Inference Toolkit implements various additional environment variables to simplify your deployment experience. A full list of environment variables is given below. All potential environment variables can be found in [const.py](src/huggingface_inference_toolkit/const.py)
+The Hugging Face Inference Toolkit implements various additional environment variables to simplify your deployment experience. A full list of environment variables is given below. The model and task variables are defined in [const.py](src/huggingface_inference_toolkit/const.py); the serving, overload and routing flags below live next to the code they control, in [env_utils.py](src/huggingface_inference_toolkit/env_utils.py), [idle.py](src/huggingface_inference_toolkit/idle.py), [latency_guard.py](src/huggingface_inference_toolkit/latency_guard.py) and [entrypoint.sh](scripts/entrypoint.sh).
 
 ### `HF_MODEL_DIR`
 
@@ -274,6 +274,121 @@ The `HF_OPTIMUM_SEQUENCE_LENGTH` environment variable defines the sequence lengt
 
 ```bash
 HF_OPTIMUM_SEQUENCE_LENGTH="128"
+```
+
+### Serving and scaling
+
+#### `WORKERS`
+
+The `WORKERS` environment variable defines how many worker processes gunicorn runs. Each worker loads its own copy of the model, so raising this multiplies memory use unless combined with `UNLOAD_IDLE`. The default value is `1`.
+
+```bash
+WORKERS="1"
+```
+
+#### `UNLOAD_IDLE`
+
+The `UNLOAD_IDLE` environment variable makes a worker load its model on the first request rather than at startup, and terminate itself once it has been idle for `IDLE_TIMEOUT`, releasing the memory and the GPU. gunicorn immediately replaces the worker, and the next request pays for a fresh load. This lets a node host more workers than it has models resident. The default value is `"0"`; set it to `"1"` to enable it.
+
+An idle worker still shows the model files in the container's page cache, which counts towards the reported memory usage but is reclaimable — the resident footprint of a worker with no model loaded is a few tens of MB.
+
+```bash
+UNLOAD_IDLE="1"
+```
+
+#### `IDLE_TIMEOUT`
+
+The `IDLE_TIMEOUT` environment variable defines how many seconds a worker must be inactive before `UNLOAD_IDLE` terminates it. Requests in flight are counted, so a worker is never terminated in the middle of one, however long it takes. The default value is `15`.
+
+```bash
+IDLE_TIMEOUT="15"
+```
+
+#### `GRACEFUL_TIMEOUT`
+
+The `GRACEFUL_TIMEOUT` environment variable defines how long, in seconds, gunicorn waits for a worker to finish the request it is serving after being asked to stop, before killing it. Inference longer than this is cut off mid-request when a pod is asked to shut down, so it should exceed your slowest expected inference. The default value is `300`, against gunicorn's own default of 30.
+
+```bash
+GRACEFUL_TIMEOUT="300"
+```
+
+#### `TIMEOUT`
+
+The `TIMEOUT` environment variable defines gunicorn's worker timeout in seconds. The default value is `30`.
+
+```bash
+TIMEOUT="30"
+```
+
+#### `DISCARD_LEFT`
+
+The `DISCARD_LEFT` environment variable makes the toolkit skip a queued request whose caller has already disconnected, answering `204` instead of spending a model call on a response nobody will read. Useful when clients time out and retry. The default value is `"0"`; set it to `"1"` to enable it.
+
+```bash
+DISCARD_LEFT="1"
+```
+
+#### `LOG_LEVEL`
+
+The `LOG_LEVEL` environment variable defines the logging level, as a Python logging level name. The default value is `INFO`.
+
+```bash
+LOG_LEVEL="DEBUG"
+```
+
+### Overload protection
+
+#### `LATENCY_GUARD_ENABLED`
+
+The `LATENCY_GUARD_ENABLED` environment variable enables load shedding based on inference latency. The toolkit tracks a fast and a slow exponential moving average of pure inference time and answers `503` while the fast one sits far above the slow one, on the grounds that refusing quickly beats queueing work whose callers will time out. There is no absolute threshold to configure: the baseline is learned from the worker's own history. Two gauges are exposed on `/metrics`, `inf_accepting` and `inf_auto_frozen`. The default value is `"0"`; set it to `"1"` to enable it.
+
+```bash
+LATENCY_GUARD_ENABLED="1"
+```
+
+The tuning variables below only apply when the guard is enabled, and the defaults are a reasonable starting point:
+
+| Variable | Default | Meaning |
+| --- | --- | --- |
+| `LATENCY_WARMUP_REQUESTS` | `10` | Inferences observed before the guard may fire |
+| `LATENCY_FAST_ALPHA` | `0.3` | EMA weight for the recent window (~3-5 requests) |
+| `LATENCY_SLOW_ALPHA` | `0.05` | EMA weight for the baseline window (~20 requests) |
+| `LATENCY_OVERLOAD_FACTOR` | `3.0` | Freeze when recent latency exceeds this multiple of the baseline |
+| `LATENCY_RECOVERY_FACTOR` | `1.5` | Unfreeze below this multiple (hysteresis) |
+| `LATENCY_FREEZE_SECONDS` | `10` | How long to refuse before letting requests through to re-measure |
+
+`LATENCY_FREEZE_SECONDS` matters more than it looks: a frozen worker runs no inference, so it records no latency and would never recover on its own. After this delay the guard accepts requests again to get fresh samples, then either unfreezes or freezes for another round.
+
+### Multi-task serving
+
+#### `ENABLE_TASK_ROUTE`
+
+The `ENABLE_TASK_ROUTE` environment variable exposes `POST /pipeline/{task}`, letting a caller name the pipeline to serve a request with instead of only the task the endpoint was deployed for. The route is off unless you set this, and a deployment that does not set it answers for `HF_TASK` alone.
+
+> [!WARNING]
+> Enable this only for callers you trust. The task comes from the request path, and every task asked for builds a **separate pipeline with its own copy of the model weights**, kept until the worker exits. Nothing bounds that cache, so a caller can walk through the tasks a model happens to support and exhaust the worker's memory or the GPU, taking the service down for everyone using it. On a small model with authenticated callers this is a useful capability; on a public endpoint serving a large model it is a way to break the deployment with a handful of requests.
+
+```bash
+ENABLE_TASK_ROUTE="1"
+```
+
+### Task and handler defaults
+
+#### `IGNORE_CUSTOM_HANDLER`
+
+The `IGNORE_CUSTOM_HANDLER` environment variable makes the toolkit serve a model with the default pipeline even when its repository ships a `handler.py`. The file is not merely discarded but never imported, since importing it runs whatever is at its top level. The default value is `"false"`; set it to `"true"` to enable it.
+
+```bash
+IGNORE_CUSTOM_HANDLER="true"
+```
+
+#### `DEFAULT_NUM_INFERENCE_STEPS` and `DEFAULT_GUIDANCE_SCALE`
+
+These two environment variables define deployment-wide defaults for the `text-to-image` parameters that decide how long a generation takes, for setups that need a predictable cost per request. They are applied only when the request does not carry the parameter itself, so an explicit request parameter always wins. Neither has a default: left unset, the pipeline's own values apply. They are parsed at startup, so a value that is not a number fails the worker immediately rather than every generation.
+
+```bash
+DEFAULT_NUM_INFERENCE_STEPS="25"
+DEFAULT_GUIDANCE_SCALE="7.5"
 ```
 
 ---
