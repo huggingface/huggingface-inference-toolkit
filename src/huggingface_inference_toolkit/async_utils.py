@@ -1,3 +1,4 @@
+from functools import partial
 from typing import Callable, Optional, TypeVar
 
 import anyio
@@ -41,6 +42,29 @@ async def async_call(
         return await anyio.to_thread.run_sync(handler, *args, **kwargs)
 
 
+async def offload(func: Callable[P, T], *args: P.args, **kwargs: P.kwargs) -> T:
+    """
+    Run a CPU-bound codec on the threadpool rather than on the event loop.
+
+    Decoding a request body and encoding a response are not cheap at the sizes we serve: a PNG
+    body reaches PIL through `Image.convert("RGB")`, and a generated image goes back out through
+    `Image.save`, base64 and orjson. Left on the loop, a single large payload stalls everything
+    the loop owes the rest of the process:
+
+    - `/health` stops answering, so the orchestrator can decide a busy worker is a dead one.
+    - gunicorn's `--timeout` (30s by default, see `scripts/entrypoint.sh`) kills a worker that
+      has not heartbeat, which under plain uvicorn could not happen at all. A request killed
+      this way dies mid-flight.
+    - `Request.is_disconnected()` only reports a disconnect the loop has already processed, so
+      DISCARD_LEFT spots a departed caller sooner on a loop that is free to notice.
+
+    Deliberately outside `MAX_THREADS_GUARD`: that semaphore rations the model, and a codec
+    holding an inference slot would queue decoding behind inference for nothing. anyio's own
+    thread limiter still bounds how many of these run at once.
+    """
+    return await anyio.to_thread.run_sync(partial(func, *args, **kwargs))
+
+
 async def _caller_left(request: Request) -> bool:
     """
     Whether the caller of `request` has given up waiting for its answer.
@@ -59,7 +83,9 @@ async def _caller_left(request: Request) -> bool:
         loop blocked during the wait -> [False, True, True]
         loop free during the wait    -> [True,  True,  True]
 
-    Polling twice is what makes this independent of the loop's state, which we should not assume:
-    `predict` still decodes images (PIL) and audio (librosa) synchronously on the loop.
+    Polling twice is what makes this independent of the loop's state, which we should not assume.
+    `predict` now hands its codecs to `offload`, so the loop is no longer blocked by the request
+    being answered — but the threads that work runs in still hold the GIL between their own
+    native calls, and other requests are being served on the same loop.
     """
     return await request.is_disconnected() or await request.is_disconnected()

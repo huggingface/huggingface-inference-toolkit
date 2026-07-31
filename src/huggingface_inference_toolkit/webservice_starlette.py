@@ -12,7 +12,12 @@ from starlette.responses import PlainTextResponse, Response
 from starlette.routing import Route
 
 from huggingface_inference_toolkit import idle
-from huggingface_inference_toolkit.async_utils import MAX_CONCURRENT_THREADS, MAX_THREADS_GUARD, async_call
+from huggingface_inference_toolkit.async_utils import (
+    MAX_CONCURRENT_THREADS,
+    MAX_THREADS_GUARD,
+    async_call,
+    offload,
+)
 from huggingface_inference_toolkit.const import (
     HF_FRAMEWORK,
     HF_HUB_TOKEN,
@@ -196,10 +201,9 @@ async def _predict(request):
 
         # extracts content from request
         content_type = request.headers.get("content-Type", os.environ.get("DEFAULT_CONTENT_TYPE", ""))
-        # try to deserialize payload
-        deserialized_body = ContentType.get_deserializer(content_type, task).deserialize(
-            await request.body()
-        )
+        # try to deserialize payload, off the loop: this is where a PNG body reaches PIL
+        deserializer = ContentType.get_deserializer(content_type, task)
+        deserialized_body = await offload(deserializer.deserialize, await request.body())
         # checks if input schema is correct
         if "inputs" not in deserialized_body and "instances" not in deserialized_body:
             raise ValueError(
@@ -212,8 +216,8 @@ async def _predict(request):
             "audio-classification",
         }:
             # Be more strict on base64 decoding, the provided string should valid base64 encoded data
-            deserialized_body["inputs"] = base64.b64decode(
-                deserialized_body["inputs"], validate=True
+            deserialized_body["inputs"] = await offload(
+                base64.b64decode, deserialized_body["inputs"], validate=True
             )
 
         # check for query parameter and add them to the body
@@ -244,9 +248,10 @@ async def _predict(request):
         # An Accept header may list several types and carry parameters: resolve it to the single
         # media type we answer with, and serialize / label the response with that one.
         accept = ContentType.resolve_accept(accept)
-        # deserialized and resonds with json
-        serialized_response_body = ContentType.get_serializer(accept).serialize(
-            pred, accept
+        # serialize off the loop too: the JSON path PNG-encodes and base64s any PIL image it
+        # finds, so a generated image is encoded here even when the caller asked for JSON.
+        serialized_response_body = await offload(
+            ContentType.get_serializer(accept).serialize, pred, accept
         )
         return Response(serialized_response_body, media_type=accept)
     except Exception as e:
