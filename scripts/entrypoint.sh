@@ -1,5 +1,64 @@
 #!/bin/bash
 
+# The runtime image carries no compiler: build-essential, cmake, the Python headers and, on the
+# CUDA variant, nvcc all live in the builder stage. Dropping them is most of what took the CPU
+# image from 3.1G to 0.7G and the GPU one from 6.8G to 4.4G, and the majority of model
+# repositories never needed them -- their requirements.txt resolves entirely to wheels.
+#
+# So install the toolchain on demand, and only for the repositories that turn out to need it.
+# The trigger is a wheels-only pip pass that failed, not merely the presence of a requirements.txt:
+# gating on the file existing would make the wheel-only majority pay the apt download too, while
+# gating on a failed ordinary install would first sit through a build that was doomed anyway.
+install_build_toolchain() {
+    echo "Installing a build toolchain to satisfy the requirements from source"
+    if ! apt-get update; then
+        return 1
+    fi
+
+    # Ask the interpreter rather than restating the version the Dockerfile installs: the headers
+    # have to match whichever Python /opt/venv was built on, and BASE_IMAGE is a build arg.
+    local python_version
+    python_version=$(python -c 'import sys; print("%d.%d" % sys.version_info[:2])') || return 1
+
+    local packages=(build-essential cmake pkg-config "python${python_version}-dev")
+
+    # A CUDA extension (flash-attn, deepspeed, apex, ...) needs nvcc to compile and the libcuda
+    # stub to link against. Neither is in the CUDA *runtime* base, and the stub is what
+    # LIBRARY_PATH pointed at back when this image was built on the devel one.
+    if [[ -n "${CUDA_VERSION:-}" ]]; then
+        local cuda_apt_version="${CUDA_VERSION%.*}"   # 12.1.0 -> 12.1
+        cuda_apt_version="${cuda_apt_version/./-}"    # 12.1   -> 12-1
+        packages+=("cuda-nvcc-${cuda_apt_version}" "cuda-cudart-dev-${cuda_apt_version}")
+        export CUDA_HOME=/usr/local/cuda
+        export PATH="${CUDA_HOME}/bin:${PATH}"
+        # Unset on the runtime base, where the devel one used to define it.
+        export LIBRARY_PATH="${CUDA_HOME}/lib64/stubs${LIBRARY_PATH:+:${LIBRARY_PATH}}"
+    fi
+
+    apt-get install -y --no-install-recommends "${packages[@]}"
+}
+
+install_requirements() {
+    local requirements=$1
+
+    # --only-binary is both the fast path and the probe: pip either resolves the whole set from
+    # wheels or refuses without attempting a single build, so nothing is half-installed before
+    # the retry below. A pip failure here is expected and not fatal -- read the second pass.
+    echo "Installing custom dependencies from ${requirements} (wheels only)"
+    if pip install -r "${requirements}" --no-cache-dir --only-binary :all:; then
+        return 0
+    fi
+
+    echo "Wheels alone did not satisfy ${requirements}, so something has to be built from source"
+    if ! install_build_toolchain; then
+        # Let pip run regardless: its own error names the package that cannot be satisfied, which
+        # is more useful to the repository owner than an apt failure.
+        echo "Warning: could not install a build toolchain, retrying the requirements anyway"
+    fi
+
+    pip install -r "${requirements}" --no-cache-dir
+}
+
 # Set the default port
 PORT=5000
 
@@ -37,9 +96,8 @@ if [[ ! -z "${HF_MODEL_ID}" ]]; then
         # Check if requirements.txt was downloaded successfully
         if [ -f "/tmp/requirements.txt" ]; then
             echo "requirements.txt downloaded successfully, now installing the dependencies..."
-            
-            # Install dependencies
-            pip install -r /tmp/requirements.txt --no-cache-dir
+
+            install_requirements /tmp/requirements.txt
             rm /tmp/requirements.txt
         else
             echo "${HF_MODEL_ID} with revision $revision contains a custom handler at $filename but doesn't contain a requirements.txt file, so skipping downloading and installing extra requirements from it."
@@ -53,8 +111,7 @@ fi
 if [[ ! -z "${HF_MODEL_DIR}" ]]; then
     # Check if requirements.txt exists and if so install dependencies
     if [ -f "${HF_MODEL_DIR}/requirements.txt" ]; then
-        echo "Installing custom dependencies from ${HF_MODEL_DIR}/requirements.txt"
-        pip install -r ${HF_MODEL_DIR}/requirements.txt --no-cache-dir
+        install_requirements "${HF_MODEL_DIR}/requirements.txt"
     fi
 fi
 
