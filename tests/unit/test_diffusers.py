@@ -6,10 +6,10 @@ import sys
 import tempfile
 import textwrap
 
-import huggingface_inference_toolkit
 from PIL import Image
 from transformers.testing_utils import require_torch, slow
 
+import huggingface_inference_toolkit
 from huggingface_inference_toolkit.diffusers_utils import IEAutoPipelineForText2Image
 from huggingface_inference_toolkit.heavy_utils import get_pipeline, load_repository_from_hf
 
