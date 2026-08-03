@@ -31,17 +31,27 @@ DEFAULT_NUM_INFERENCE_STEPS = _generation_default("DEFAULT_NUM_INFERENCE_STEPS",
 DEFAULT_GUIDANCE_SCALE = _generation_default("DEFAULT_GUIDANCE_SCALE", float)
 
 
-if is_diffusers_available():
-    import torch
-    from diffusers import (
-        AutoPipelineForText2Image,
-        DPMSolverMultistepScheduler,
-        StableDiffusionPipeline,
-    )
-
-
 class IEAutoPipelineForText2Image:
     def __init__(self, model_dir: str, device: Union[str, None] = None, **kwargs):  # needs "cuda" for GPU
+        # Imported here rather than at module scope. `from diffusers import
+        # AutoPipelineForText2Image` resolves through diffusers' lazy module, which imports
+        # `diffusers.pipelines.auto_pipeline`, which imports *every* pipeline it knows about.
+        # One unimportable pipeline module then takes down whatever imported us -- and
+        # `heavy_utils` imports this module during `download_model`, so it took down worker
+        # startup for endpoints that have nothing to do with diffusers.
+        #
+        # Seen in production: a repository whose requirements.txt raised diffusers to 0.39
+        # while transformers stayed at the pinned 4.51.3, so `ideogram4` failed on the
+        # `transformers.masking_utils` it needs, and the endpoint never became ready.
+        # Resolving the names only when a text-to-image pipeline is actually being built
+        # keeps that failure with the request that asked for it.
+        import torch
+        from diffusers import (
+            AutoPipelineForText2Image,
+            DPMSolverMultistepScheduler,
+            StableDiffusionPipeline,
+        )
+
         dtype = torch.float32
         if device == "cuda":
             dtype = torch.bfloat16 if is_torch_bf16_gpu_available() else torch.float16
@@ -72,6 +82,8 @@ class IEAutoPipelineForText2Image:
         # diffusers doesn't support seed but rather the generator kwarg
         # see: https://github.com/huggingface/api-inference-community/blob/8e577e2d60957959ba02f474b2913d84a9086b82/docker_images/diffusers/app/pipelines/text_to_image.py#L172-L176
         if "seed" in kwargs:
+            import torch
+
             seed = int(kwargs["seed"])
             generator = torch.Generator().manual_seed(seed)
             kwargs["generator"] = generator
