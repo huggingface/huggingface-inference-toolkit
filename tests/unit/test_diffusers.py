@@ -1,10 +1,12 @@
 import logging
+import os
 import pathlib
 import subprocess
 import sys
 import tempfile
 import textwrap
 
+import huggingface_inference_toolkit
 from PIL import Image
 from transformers.testing_utils import require_torch, slow
 
@@ -95,11 +97,18 @@ def test_importing_diffusers_utils_does_not_resolve_diffusers():
         print("OK")
         """
     )
+    # Point the child at wherever the package we are testing actually lives, rather than at a
+    # path derived from this file: CI copies the tests to /opt/hf-inference-toolkit-tests and
+    # installs the package into the venv, so `__file__`-relative guessing lands on /opt/src.
+    package_root = str(pathlib.Path(huggingface_inference_toolkit.__file__).resolve().parents[1])
+    env = dict(os.environ)
+    env["PYTHONPATH"] = os.pathsep.join(filter(None, [package_root, env.get("PYTHONPATH")]))
+
     result = subprocess.run(
         [sys.executable, "-c", program],
         capture_output=True,
         text=True,
-        cwd=str(pathlib.Path(__file__).resolve().parents[2] / "src"),
+        env=env,
     )
     assert result.returncode == 0, f"import broke on an unimportable diffusers:\n{result.stderr}"
     assert "OK" in result.stdout
