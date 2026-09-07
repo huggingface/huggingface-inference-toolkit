@@ -69,7 +69,6 @@ RUN apt-get update && \
       git-lfs \
       tar \
       libsndfile1 \
-      libprotobuf23 \
       libgomp1 \
       ffmpeg \
     && apt-get clean autoremove --yes \
