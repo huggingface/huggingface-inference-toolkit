@@ -1,5 +1,7 @@
 import importlib.util
-from typing import Any, Dict, List, Tuple, Union
+import json
+import os
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
@@ -18,7 +20,23 @@ def is_sentence_transformers_available():
 
 
 if is_sentence_transformers_available():
-    from sentence_transformers import CrossEncoder, SentenceTransformer, util
+    from sentence_transformers import CrossEncoder, SentenceTransformer, SparseEncoder, util
+
+
+def st_model_type(model_dir: str) -> Optional[str]:
+    """
+    The model family the checkpoint declares in `config_sentence_transformers.json`.
+
+    sentence-transformers writes it from 5.0 onwards ("SentenceTransformer", "SparseEncoder",
+    "CrossEncoder", "ColBERT"); older checkpoints have no key, and repositories that are not
+    sentence-transformers models have no file. Both mean "load it as a dense model", which is
+    what those checkpoints are.
+    """
+    try:
+        with open(os.path.join(model_dir, "config_sentence_transformers.json")) as f:
+            return json.load(f).get("model_type")
+    except (OSError, ValueError):
+        return None
 
 
 class SentenceSimilarityPipeline:
@@ -36,13 +54,35 @@ class SentenceSimilarityPipeline:
 
 class SentenceEmbeddingPipeline:
     def __init__(self, model_dir: str, device: Union[str, None] = None, **kwargs: Any) -> None:
+        # The task cannot tell the two families apart -- a SPLADE checkpoint and a dense embedding
+        # model are both served as `sentence-embeddings` -- so the checkpoint decides, not HF_TASK.
+        #
+        # This matters because the wrong class is not an error. Asked for a SparseEncoder
+        # checkpoint, SentenceTransformer performs a cross-family conversion: it drops
+        # `cls.predictions.*`, the MLM head that produces the vocabulary-space scores SPLADE *is*,
+        # initializes an untrained pooler in its place, and returns a dense hidden-state vector.
+        # On sentence-transformers 5.x that happens with no warning at all, so the endpoint answers
+        # 200 with an embedding that is the wrong length, wrong density and wrong sign range.
+        #
+        # `ColBERT` is deliberately not routed here: it needs MultiVectorEncoder, which arrives in
+        # sentence-transformers 6.0, so those checkpoints keep failing loudly for now.
         # `device` needs to be set to "cuda" for GPU
-        self.model = SentenceTransformer(model_dir, device=device, **kwargs)
+        if st_model_type(model_dir) == "SparseEncoder":
+            self.model = SparseEncoder(model_dir, device=device, **kwargs)
+        else:
+            self.model = SentenceTransformer(model_dir, device=device, **kwargs)
 
     def __call__(self, sentences: Union[str, List[str]]) -> Union[np.ndarray, Dict[str, np.ndarray]]:
         # Deliberately not `.tolist()`: it widens float32 to float64 and serializes
         # 0.1 as 0.10000000149011612.
         embeddings = self.model.encode(sentences)
+        # SparseEncoder returns a torch sparse tensor, where SentenceTransformer already returns an
+        # array. Densified rather than returned as indices/values so the response stays the flat
+        # vector every caller of this task already expects.
+        if hasattr(embeddings, "to_dense"):
+            embeddings = embeddings.to_dense()
+        if hasattr(embeddings, "cpu"):
+            embeddings = embeddings.cpu().numpy()
         # The widgets expect the bare array, not a wrapper object
         return embeddings if api_inference_compat() else {"embeddings": embeddings}
 
