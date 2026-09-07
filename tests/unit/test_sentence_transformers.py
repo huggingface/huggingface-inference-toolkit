@@ -11,6 +11,7 @@ from huggingface_inference_toolkit.heavy_utils import (
 from huggingface_inference_toolkit.sentence_transformers_utils import (
     SentenceEmbeddingPipeline,
     get_sentence_transformers_pipeline,
+    st_model_type,
 )
 
 
@@ -113,3 +114,56 @@ def test_sentence_ranking_validation_errors():
             match=("Provided texts=None, but a list of non-empty strings should be provided instead."),
         ):
             pipe(sentences=None, query="Lets create an embedding", texts=None)
+
+
+def test_st_model_type_reads_the_declared_family(tmp_path):
+    (tmp_path / "config_sentence_transformers.json").write_text('{"model_type": "SparseEncoder"}')
+    assert st_model_type(tmp_path.as_posix()) == "SparseEncoder"
+
+
+def test_st_model_type_is_none_when_undeclared(tmp_path):
+    # No file at all: the repository is not a sentence-transformers model
+    assert st_model_type(tmp_path.as_posix()) is None
+    # Present but without the key: a checkpoint saved before sentence-transformers 5.0
+    (tmp_path / "config_sentence_transformers.json").write_text('{"__version__": {}}')
+    assert st_model_type(tmp_path.as_posix()) is None
+    # Unreadable: treated as undeclared rather than failing the load
+    (tmp_path / "config_sentence_transformers.json").write_text("not json")
+    assert st_model_type(tmp_path.as_posix()) is None
+
+
+@pytest.mark.parametrize(
+    "declared,expected",
+    [
+        ("SparseEncoder", "SparseEncoder"),
+        # ColBERT needs MultiVectorEncoder, which sentence-transformers only adds in 6.0, so it is
+        # deliberately not routed anywhere new and keeps failing loudly.
+        ("ColBERT", "SentenceTransformer"),
+        ("SentenceTransformer", "SentenceTransformer"),
+        (None, "SentenceTransformer"),
+    ],
+)
+def test_sentence_embedding_pipeline_dispatches_on_the_declared_family(
+    tmp_path, monkeypatch, declared, expected
+):
+    """The class comes from the checkpoint, not from the task: both families serve the same task."""
+    if declared is not None:
+        (tmp_path / "config_sentence_transformers.json").write_text(
+            '{"model_type": "%s"}' % declared
+        )
+
+    import huggingface_inference_toolkit.sentence_transformers_utils as stu
+
+    loaded = {}
+
+    def fake(name):
+        def _init(model_dir, device=None, **kwargs):
+            loaded["class"] = name
+            return object()
+
+        return _init
+
+    monkeypatch.setattr(stu, "SparseEncoder", fake("SparseEncoder"))
+    monkeypatch.setattr(stu, "SentenceTransformer", fake("SentenceTransformer"))
+    stu.SentenceEmbeddingPipeline(tmp_path.as_posix(), device="cpu")
+    assert loaded["class"] == expected
