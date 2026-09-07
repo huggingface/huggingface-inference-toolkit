@@ -1,10 +1,15 @@
+import base64
 from io import BytesIO
 
 import pytest
 from PIL import Image
 
 from huggingface_inference_toolkit.serialization.audio_utils import Audioer
-from huggingface_inference_toolkit.serialization.base import ContentType, content_type_mapping
+from huggingface_inference_toolkit.serialization.base import (
+    ContentType,
+    content_type_mapping,
+    decode_media_string_input,
+)
 from huggingface_inference_toolkit.serialization.image_utils import MEDIA_TYPE_TO_PIL_FORMAT, Imager
 from huggingface_inference_toolkit.serialization.json_utils import Jsoner
 
@@ -154,3 +159,131 @@ def test_every_advertised_image_type_can_be_serialized():
     # would only fail at response time, on the accept path
     advertised = {media_type for media_type in content_type_mapping if media_type.startswith("image/")}
     assert advertised == set(MEDIA_TYPE_TO_PIL_FORMAT)
+
+
+def test_decode_media_string_input_decodes_base64_audio():
+    audio_bytes = b"\x00\x01RIFFfake-audio"
+    decoded = decode_media_string_input(
+        "automatic-speech-recognition", base64.b64encode(audio_bytes).decode()
+    )
+    # Decoded to the raw bytes the pipeline reads, never opened as a path
+    assert decoded == audio_bytes
+
+
+def test_decode_media_string_input_decodes_base64_image():
+    buffer = BytesIO()
+    Image.new("RGB", (8, 8), "red").save(buffer, format="PNG")
+    decoded = decode_media_string_input(
+        "image-classification", base64.b64encode(buffer.getvalue()).decode()
+    )
+    assert isinstance(decoded, Image.Image)
+    assert decoded.size == (8, 8)
+
+
+@pytest.mark.parametrize("task", ["text-classification", "text-generation", "feature-extraction"])
+def test_decode_media_string_input_leaves_text_tasks_untouched(task):
+    # A string is literal text for these tasks, not encoded media
+    assert decode_media_string_input(task, "/etc/passwd") == "/etc/passwd"
+
+
+def test_decode_media_string_input_leaves_non_strings_untouched():
+    # A binary body is already decoded to bytes / a PIL image before it reaches here
+    image = Image.new("RGB", (8, 8))
+    assert decode_media_string_input("image-classification", image) is image
+    assert decode_media_string_input("automatic-speech-recognition", b"raw-bytes") == b"raw-bytes"
+
+
+@pytest.mark.parametrize(
+    "task",
+    ["automatic-speech-recognition", "audio-classification", "image-classification", "image-to-text"],
+)
+@pytest.mark.parametrize(
+    "malicious",
+    [
+        "/tmp/plop",  # local file path
+        "http://127.0.0.1:8080/internal",  # a request the server would make on the caller's behalf
+        "https://example.com/sample.wav",
+    ],
+)
+def test_decode_media_string_input_rejects_paths_and_urls(task, malicious):
+    # A media task must never receive a raw string: transformers would open it as a file or fetch
+    # it as a URL. None of these is valid base64, so each is rejected instead of resolved.
+    with pytest.raises(ValueError, match="must be the media content itself"):
+        decode_media_string_input(task, malicious)
+
+
+@pytest.mark.parametrize("task", ["image-classification", "image-to-text"])
+def test_decode_media_string_input_rejects_a_path_that_is_itself_valid_base64(task):
+    # A path is not always rejected by the base64 decode: `/var/lib/nonexistent` is 20 characters
+    # of the base64 alphabet and decodes cleanly. What matters is that it is decoded rather than
+    # opened -- the bytes are the caller's own string, never the file -- and for an image the
+    # result is then caught as not-media, so the caller still gets the contract back.
+    #
+    # Not asserted for audio: `Audioer` hands the bytes to the pipeline as-is, since any byte
+    # string is a candidate audio payload and there is nothing to validate it against. Such a
+    # path decodes to noise and fails in the audio decoder instead, still never opened.
+    with pytest.raises(ValueError, match="must be the media content itself"):
+        decode_media_string_input(task, "/var/lib/nonexistent")
+
+
+def _b64_png():
+    buffer = BytesIO()
+    Image.new("RGB", (8, 8), "blue").save(buffer, format="PNG")
+    return base64.b64encode(buffer.getvalue()).decode()
+
+
+@pytest.mark.parametrize(
+    "task,key",
+    [
+        ("visual-question-answering", "image"),
+        ("document-question-answering", "image"),
+        ("image-text-to-text", "images"),
+        ("image-text-to-text", "image"),
+    ],
+)
+def test_decode_media_string_input_decodes_the_media_key_of_a_dict(task, key):
+    # These arrive as a dict, which the handler splats into the pipeline as keyword arguments, so
+    # the media is nested under a key rather than being `inputs` itself.
+    decoded = decode_media_string_input(task, {key: _b64_png(), "question": "what is this?"})
+    assert isinstance(decoded[key], Image.Image)
+    assert decoded[key].size == (8, 8)
+    # Everything that is not media is passed through as it was
+    assert decoded["question"] == "what is this?"
+
+
+@pytest.mark.parametrize(
+    "task,key",
+    [
+        ("visual-question-answering", "image"),
+        ("document-question-answering", "image"),
+        ("image-text-to-text", "images"),
+    ],
+)
+@pytest.mark.parametrize("malicious", ["/var/lib/nonexistent", "http://127.0.0.1:8080/internal"])
+def test_decode_media_string_input_rejects_paths_and_urls_nested_in_a_dict(task, key, malicious):
+    # `load_image` resolves a nested string exactly as it resolves a top-level one
+    with pytest.raises(ValueError, match="must be the media content itself"):
+        decode_media_string_input(task, {key: malicious, "question": "what is this?"})
+
+
+def test_decode_media_string_input_leaves_non_media_dicts_untouched():
+    # question-answering takes a dict too, but none of its values is media
+    inputs = {"question": "who?", "context": "/etc/passwd is a path, read as literal text here"}
+    assert decode_media_string_input("question-answering", inputs) == inputs
+
+
+def test_decode_media_string_input_leaves_absent_and_non_string_media_keys_untouched():
+    image = Image.new("RGB", (8, 8))
+    assert decode_media_string_input("visual-question-answering", {"question": "who?"}) == {
+        "question": "who?"
+    }
+    # A binary body is already a PIL image by the time it gets here
+    assert decode_media_string_input("visual-question-answering", {"image": image})["image"] is image
+
+
+@pytest.mark.parametrize("value", ["/var/lib/nonexistent", "http://127.0.0.1:8080/internal", "Zm9v"])
+def test_decode_media_string_input_refuses_a_string_for_video_classification(value):
+    # No media type in `content_type_mapping` can carry a video, so there is no encoding a caller
+    # could legitimately send: a string can only be something for the server to open or fetch.
+    with pytest.raises(ValueError, match="cannot be a string"):
+        decode_media_string_input("video-classification", value)

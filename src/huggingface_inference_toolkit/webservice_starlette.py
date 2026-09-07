@@ -1,5 +1,4 @@
 import asyncio
-import base64
 import os
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -27,7 +26,7 @@ from huggingface_inference_toolkit.handler import (
 )
 from huggingface_inference_toolkit.latency_guard import latency_guard
 from huggingface_inference_toolkit.logging import logger
-from huggingface_inference_toolkit.serialization.base import ContentType
+from huggingface_inference_toolkit.serialization.base import ContentType, decode_media_string_input
 from huggingface_inference_toolkit.serialization.json_utils import Jsoner
 from huggingface_inference_toolkit.utils import (
     convert_params_to_int_or_bool,
@@ -206,14 +205,14 @@ async def _predict(request):
                 f"Body needs to provide a inputs key, received: {orjson.dumps(deserialized_body)}"
             )
 
-        # Decode base64 audio inputs before running inference
-        if "parameters" in deserialized_body and task in {
-            "automatic-speech-recognition",
-            "audio-classification",
-        }:
-            # Be more strict on base64 decoding, the provided string should valid base64 encoded data
-            deserialized_body["inputs"] = base64.b64decode(
-                deserialized_body["inputs"], validate=True
+        # Media for a media task is base64-encoded content, decoded here into the bytes / PIL
+        # image the binary-body path produces -- whether `inputs` is the media itself or a dict
+        # carrying it under a key. Never let such a string reach the pipeline as-is: transformers
+        # would open it as a local file path or fetch it as a URL (arbitrary file read /
+        # server-side request forgery).
+        if "inputs" in deserialized_body:
+            deserialized_body["inputs"] = decode_media_string_input(
+                task, deserialized_body["inputs"]
             )
 
         # check for query parameter and add them to the body
