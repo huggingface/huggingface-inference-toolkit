@@ -136,8 +136,8 @@ def test_st_model_type_is_none_when_undeclared(tmp_path):
     "declared,expected",
     [
         ("SparseEncoder", "SparseEncoder"),
-        # ColBERT needs MultiVectorEncoder, which sentence-transformers only adds in 6.0, so it is
-        # deliberately not routed anywhere new and keeps failing loudly.
+        # A late-interaction model has no single embedding per text to return, so this task is
+        # not where it is handled -- see the similarity test below.
         ("ColBERT", "SentenceTransformer"),
         ("SentenceTransformer", "SentenceTransformer"),
         (None, "SentenceTransformer"),
@@ -167,3 +167,43 @@ def test_sentence_embedding_pipeline_dispatches_on_the_declared_family(
     monkeypatch.setattr(stu, "SentenceTransformer", fake("SentenceTransformer"))
     stu.SentenceEmbeddingPipeline(tmp_path.as_posix(), device="cpu")
     assert loaded["class"] == expected
+
+
+@pytest.mark.parametrize(
+    "declared,expected",
+    [
+        ("ColBERT", "MultiVectorEncoder"),
+        ("SentenceTransformer", "SentenceTransformer"),
+        ("SparseEncoder", "SentenceTransformer"),
+        (None, "SentenceTransformer"),
+    ],
+)
+def test_sentence_similarity_pipeline_dispatches_on_the_declared_family(
+    tmp_path, monkeypatch, declared, expected
+):
+    """Scoring a late-interaction checkpoint needs its own class: MaxSim, not a cosine."""
+    if declared is not None:
+        (tmp_path / "config_sentence_transformers.json").write_text(
+            '{"model_type": "%s"}' % declared
+        )
+
+    import huggingface_inference_toolkit.sentence_transformers_utils as stu
+
+    loaded = {}
+
+    def fake(name):
+        def _init(model_dir, device=None, **kwargs):
+            loaded["class"] = name
+            loaded["kwargs"] = kwargs
+            return object()
+
+        return _init
+
+    monkeypatch.setattr(stu, "MultiVectorEncoder", fake("MultiVectorEncoder"))
+    monkeypatch.setattr(stu, "SentenceTransformer", fake("SentenceTransformer"))
+    pipe = stu.SentenceSimilarityPipeline(tmp_path.as_posix(), device="cpu")
+    assert loaded["class"] == expected
+    assert pipe.is_multi_vector == (expected == "MultiVectorEncoder")
+    if expected == "MultiVectorEncoder":
+        # Bounded scores, so the task answers in the same range as every other model on it
+        assert loaded["kwargs"]["similarity_fn_name"] == "meanmaxsim"

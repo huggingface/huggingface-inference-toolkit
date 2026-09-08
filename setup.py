@@ -33,7 +33,7 @@ install_requires = requirements("requirements.txt")
 
 extras = {}
 
-extras["st"] = ["sentence_transformers==5.6.0"]
+extras["st"] = ["sentence_transformers==6.0.1"]
 extras["diffusers"] = ["diffusers==0.39.0", "accelerate==1.14.0"]
 extras["torch"] = requirements("requirements-torch.txt")
 extras["test"] = requirements("test-requirements.txt")
