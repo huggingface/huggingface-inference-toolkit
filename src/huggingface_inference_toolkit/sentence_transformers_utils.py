@@ -20,7 +20,13 @@ def is_sentence_transformers_available():
 
 
 if is_sentence_transformers_available():
-    from sentence_transformers import CrossEncoder, SentenceTransformer, SparseEncoder, util
+    from sentence_transformers import (
+        CrossEncoder,
+        MultiVectorEncoder,
+        SentenceTransformer,
+        SparseEncoder,
+        util,
+    )
 
 
 def st_model_type(model_dir: str) -> Optional[str]:
@@ -41,13 +47,39 @@ def st_model_type(model_dir: str) -> Optional[str]:
 
 class SentenceSimilarityPipeline:
     def __init__(self, model_dir: str, device: Union[str, None] = None, **kwargs: Any) -> None:
+        # As in SentenceEmbeddingPipeline, the checkpoint decides the class rather than the task.
+        # A late-interaction checkpoint keeps one vector per token instead of one per text, so it
+        # neither loads nor scores like a dense model.
+        #
+        # `meanmaxsim` rather than the default `maxsim`: raw MaxSim sums over query tokens, so its
+        # magnitude scales with query length and is unbounded, where every other model on this task
+        # answers with a cosine in [-1, 1]. Dividing by the query token count restores that range.
+        # It is a positive per-query constant, so the ranking is identical either way -- this
+        # changes the scale the caller sees, never the order.
         # `device` needs to be set to "cuda" for GPU
-        self.model = SentenceTransformer(model_dir, device=device, **kwargs)
+        self.is_multi_vector = st_model_type(model_dir) == "ColBERT"
+        if self.is_multi_vector:
+            kwargs.setdefault("similarity_fn_name", "meanmaxsim")
+            self.model = MultiVectorEncoder(model_dir, device=device, **kwargs)
+        else:
+            self.model = SentenceTransformer(model_dir, device=device, **kwargs)
 
     def __call__(self, source_sentence: str, sentences: List[str]) -> Dict[str, float]:
-        embeddings1 = self.model.encode(source_sentence, convert_to_tensor=True)
-        embeddings2 = self.model.encode(sentences, convert_to_tensor=True)
-        similarities = util.pytorch_cos_sim(embeddings1, embeddings2).tolist()[0]
+        if self.is_multi_vector:
+            # Multi-vector models are asymmetric -- queries and documents take different prefixes
+            # and length caps -- so encode_query / encode_document are required rather than
+            # interchangeable. Scoring is the model's own, since a cosine between per-token
+            # matrices is not defined.
+            scores = self.model.similarity(
+                self.model.encode_query([source_sentence]),
+                self.model.encode_document(sentences),
+            )
+        else:
+            scores = util.pytorch_cos_sim(
+                self.model.encode(source_sentence, convert_to_tensor=True),
+                self.model.encode(sentences, convert_to_tensor=True),
+            )
+        similarities = scores.tolist()[0]
         # The widgets expect the bare list, not a wrapper object
         return similarities if api_inference_compat() else {"similarities": similarities}
 
@@ -64,8 +96,10 @@ class SentenceEmbeddingPipeline:
         # On sentence-transformers 5.x that happens with no warning at all, so the endpoint answers
         # 200 with an embedding that is the wrong length, wrong density and wrong sign range.
         #
-        # `ColBERT` is deliberately not routed here: it needs MultiVectorEncoder, which arrives in
-        # sentence-transformers 6.0, so those checkpoints keep failing loudly for now.
+        # `ColBERT` is deliberately not routed here even though MultiVectorEncoder is available:
+        # a late-interaction model has no single embedding per text to return, only one vector per
+        # token, so there is nothing to answer this task with. It is handled in
+        # SentenceSimilarityPipeline, where scoring -- not the embedding -- is what is asked for.
         # `device` needs to be set to "cuda" for GPU
         if st_model_type(model_dir) == "SparseEncoder":
             self.model = SparseEncoder(model_dir, device=device, **kwargs)
