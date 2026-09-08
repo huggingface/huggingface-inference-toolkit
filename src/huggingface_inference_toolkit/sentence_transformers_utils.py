@@ -29,6 +29,15 @@ if is_sentence_transformers_available():
     )
 
 
+def _read_json(model_dir: str, filename: str):
+    """The parsed file, or None when it is absent or unreadable -- both mean "nothing declared"."""
+    try:
+        with open(os.path.join(model_dir, filename)) as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return None
+
+
 def st_model_type(model_dir: str) -> Optional[str]:
     """
     The model family the checkpoint declares in `config_sentence_transformers.json`.
@@ -38,11 +47,31 @@ def st_model_type(model_dir: str) -> Optional[str]:
     sentence-transformers models have no file. Both mean "load it as a dense model", which is
     what those checkpoints are.
     """
-    try:
-        with open(os.path.join(model_dir, "config_sentence_transformers.json")) as f:
-            return json.load(f).get("model_type")
-    except (OSError, ValueError):
-        return None
+    cfg = _read_json(model_dir, "config_sentence_transformers.json")
+    return cfg.get("model_type") if isinstance(cfg, dict) else None
+
+
+def is_multi_vector(model_dir: str) -> bool:
+    """
+    Whether the checkpoint is late-interaction (ColBERT-style), by any of the three markers such a
+    checkpoint carries in practice.
+
+    `model_type` alone is not enough. sentence-transformers only began writing it in 5.0, and most
+    of these checkpoints predate that -- of the ten HF Inference serves, six declare nothing. They
+    are still recognisable two other ways: they ask for MaxSim scoring, which is precisely what
+    they fail on when loaded as a dense model, or they carry a `pylate` module, PyLate being the
+    library they were trained with. Neither marker appears on a dense checkpoint.
+    """
+    cfg = _read_json(model_dir, "config_sentence_transformers.json") or {}
+    if isinstance(cfg, dict):
+        if cfg.get("model_type") == "ColBERT":
+            return True
+        if str(cfg.get("similarity_fn_name") or "").lower() in ("maxsim", "meanmaxsim"):
+            return True
+    modules = _read_json(model_dir, "modules.json")
+    if isinstance(modules, list):
+        return any(str((m or {}).get("type", "")).startswith("pylate.") for m in modules)
+    return False
 
 
 class SentenceSimilarityPipeline:
@@ -57,7 +86,7 @@ class SentenceSimilarityPipeline:
         # It is a positive per-query constant, so the ranking is identical either way -- this
         # changes the scale the caller sees, never the order.
         # `device` needs to be set to "cuda" for GPU
-        self.is_multi_vector = st_model_type(model_dir) == "ColBERT"
+        self.is_multi_vector = is_multi_vector(model_dir)
         if self.is_multi_vector:
             kwargs.setdefault("similarity_fn_name", "meanmaxsim")
             self.model = MultiVectorEncoder(model_dir, device=device, **kwargs)
