@@ -1,5 +1,7 @@
 import importlib.util
-from typing import Any, Dict, List, Tuple, Union
+import json
+import os
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
@@ -18,31 +20,132 @@ def is_sentence_transformers_available():
 
 
 if is_sentence_transformers_available():
-    from sentence_transformers import CrossEncoder, SentenceTransformer, util
+    from sentence_transformers import (
+        CrossEncoder,
+        MultiVectorEncoder,
+        SentenceTransformer,
+        SparseEncoder,
+        util,
+    )
+
+
+def _read_json(model_dir: str, filename: str):
+    """The parsed file, or None when it is absent or unreadable -- both mean "nothing declared"."""
+    try:
+        with open(os.path.join(model_dir, filename)) as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return None
+
+
+def st_model_type(model_dir: str) -> Optional[str]:
+    """
+    The model family the checkpoint declares in `config_sentence_transformers.json`.
+
+    sentence-transformers writes it from 5.0 onwards ("SentenceTransformer", "SparseEncoder",
+    "CrossEncoder", "ColBERT"); older checkpoints have no key, and repositories that are not
+    sentence-transformers models have no file. Both mean "load it as a dense model", which is
+    what those checkpoints are.
+    """
+    cfg = _read_json(model_dir, "config_sentence_transformers.json")
+    return cfg.get("model_type") if isinstance(cfg, dict) else None
+
+
+def is_multi_vector(model_dir: str) -> bool:
+    """
+    Whether the checkpoint is late-interaction (ColBERT-style), by any of the three markers such a
+    checkpoint carries in practice.
+
+    `model_type` alone is not enough. sentence-transformers only began writing it in 5.0, and most
+    of these checkpoints predate that -- of the ten HF Inference serves, six declare nothing. They
+    are still recognisable two other ways: they ask for MaxSim scoring, which is precisely what
+    they fail on when loaded as a dense model, or they carry a `pylate` module, PyLate being the
+    library they were trained with. Neither marker appears on a dense checkpoint.
+    """
+    cfg = _read_json(model_dir, "config_sentence_transformers.json") or {}
+    if isinstance(cfg, dict):
+        if cfg.get("model_type") == "ColBERT":
+            return True
+        if str(cfg.get("similarity_fn_name") or "").lower() in ("maxsim", "meanmaxsim"):
+            return True
+    modules = _read_json(model_dir, "modules.json")
+    if isinstance(modules, list):
+        return any(str((m or {}).get("type", "")).startswith("pylate.") for m in modules)
+    return False
 
 
 class SentenceSimilarityPipeline:
     def __init__(self, model_dir: str, device: Union[str, None] = None, **kwargs: Any) -> None:
+        # As in SentenceEmbeddingPipeline, the checkpoint decides the class rather than the task.
+        # A late-interaction checkpoint keeps one vector per token instead of one per text, so it
+        # neither loads nor scores like a dense model.
+        #
+        # `meanmaxsim` rather than the default `maxsim`: raw MaxSim sums over query tokens, so its
+        # magnitude scales with query length and is unbounded, where every other model on this task
+        # answers with a cosine in [-1, 1]. Dividing by the query token count restores that range.
+        # It is a positive per-query constant, so the ranking is identical either way -- this
+        # changes the scale the caller sees, never the order.
         # `device` needs to be set to "cuda" for GPU
-        self.model = SentenceTransformer(model_dir, device=device, **kwargs)
+        self.is_multi_vector = is_multi_vector(model_dir)
+        if self.is_multi_vector:
+            kwargs.setdefault("similarity_fn_name", "meanmaxsim")
+            self.model = MultiVectorEncoder(model_dir, device=device, **kwargs)
+        else:
+            self.model = SentenceTransformer(model_dir, device=device, **kwargs)
 
     def __call__(self, source_sentence: str, sentences: List[str]) -> Dict[str, float]:
-        embeddings1 = self.model.encode(source_sentence, convert_to_tensor=True)
-        embeddings2 = self.model.encode(sentences, convert_to_tensor=True)
-        similarities = util.pytorch_cos_sim(embeddings1, embeddings2).tolist()[0]
+        if self.is_multi_vector:
+            # Multi-vector models are asymmetric -- queries and documents take different prefixes
+            # and length caps -- so encode_query / encode_document are required rather than
+            # interchangeable. Scoring is the model's own, since a cosine between per-token
+            # matrices is not defined.
+            scores = self.model.similarity(
+                self.model.encode_query([source_sentence]),
+                self.model.encode_document(sentences),
+            )
+        else:
+            scores = util.pytorch_cos_sim(
+                self.model.encode(source_sentence, convert_to_tensor=True),
+                self.model.encode(sentences, convert_to_tensor=True),
+            )
+        similarities = scores.tolist()[0]
         # The widgets expect the bare list, not a wrapper object
         return similarities if api_inference_compat() else {"similarities": similarities}
 
 
 class SentenceEmbeddingPipeline:
     def __init__(self, model_dir: str, device: Union[str, None] = None, **kwargs: Any) -> None:
+        # The task cannot tell the two families apart -- a SPLADE checkpoint and a dense embedding
+        # model are both served as `sentence-embeddings` -- so the checkpoint decides, not HF_TASK.
+        #
+        # This matters because the wrong class is not an error. Asked for a SparseEncoder
+        # checkpoint, SentenceTransformer performs a cross-family conversion: it drops
+        # `cls.predictions.*`, the MLM head that produces the vocabulary-space scores SPLADE *is*,
+        # initializes an untrained pooler in its place, and returns a dense hidden-state vector.
+        # On sentence-transformers 5.x that happens with no warning at all, so the endpoint answers
+        # 200 with an embedding that is the wrong length, wrong density and wrong sign range.
+        #
+        # `ColBERT` is deliberately not routed here even though MultiVectorEncoder is available:
+        # a late-interaction model has no single embedding per text to return, only one vector per
+        # token, so there is nothing to answer this task with. It is handled in
+        # SentenceSimilarityPipeline, where scoring -- not the embedding -- is what is asked for.
         # `device` needs to be set to "cuda" for GPU
-        self.model = SentenceTransformer(model_dir, device=device, **kwargs)
+        if st_model_type(model_dir) == "SparseEncoder":
+            self.model = SparseEncoder(model_dir, device=device, **kwargs)
+        else:
+            self.model = SentenceTransformer(model_dir, device=device, **kwargs)
 
     def __call__(self, sentences: Union[str, List[str]]) -> Union[np.ndarray, Dict[str, np.ndarray]]:
         # Deliberately not `.tolist()`: it widens float32 to float64 and serializes
         # 0.1 as 0.10000000149011612.
         embeddings = self.model.encode(sentences)
+        # SparseEncoder returns a torch sparse tensor, where SentenceTransformer already returns an
+        # array. Densified rather than returned as indices/values so the response stays the flat
+        # vector every caller of this task already expects.
+        if hasattr(embeddings, "to_dense"):
+            embeddings = embeddings.to_dense()
+        if hasattr(embeddings, "cpu"):
+            embeddings = embeddings.cpu().numpy()
         # The widgets expect the bare array, not a wrapper object
         return embeddings if api_inference_compat() else {"embeddings": embeddings}
 

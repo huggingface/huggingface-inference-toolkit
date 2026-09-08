@@ -8,8 +8,8 @@
 # Due to an error affecting kenlm and cmake (see https://github.com/kpu/kenlm/pull/464)
 # Also see the transformers patch for it https://github.com/huggingface/transformers/pull/37091
 kenlm@ git+https://github.com/kpu/kenlm@ba83eafdce6553addd885ed3da461bb0d60f8df7
-transformers[sklearn,sentencepiece,audio,vision]==4.51.3
-huggingface_hub[hf_transfer]==0.30.2
+transformers[sklearn,sentencepiece,audio,vision]==5.14.1
+huggingface_hub[hf_xet]==1.24.0
 # Tokenizer backends transformers imports lazily: when one is absent the image still builds and
 # the model raises at request time instead.
 # BertJapaneseTokenizer, with both dictionaries: mecab_dic defaults to ipadic, and the v2/v3
@@ -40,3 +40,4 @@ pandas
 numpy
 orjson
 einops
+timm

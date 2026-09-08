@@ -38,12 +38,14 @@ class HuggingFaceHandler:
         """
         from huggingface_inference_toolkit.heavy_utils import get_pipeline
 
+        # `framework` is deliberately not forwarded: transformers v5 dropped the argument
+        # (PyTorch-only now) and passing it raises a TypeError in `_sanitize_parameters`.
         # `anyio.to_thread.run_sync` passes positional arguments only, hence the kwargs dict
         pipeline = await async_call(
             get_pipeline,
             task,  # type: ignore
             model_dir,  # type: ignore
-            {"framework": framework, "trust_remote_code": HF_TRUST_REMOTE_CODE},
+            {"trust_remote_code": HF_TRUST_REMOTE_CODE},
         )
         return cls(pipeline)
 
