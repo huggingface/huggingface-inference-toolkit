@@ -38,25 +38,25 @@ jobs:
       group: aws-highmemory-32-plus-priv
     steps:
       - name: Check out
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@dc7b9719a96d48369863986a06765841d7ea23f6  # v2.0.0
+        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e  # v4.3.0
         with:
           install: true
 
       - name: Login to container registry
-        uses: docker/login-action@49ed152c8eca782a232dede0303416e8f356c37b  # v2.0.0
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f  # v4.6.0
         with:
           registry: ${{ inputs.repository }}
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
 
       - name: Inject slug/short variables
-        uses: rlespinasse/github-slug-action@797d68864753cbceedc271349d402da4590e6302  # v4
+        uses: rlespinasse/github-slug-action@0e3299190dac9a700da92a90de4556116ea965ed  # v5.7.1
 
       - name: Build and push image to container registry
-        uses: docker/build-push-action@e551b19e49efd4e98792db7592c17c09b89db8d8  # v3.0.0
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a  # v7.3.0
         with:
           push: true
           context: ${{ inputs.context }}

@@ -28,9 +28,9 @@ jobs:
       CACHE_TEST_DIR: /opt/hf-inference-toolkit-tests
       RUN_SLOW: True
     steps:
-    - uses: actions/checkout@v4.1.1
+    - uses: actions/checkout@v7
     - name: Docker Setup Buildx
-      uses: docker/setup-buildx-action@v3.0.0
+      uses: docker/setup-buildx-action@v4.3.0
     - name: Docker Build
       run: make inference-pytorch-gpu
     - name: Run unit tests
