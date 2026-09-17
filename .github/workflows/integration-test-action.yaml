@@ -33,8 +33,12 @@ on:
         required: false
         default: 'aws-g4dn-2xlarge-cache'
 
+permissions: {}
+
 jobs:
   pytorch-integration-tests:
+    permissions:
+      contents: read
     runs-on:
       group: ${{ inputs.runs_on }}
     env:
@@ -57,7 +61,9 @@ jobs:
     - name: Docker Setup Buildx
       uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e  # v4.3.0
     - name: Docker Build
-      run: ${{ inputs.build_img_cmd }}
+      env:
+        BUILD_IMG_CMD: ${{ inputs.build_img_cmd }}
+      run: eval "$BUILD_IMG_CMD"
     - name: Set up Python 3.11
       uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
       with:
@@ -65,8 +71,13 @@ jobs:
     - name: Install dependencies
       run: pip install ".[torch, test]"
     - name: Run local integration tests
+      env:
+        TEST_PATH: ${{ inputs.test_path }}
+        TEST_PARALLELISM: ${{ inputs.test_parallelism }}
+        LOG_LEVEL: ${{ inputs.log_level }}
+        LOG_FORMAT: ${{ inputs.log_format }}
       run: |
         python -m pytest \
-        ${{ inputs.test_path }} -n ${{ inputs.test_parallelism }} \
-        --log-cli-level='${{ inputs.log_level }}' \
-        --log-format='${{ inputs.log_format }}'
+        "$TEST_PATH" -n "$TEST_PARALLELISM" \
+        --log-cli-level="$LOG_LEVEL" \
+        --log-format="$LOG_FORMAT"
