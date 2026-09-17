@@ -32,8 +32,12 @@ on:
       REGISTRY_PASSWORD:
         required: true
 
+permissions: {}
+
 jobs:
   buildx:
+    permissions:
+      contents: read
     runs-on:
       group: aws-highmemory-32-plus-priv
     steps:
