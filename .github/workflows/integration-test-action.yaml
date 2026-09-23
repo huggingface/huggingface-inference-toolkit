@@ -33,8 +33,12 @@ on:
         required: false
         default: 'aws-g4dn-2xlarge-cache'
 
+permissions: {}
+
 jobs:
   pytorch-integration-tests:
+    permissions:
+      contents: read
     runs-on:
       group: ${{ inputs.runs_on }}
     env:

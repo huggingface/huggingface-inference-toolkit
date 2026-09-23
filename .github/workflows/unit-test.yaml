@@ -17,8 +17,12 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
+permissions: {}
+
 jobs:
   pytorch-unit-test:
+    permissions:
+      contents: read
     runs-on: 
       group: aws-g4dn-2xlarge-cache
     env:
