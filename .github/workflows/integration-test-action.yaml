@@ -57,20 +57,27 @@ jobs:
       HF_HUB_CACHE: ${{ github.workspace }}/.hf_cache/hub
       RUN_SLOW: ${{ inputs.run_slow }}
     steps:
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
     - name: Docker Setup Buildx
-      uses: docker/setup-buildx-action@f95db51fddba0c2d1ec667646a06c2ce06100226  # v3.0.0
+      uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e  # v4.3.0
     - name: Docker Build
-      run: ${{ inputs.build_img_cmd }}
+      env:
+        BUILD_IMG_CMD: ${{ inputs.build_img_cmd }}
+      run: eval "$BUILD_IMG_CMD"
     - name: Set up Python 3.11
-      uses: actions/setup-python@e9aba2c848f5ebd159c070c61ea2c4e2b122355e  # v2
+      uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
       with:
         python-version: 3.11
     - name: Install dependencies
       run: pip install ".[torch, test]"
     - name: Run local integration tests
+      env:
+        TEST_PATH: ${{ inputs.test_path }}
+        TEST_PARALLELISM: ${{ inputs.test_parallelism }}
+        LOG_LEVEL: ${{ inputs.log_level }}
+        LOG_FORMAT: ${{ inputs.log_format }}
       run: |
         python -m pytest \
-        ${{ inputs.test_path }} -n ${{ inputs.test_parallelism }} \
-        --log-cli-level='${{ inputs.log_level }}' \
-        --log-format='${{ inputs.log_format }}'
+        "$TEST_PATH" -n "$TEST_PARALLELISM" \
+        --log-cli-level="$LOG_LEVEL" \
+        --log-format="$LOG_FORMAT"
