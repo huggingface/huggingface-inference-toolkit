@@ -206,14 +206,14 @@ async def _predict(request):
             )
 
         # Media for a media task is base64-encoded content, decoded here into the bytes / PIL
-        # image the binary-body path produces -- whether `inputs` is the media itself or a dict
-        # carrying it under a key. Never let such a string reach the pipeline as-is: transformers
-        # would open it as a local file path or fetch it as a URL (arbitrary file read /
-        # server-side request forgery).
-        if "inputs" in deserialized_body:
-            deserialized_body["inputs"] = decode_media_string_input(
-                task, deserialized_body["inputs"]
-            )
+        # image the binary-body path produces -- whether `inputs` is the media itself, a list of
+        # media, or a dict carrying it under a key, at any depth. Never let such a string reach
+        # the pipeline as-is: transformers would open it as a local file path or fetch it as a
+        # URL (arbitrary file read / server-side request forgery). `instances` is the Vertex AI
+        # body, one input per element, and is walked the same way.
+        for key in ("inputs", "instances"):
+            if key in deserialized_body:
+                deserialized_body[key] = decode_media_string_input(task, deserialized_body[key], path=key)
 
         # check for query parameter and add them to the body
         if request.query_params and "parameters" not in deserialized_body:

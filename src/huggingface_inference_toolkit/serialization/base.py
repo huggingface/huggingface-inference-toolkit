@@ -29,23 +29,20 @@ IMAGE_INPUT_TASKS = frozenset(
         "zero-shot-image-classification",
         "zero-shot-object-detection",
         # First positional argument is the image, so a bare string is resolved here too. The
-        # dict form these three usually arrive in is handled by `MEDIA_INPUT_KEYS` below.
+        # dict form these three usually arrive in is walked key by key, see `MEDIA_INPUT_KEYS`.
         "visual-question-answering",
         "document-question-answering",
         "image-text-to-text",
     }
 )
 
-# Tasks whose `inputs` is a dict carrying the media under a key instead of being the media. The
-# handler splats such a dict into the pipeline as keyword arguments, so the nested string never
-# passes through the single-value path above and has to be decoded here as well.
-MEDIA_INPUT_KEYS = {
-    "visual-question-answering": ("image",),
-    "document-question-answering": ("image",),
-    # Only the plain `images` / `image` argument. A conversational payload nests images inside a
-    # messages list; hf-inference does not serve that shape, so it is deliberately not walked.
-    "image-text-to-text": ("images", "image"),
-}
+# Keyword names under which a pipeline takes its media. The handler splats a dict `inputs` into
+# the pipeline as keyword arguments, so a string under one of these is resolved by transformers
+# exactly like a bare `inputs` string. `inputs` is the base `Pipeline.__call__` name and works for
+# every task; `images` / `image` / `audios` / `videos` are the per-task aliases. `url`, `path`,
+# `base64` and `image_url` are the keys of a chat content item (`{"type": "image", ...}`) that
+# carry the image of an image-text-to-text conversation, and that transformers loads the same way.
+MEDIA_INPUT_KEYS = frozenset({"inputs", "images", "image", "audios", "videos", "url", "path", "base64", "image_url"})
 
 # Media tasks the toolkit registers no media type for: nothing in `content_type_mapping` can carry
 # a video, so there is no encoding a caller could legitimately send instead. transformers would
@@ -171,9 +168,43 @@ def _decode_base64_media(task: Optional[str], deserializer, value: str, where: s
         raise ValueError(f"{contract} The decoded bytes are not valid media ({e}).") from e
 
 
-def decode_media_string_input(task: Optional[str], value):
+def _decode_media(task: Optional[str], deserializer, value, path: str, is_media: bool):
     """
-    Resolve a JSON `inputs` for a media task into the decoded media the pipeline expects.
+    Walk `value` and decode every string that sits in a media position, whatever the nesting.
+
+    A string is media when it is the input itself, an element of a list that is media, or the
+    value of a key in `MEDIA_INPUT_KEYS`; a list passes that on to its elements, a dict decides
+    key by key. Strings anywhere else are text (a question, a prompt, candidate labels) and are
+    left alone, but the walk carries on through them, so a chat nested under `text` is still
+    covered. `deserializer` is None for a task the toolkit has no media type for, where a media
+    string can only be a path or a URL and is refused instead of decoded.
+    """
+    if isinstance(value, str):
+        if not is_media:
+            return value
+        if deserializer is None:
+            raise ValueError(
+                f"'{path}' for task '{task}' cannot be a string: transformers would fetch it as a URL "
+                "or open it as a local file, and the toolkit registers no media type this task's "
+                "content could be sent as instead."
+            )
+        return _decode_base64_media(task, deserializer, value, f"'{path}'")
+    if isinstance(value, list):
+        return [
+            _decode_media(task, deserializer, item, f"{path}[{index}]", is_media) for index, item in enumerate(value)
+        ]
+    if isinstance(value, dict):
+        return {
+            key: _decode_media(task, deserializer, item, f'{path}["{key}"]', key in MEDIA_INPUT_KEYS)
+            for key, item in value.items()
+        }
+    return value
+
+
+def decode_media_string_input(task: Optional[str], value, path: str = "inputs"):
+    """
+    Resolve a JSON `inputs` (or `instances`, see `path`) for a media task into the decoded media
+    the pipeline expects.
 
     For audio and image tasks a string input is the media content itself, base64-encoded, and is
     decoded here into the bytes / PIL image the binary-body path already produces. This is
@@ -181,41 +212,23 @@ def decode_media_string_input(task: Optional[str], value):
     pipeline would resolve it as a local path or a remote reference rather than as content. A
     string that is not valid base64 is rejected rather than passed through.
 
-    Three shapes are handled, because transformers resolves a string in all three:
+    transformers resolves such a string wherever it finds one -- as the input, in a list of
+    inputs, under a media keyword of a dict the handler splats, or inside a chat message -- so
+    the walk in `_decode_media` covers every shape rather than a list of known ones: a media
+    task never hands the pipeline a string in a media position.
 
-    - `inputs` is the media (`IMAGE_INPUT_TASKS` / `AUDIO_INPUT_TASKS`), decoded in place;
-    - `inputs` is a dict carrying the media under a key (`MEDIA_INPUT_KEYS`) -- the handler splats
-      it into the pipeline as keyword arguments, so each media key is decoded and the rest of the
-      dict is left alone;
-    - the task has no media type the toolkit can accept (`UNSUPPORTED_MEDIA_TASKS`), so a string
-      cannot be anything but a path or a URL and is refused outright.
+    For a task the toolkit has no media type for (`UNSUPPORTED_MEDIA_TASKS`), a media string
+    cannot be anything but a path or a URL and is refused outright.
 
     Anything else is returned unchanged: a binary body is already decoded, and a text task's
-    string is literal text.
+    input is literal text.
     """
-    if isinstance(value, str) and task in UNSUPPORTED_MEDIA_TASKS:
-        raise ValueError(
-            f"'inputs' for task '{task}' cannot be a string: transformers would fetch it as a URL "
-            "or open it as a local file, and the toolkit registers no media type this task's "
-            "content could be sent as instead."
-        )
-
-    if isinstance(value, dict):
-        keys = MEDIA_INPUT_KEYS.get(task or "")
-        if not keys:
-            return value
-        decoded = dict(value)
-        for key in keys:
-            if isinstance(decoded.get(key), str):
-                decoded[key] = _decode_base64_media(task, Imager, decoded[key], f"'inputs[\"{key}\"]'")
-        return decoded
-
-    if not isinstance(value, str):
-        return value
-    if task in AUDIO_INPUT_TASKS:
+    if task in UNSUPPORTED_MEDIA_TASKS:
+        deserializer = None
+    elif task in AUDIO_INPUT_TASKS:
         deserializer = Audioer
     elif task in IMAGE_INPUT_TASKS:
         deserializer = Imager
     else:
         return value
-    return _decode_base64_media(task, deserializer, value, "'inputs'")
+    return _decode_media(task, deserializer, value, path, True)
