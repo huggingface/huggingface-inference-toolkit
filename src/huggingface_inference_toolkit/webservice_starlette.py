@@ -205,20 +205,26 @@ async def _predict(request):
                 f"Body needs to provide a inputs key, received: {orjson.dumps(deserialized_body)}"
             )
 
+        # check for query parameter and add them to the body
+        if request.query_params and "parameters" not in deserialized_body:
+            deserialized_body["parameters"] = convert_params_to_int_or_bool(
+                dict(request.query_params)
+            )
+
         # Media for a media task is base64-encoded content, decoded here into the bytes / PIL
         # image the binary-body path produces -- whether `inputs` is the media itself, a list of
         # media, or a dict carrying it under a key, at any depth. Never let such a string reach
         # the pipeline as-is: transformers would open it as a local file path or fetch it as a
         # URL (arbitrary file read / server-side request forgery). `instances` is the Vertex AI
-        # body, one input per element, and is walked the same way.
+        # body, one input per element, and is walked the same way. So is `parameters`, once the
+        # query string has been merged into it: the handler splats it into the pipeline call as
+        # keyword arguments, and a media keyword there overrides the input.
         for key in ("inputs", "instances"):
             if key in deserialized_body:
                 deserialized_body[key] = decode_media_string_input(task, deserialized_body[key], path=key)
-
-        # check for query parameter and add them to the body
-        if request.query_params and "parameters" not in deserialized_body:
-            deserialized_body["parameters"] = convert_params_to_int_or_bool(
-                dict(request.query_params)
+        if "parameters" in deserialized_body:
+            deserialized_body["parameters"] = decode_media_string_input(
+                task, deserialized_body["parameters"], path="parameters", is_media=False
             )
 
         # tracks request time

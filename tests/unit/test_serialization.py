@@ -420,3 +420,34 @@ def test_the_path_names_where_the_offending_string_was_found():
         decode_media_string_input(
             "image-classification", [{"images": _b64_png()}, {"images": "/var/lib/nonexistent"}], path="instances"
         )
+
+
+@pytest.mark.parametrize(
+    "task,key",
+    [
+        ("image-classification", "images"),
+        ("zero-shot-image-classification", "images"),
+        ("image-text-to-text", "images"),
+        ("video-classification", "videos"),
+    ],
+)
+def test_parameters_are_walked_for_media_keys_but_are_not_media_themselves(task, key):
+    # The handler splats `parameters` into the pipeline call as keyword arguments, next to the
+    # input, and for these tasks the media keyword overrides the input. A string there is
+    # resolved like one in `inputs`. The other parameters are what they are: `top_k` a number,
+    # `prompt` a text.
+    with pytest.raises(ValueError, match=r"'parameters\[\"" + key + r"\"\]' for task"):
+        decode_media_string_input(task, {key: "http://127.0.0.1:8080/internal"}, path="parameters", is_media=False)
+    parameters = {"top_k": 3, "prompt": "http://127.0.0.1:8080/internal", "candidate_labels": ["/etc/passwd"]}
+    assert decode_media_string_input(task, parameters, path="parameters", is_media=False) == parameters
+
+
+def test_a_chat_in_the_text_parameter_is_walked():
+    # image-text-to-text takes the conversation as `text`, a parameter as much as an input
+    with pytest.raises(ValueError, match=r"'parameters\[\"text\"\]\[0\]\[\"content\"\]\[0\]\[\"url\"\]'"):
+        decode_media_string_input(
+            "image-text-to-text",
+            _chat({"type": "image", "url": "http://127.0.0.1:8080/internal"}),
+            path="parameters",
+            is_media=False,
+        )

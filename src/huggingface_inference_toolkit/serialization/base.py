@@ -201,10 +201,12 @@ def _decode_media(task: Optional[str], deserializer, value, path: str, is_media:
     return value
 
 
-def decode_media_string_input(task: Optional[str], value, path: str = "inputs"):
+def decode_media_string_input(task: Optional[str], value, path: str = "inputs", is_media: bool = True):
     """
     Resolve a JSON `inputs` (or `instances`, see `path`) for a media task into the decoded media
-    the pipeline expects.
+    the pipeline expects. With `is_media` False the value itself is not media but may carry some
+    under a media key: `parameters`, which the handler splats into the pipeline call alongside
+    the input, so `{"images": ...}` there is resolved exactly as it would be in `inputs`.
 
     For audio and image tasks a string input is the media content itself, base64-encoded, and is
     decoded here into the bytes / PIL image the binary-body path already produces. This is
@@ -231,4 +233,4 @@ def decode_media_string_input(task: Optional[str], value, path: str = "inputs"):
         deserializer = Imager
     else:
         return value
-    return _decode_media(task, deserializer, value, path, True)
+    return _decode_media(task, deserializer, value, path, is_media)

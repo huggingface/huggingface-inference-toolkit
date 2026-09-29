@@ -38,7 +38,7 @@ def handler(monkeypatch):
     return handler
 
 
-def _post(body: dict):
+def _post(body: dict, query_string: bytes = b""):
     payload = orjson.dumps(body)
 
     async def receive():
@@ -49,7 +49,7 @@ def _post(body: dict):
         "method": "POST",
         "path": "/",
         "headers": [(b"content-type", b"application/json")],
-        "query_string": b"",
+        "query_string": query_string,
         "path_params": {},
     }
     return anyio.run(partial(ws._predict, Request(scope, receive)))
@@ -80,7 +80,7 @@ def test_instances_are_walked_the_same_way(handler):
     # run on it too, or a Vertex deployment gets none of the protection.
     response = _post({"instances": [{"images": _b64_png()}, "/var/lib/nonexistent"]})
     assert response.status_code == 400
-    assert b"'instances[1]' for task 'image-classification'" in response.body
+    assert "'instances[1]' for task 'image-classification'" in orjson.loads(response.body)["error"]
     assert handler.calls == []
 
 
@@ -90,3 +90,27 @@ def test_instances_are_decoded_before_the_handler(handler):
     instances = handler.calls[0]["instances"]
     assert isinstance(instances[0]["images"], Image.Image)
     assert isinstance(instances[1], Image.Image)
+
+
+def test_a_media_keyword_in_parameters_never_reaches_the_handler(handler):
+    # `parameters` is splatted into the pipeline call next to the input, and `images` there
+    # overrides the input for image-classification: the guard has to cover it too.
+    response = _post({"inputs": _b64_png(), "parameters": {"images": "/var/lib/nonexistent"}})
+    assert response.status_code == 400
+    assert "'parameters[\"images\"]' for task 'image-classification'" in orjson.loads(response.body)["error"]
+    assert handler.calls == []
+
+
+def test_a_media_keyword_in_the_query_string_never_reaches_the_handler(handler):
+    # The query string becomes `parameters` when the body carries none, so it is walked after
+    # that merge, not before
+    response = _post({"inputs": _b64_png()}, query_string=b"images=http%3A%2F%2F127.0.0.1%3A8080%2Finternal")
+    assert response.status_code == 400
+    assert "'parameters[\"images\"]' for task 'image-classification'" in orjson.loads(response.body)["error"]
+    assert handler.calls == []
+
+
+def test_ordinary_parameters_still_reach_the_handler(handler):
+    response = _post({"inputs": _b64_png()}, query_string=b"top_k=3")
+    assert response.status_code == 200
+    assert handler.calls[0]["parameters"] == {"top_k": 3}
