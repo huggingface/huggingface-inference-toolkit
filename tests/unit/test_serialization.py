@@ -6,6 +6,8 @@ from PIL import Image
 
 from huggingface_inference_toolkit.serialization.audio_utils import Audioer
 from huggingface_inference_toolkit.serialization.base import (
+    AUDIO_INPUT_TASKS,
+    IMAGE_INPUT_TASKS,
     ContentType,
     content_type_mapping,
     decode_media_string_input,
@@ -287,3 +289,165 @@ def test_decode_media_string_input_refuses_a_string_for_video_classification(val
     # could legitimately send: a string can only be something for the server to open or fetch.
     with pytest.raises(ValueError, match="cannot be a string"):
         decode_media_string_input("video-classification", value)
+
+
+# --- Every shape transformers resolves a string in, not only the bare-string and known-dict ones
+
+
+_MALICIOUS = ["/var/lib/nonexistent", "http://127.0.0.1:8080/internal"]
+
+
+@pytest.mark.parametrize("task", sorted(IMAGE_INPUT_TASKS))
+@pytest.mark.parametrize("key", ["inputs", "images", "image"])
+def test_every_image_task_decodes_the_media_key_of_a_dict(task, key):
+    # The handler splats a dict into the pipeline as keyword arguments for every task, not just
+    # the three that usually arrive that way: `inputs` is the base pipeline's keyword and
+    # `images` / `image` the per-task aliases, so all of them are media for all image tasks.
+    decoded = decode_media_string_input(task, {key: _b64_png()})
+    assert isinstance(decoded[key], Image.Image)
+
+
+@pytest.mark.parametrize(
+    "task", ["image-classification", "object-detection", "zero-shot-image-classification", "image-to-text"]
+)
+@pytest.mark.parametrize("key", ["inputs", "images", "image"])
+@pytest.mark.parametrize("malicious", _MALICIOUS)
+def test_a_dict_for_an_unlisted_image_task_is_not_a_way_around_the_guard(task, key, malicious):
+    with pytest.raises(ValueError, match="must be the media content itself"):
+        decode_media_string_input(task, {key: malicious})
+
+
+@pytest.mark.parametrize("task", sorted(AUDIO_INPUT_TASKS))
+@pytest.mark.parametrize("key", ["inputs", "audios"])
+def test_a_dict_for_an_audio_task_is_not_a_way_around_the_guard(task, key):
+    with pytest.raises(ValueError, match="must be the media content itself"):
+        decode_media_string_input(task, {key: "http://127.0.0.1:8080/internal"})
+    # A path that happens to be valid base64 is decoded to its own bytes, never opened (see
+    # `test_decode_media_string_input_rejects_a_path_that_is_itself_valid_base64` for why audio
+    # does not reject it outright)
+    decoded = decode_media_string_input(task, {key: "/var/lib/nonexistent"})
+    assert decoded[key] == base64.b64decode("/var/lib/nonexistent")
+
+
+@pytest.mark.parametrize("task", ["image-classification", "visual-question-answering"])
+@pytest.mark.parametrize("malicious", _MALICIOUS)
+def test_a_list_of_strings_is_not_a_way_around_the_guard(task, malicious):
+    # The base pipeline iterates a list and preprocesses each element as it would a single input
+    with pytest.raises(ValueError, match=r"'inputs\[1\]' for task"):
+        decode_media_string_input(task, [_b64_png(), malicious])
+    with pytest.raises(ValueError, match=r"'inputs\[1\]' for task"):
+        decode_media_string_input("audio-classification", ["Zm9v", "http://127.0.0.1:8080/internal"])
+
+
+def test_a_list_of_strings_is_decoded_element_by_element():
+    decoded = decode_media_string_input("image-classification", [_b64_png(), _b64_png()])
+    assert len(decoded) == 2
+    assert all(isinstance(image, Image.Image) for image in decoded)
+
+
+@pytest.mark.parametrize("task", ["visual-question-answering", "zero-shot-object-detection", "image-text-to-text"])
+@pytest.mark.parametrize("malicious", _MALICIOUS)
+def test_a_list_of_dicts_is_not_a_way_around_the_guard(task, malicious):
+    with pytest.raises(ValueError, match=r"'inputs\[0\]\[\"image\"\]' for task"):
+        decode_media_string_input(task, [{"image": malicious, "question": "what?"}])
+
+
+@pytest.mark.parametrize("malicious", _MALICIOUS)
+def test_a_list_nested_under_a_media_key_is_not_a_way_around_the_guard(malicious):
+    # image-text-to-text takes a list of lists of images
+    with pytest.raises(ValueError, match=r"'inputs\[\"images\"\]\[0\]\[1\]' for task"):
+        decode_media_string_input("image-text-to-text", {"images": [[_b64_png(), malicious]], "text": ["hi"]})
+
+
+def _chat(content_item):
+    return {"text": [{"role": "user", "content": [content_item, {"type": "text", "text": "describe"}]}]}
+
+
+@pytest.mark.parametrize(
+    "content_item,where",
+    [
+        ({"type": "image", "url": "{m}"}, r'\["url"\]'),
+        ({"type": "image", "path": "{m}"}, r'\["path"\]'),
+        ({"type": "image", "image": "{m}"}, r'\["image"\]'),
+        # `base64` is documented as carrying encoded content, but transformers resolves it through
+        # the same loader as the others, so a URL there is fetched all the same
+        ({"type": "image", "base64": "{m}"}, r'\["base64"\]'),
+        ({"type": "image_url", "image_url": {"url": "{m}"}}, r'\["image_url"\]\["url"\]'),
+    ],
+)
+@pytest.mark.parametrize("malicious", _MALICIOUS)
+def test_an_image_inside_a_chat_message_is_not_a_way_around_the_guard(content_item, where, malicious):
+    # The conversational shape nests the image several levels down, under `text`, which is not
+    # itself media: the walk has to go through text positions to reach it.
+    item = {k: (v.format(m=malicious) if isinstance(v, str) else {"url": malicious}) for k, v in content_item.items()}
+    with pytest.raises(ValueError, match=r"'inputs\[\"text\"\]\[0\]\[\"content\"\]\[0\]" + where + "' for task"):
+        decode_media_string_input("image-text-to-text", _chat(item))
+
+
+def test_an_image_inside_a_chat_message_is_decoded_in_place():
+    decoded = decode_media_string_input("image-text-to-text", _chat({"type": "image", "url": _b64_png()}))
+    content = decoded["text"][0]["content"]
+    assert isinstance(content[0]["url"], Image.Image)
+    # The text item next to it is untouched
+    assert content[1] == {"type": "text", "text": "describe"}
+
+
+def test_text_values_of_a_media_task_dict_are_left_alone():
+    # A question, a prompt or candidate labels are literal text, even when they look like a path.
+    # Only media positions are decoded; the walk passes through the rest.
+    inputs = {
+        "image": _b64_png(),
+        "question": "/etc/passwd",
+        "prompt": "http://127.0.0.1:8080/internal",
+        "candidate_labels": ["cat", "/etc/passwd"],
+        "text": [{"role": "user", "content": "http://127.0.0.1:8080/internal"}],
+    }
+    decoded = decode_media_string_input("image-text-to-text", inputs)
+    assert isinstance(decoded["image"], Image.Image)
+    for key in ("question", "prompt", "candidate_labels", "text"):
+        assert decoded[key] == inputs[key]
+
+
+@pytest.mark.parametrize("value", [{"inputs": "/var/lib/nonexistent"}, {"videos": "Zm9v"}, ["http://127.0.0.1/x"]])
+def test_video_classification_refuses_a_media_string_in_any_shape(value):
+    with pytest.raises(ValueError, match="cannot be a string"):
+        decode_media_string_input("video-classification", value)
+
+
+def test_the_path_names_where_the_offending_string_was_found():
+    # `instances` is the Vertex AI body: the caller is told which instance and key was rejected
+    with pytest.raises(ValueError, match=r"'instances\[1\]\[\"images\"\]' for task 'image-classification'"):
+        decode_media_string_input(
+            "image-classification", [{"images": _b64_png()}, {"images": "/var/lib/nonexistent"}], path="instances"
+        )
+
+
+@pytest.mark.parametrize(
+    "task,key",
+    [
+        ("image-classification", "images"),
+        ("zero-shot-image-classification", "images"),
+        ("image-text-to-text", "images"),
+        ("video-classification", "videos"),
+    ],
+)
+def test_parameters_are_walked_for_media_keys_but_are_not_media_themselves(task, key):
+    # The handler splats `parameters` into the pipeline call as keyword arguments, next to the
+    # input, and for these tasks the media keyword overrides the input. A string there is
+    # resolved like one in `inputs`. The other parameters are what they are: `top_k` a number,
+    # `prompt` a text.
+    with pytest.raises(ValueError, match=r"'parameters\[\"" + key + r"\"\]' for task"):
+        decode_media_string_input(task, {key: "http://127.0.0.1:8080/internal"}, path="parameters", is_media=False)
+    parameters = {"top_k": 3, "prompt": "http://127.0.0.1:8080/internal", "candidate_labels": ["/etc/passwd"]}
+    assert decode_media_string_input(task, parameters, path="parameters", is_media=False) == parameters
+
+
+def test_a_chat_in_the_text_parameter_is_walked():
+    # image-text-to-text takes the conversation as `text`, a parameter as much as an input
+    with pytest.raises(ValueError, match=r"'parameters\[\"text\"\]\[0\]\[\"content\"\]\[0\]\[\"url\"\]'"):
+        decode_media_string_input(
+            "image-text-to-text",
+            _chat({"type": "image", "url": "http://127.0.0.1:8080/internal"}),
+            path="parameters",
+            is_media=False,
+        )
