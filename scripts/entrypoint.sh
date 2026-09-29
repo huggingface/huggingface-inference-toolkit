@@ -82,7 +82,7 @@ if [[ ! -z "${HF_MODEL_ID}" ]]; then
     revision=${HF_REVISION:-main}
 
     echo "Downloading $filename for model ${HF_MODEL_ID}"
-    huggingface-cli download ${HF_MODEL_ID} "$filename" --revision "$revision" --local-dir /tmp
+    hf download ${HF_MODEL_ID} "$filename" --revision "$revision" --local-dir /tmp
 
     # Check if handler.py was downloaded successfully
     if [ -f "/tmp/$filename" ]; then
@@ -91,7 +91,7 @@ if [[ ! -z "${HF_MODEL_ID}" ]]; then
 
         # Attempt to download requirements.txt
         echo "Downloading requirements.txt for model ${HF_MODEL_ID}"
-        huggingface-cli download "${HF_MODEL_ID}" requirements.txt --revision "$revision" --local-dir /tmp
+        hf download "${HF_MODEL_ID}" requirements.txt --revision "$revision" --local-dir /tmp
 
         # Check if requirements.txt was downloaded successfully
         if [ -f "/tmp/requirements.txt" ]; then
