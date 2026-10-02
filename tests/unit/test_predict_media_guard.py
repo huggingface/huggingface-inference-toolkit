@@ -114,3 +114,33 @@ def test_ordinary_parameters_still_reach_the_handler(handler):
     response = _post({"inputs": _b64_png()}, query_string=b"top_k=3")
     assert response.status_code == 200
     assert handler.calls[0]["parameters"] == {"top_k": 3}
+
+
+@pytest.mark.parametrize(
+    "task,body,where",
+    [
+        # With `instances` present and no `inputs`, the handler splats the whole body into the
+        # pipeline, so a media keyword next to `instances` is a pipeline argument like any other
+        (
+            "zero-shot-image-classification",
+            {"instances": [], "image": "/var/lib/nonexistent", "candidate_labels": ["a"]},
+            "'image' for task 'zero-shot-image-classification'",
+        ),
+        ("image-classification", {"instances": [], "images": "/var/lib/nonexistent"}, "'images' for task"),
+    ],
+)
+def test_a_media_keyword_beside_instances_never_reaches_the_handler(handler, monkeypatch, task, body, where):
+    monkeypatch.setattr(ws, "HF_TASK", task)
+    response = _post(body)
+    assert response.status_code == 400
+    assert where in orjson.loads(response.body)["error"]
+    assert handler.calls == []
+
+
+def test_text_keys_at_the_top_level_still_pass(handler):
+    # Only media keywords are decoded; any other top-level string is left for the handler
+    response = _post({"inputs": _b64_png(), "candidate_labels": ["/var/lib/nonexistent"], "note": "http://x"})
+    assert response.status_code == 200
+    body = handler.calls[0]
+    assert isinstance(body["inputs"], Image.Image)
+    assert body["candidate_labels"] == ["/var/lib/nonexistent"] and body["note"] == "http://x"

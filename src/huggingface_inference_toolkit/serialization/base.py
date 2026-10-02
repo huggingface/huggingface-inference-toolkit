@@ -42,7 +42,10 @@ IMAGE_INPUT_TASKS = frozenset(
 # every task; `images` / `image` / `audios` / `videos` are the per-task aliases. `url`, `path`,
 # `base64` and `image_url` are the keys of a chat content item (`{"type": "image", ...}`) that
 # carry the image of an image-text-to-text conversation, and that transformers loads the same way.
-MEDIA_INPUT_KEYS = frozenset({"inputs", "images", "image", "audios", "videos", "url", "path", "base64", "image_url"})
+# `instances` is the Vertex AI body, one input per element.
+MEDIA_INPUT_KEYS = frozenset(
+    {"inputs", "instances", "images", "image", "audios", "videos", "url", "path", "base64", "image_url"}
+)
 
 # Media tasks the toolkit registers no media type for: nothing in `content_type_mapping` can carry
 # a video, so there is no encoding a caller could legitimately send instead. transformers would
@@ -195,7 +198,7 @@ def _decode_media(task: Optional[str], deserializer, value, path: str, is_media:
         ]
     if isinstance(value, dict):
         return {
-            key: _decode_media(task, deserializer, item, f'{path}["{key}"]', key in MEDIA_INPUT_KEYS)
+            key: _decode_media(task, deserializer, item, f'{path}["{key}"]' if path else key, key in MEDIA_INPUT_KEYS)
             for key, item in value.items()
         }
     return value
@@ -203,10 +206,13 @@ def _decode_media(task: Optional[str], deserializer, value, path: str, is_media:
 
 def decode_media_string_input(task: Optional[str], value, path: str = "inputs", is_media: bool = True):
     """
-    Resolve a JSON `inputs` (or `instances`, see `path`) for a media task into the decoded media
-    the pipeline expects. With `is_media` False the value itself is not media but may carry some
-    under a media key: `parameters`, which the handler splats into the pipeline call alongside
-    the input, so `{"images": ...}` there is resolved exactly as it would be in `inputs`.
+    Resolve a JSON `inputs` for a media task into the decoded media the pipeline expects.
+
+    With `is_media` False the value itself is not media but may carry some under a media key. That
+    is how the whole request body is walked (`path=""`, so errors name `inputs`, `instances[1]` or
+    `parameters["images"]`): the handler splats `parameters` into the pipeline call alongside the
+    input, and, when the body has no `inputs`, the body itself, so a media keyword anywhere at the
+    top level is resolved exactly as it would be in `inputs`.
 
     For audio and image tasks a string input is the media content itself, base64-encoded, and is
     decoded here into the bytes / PIL image the binary-body path already produces. This is

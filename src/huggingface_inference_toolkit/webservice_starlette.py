@@ -215,17 +215,12 @@ async def _predict(request):
         # image the binary-body path produces -- whether `inputs` is the media itself, a list of
         # media, or a dict carrying it under a key, at any depth. Never let such a string reach
         # the pipeline as-is: transformers would open it as a local file path or fetch it as a
-        # URL (arbitrary file read / server-side request forgery). `instances` is the Vertex AI
-        # body, one input per element, and is walked the same way. So is `parameters`, once the
-        # query string has been merged into it: the handler splats it into the pipeline call as
-        # keyword arguments, and a media keyword there overrides the input.
-        for key in ("inputs", "instances"):
-            if key in deserialized_body:
-                deserialized_body[key] = decode_media_string_input(task, deserialized_body[key], path=key)
-        if "parameters" in deserialized_body:
-            deserialized_body["parameters"] = decode_media_string_input(
-                task, deserialized_body["parameters"], path="parameters", is_media=False
-            )
+        # URL (arbitrary file read / server-side request forgery). The whole body is walked, once
+        # the query string has been merged into `parameters`, because the handler splats more
+        # than `inputs` into the pipeline call: `parameters` always, and the body itself when it
+        # carries no `inputs` (an `instances` body on a non-Vertex deployment), so a media keyword
+        # at any level of it would otherwise reach the pipeline.
+        deserialized_body = decode_media_string_input(task, deserialized_body, path="", is_media=False)
 
         # tracks request time
         start_time = perf_counter()
